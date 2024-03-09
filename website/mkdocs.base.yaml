@@ -1,0 +1,98 @@
+# site
+site_name: Kyverno Envoy plugin
+site_url: https://github.io/kyverno/kyverno-envoy-plugin/
+site_description: Kyverno based authz in a mesh
+
+# repo
+repo_name: kyverno/kyverno-envoy-plugin
+repo_url: https://github.com/kyverno/kyverno-envoy-plugin
+
+# edit
+edit_uri: edit/main/website/docs/
+
+# copyright
+copyright: Made with ❤️ by Kyverno contributors.
+
+# strictness
+strict: true
+
+# style
+extra_css:
+- static/extra.css
+
+# version
+extra:
+  version:
+    provider: mike
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  language: en
+  logo: static/kyverno-chainsaw-logo.png
+  favicon: static/favicon.ico
+  include_search_page: false
+  search_index_only: true
+  features:
+  - announce.dismiss
+  - search.suggest
+  - search.highlight
+  - search.share
+  - content.code.copy
+  - content.action.edit
+  - navigation.footer
+  - navigation.instant
+  - navigation.tracking
+  - navigation.tabs
+  palette:
+  - media: "(prefers-color-scheme: light)" # Light mode
+    scheme: default
+    toggle:
+      icon: material/lightbulb-outline
+      name: Switch to light mode
+  - media: "(prefers-color-scheme: dark)" # Dark mode
+    scheme: slate
+    primary: light blue
+    accent: indigo
+    toggle:
+      icon: material/lightbulb
+      name: Switch to dark mode
+
+plugins:
+- search
+# - redirects:
+#     redirect_maps:
+#       discord.md: https://discord.gg/RGEBtg8vQ6
+#       github.md: https://github.com/goreleaser
+#       linkedin.md: https://www.linkedin.com/company/goreleaser/
+#       mastodon.md: https://fosstodon.org/@goreleaser
+#       twitter.md: https://twitter.com/goreleaser
+#       d.md: https://discord.gg/RGEBtg8vQ6
+#       g.md: https://github.com/goreleaser
+#       l.md: https://www.linkedin.com/company/goreleaser/
+#       m.md: https://fosstodon.org/@goreleaser
+#       t.md: https://twitter.com/goreleaser
+#       "customization/build.md": customization/builds.md
+- minify:
+    minify_html: true
+- include-markdown
+- tags
+- blog:
+    post_url_format: "{slug}"
+
+markdown_extensions:
+- attr_list
+- pymdownx.emoji:
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+- admonition
+- codehilite
+- meta
+- toc:
+    permalink: true
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.superfences
+- pymdownx.tasklist:
+    custom_checkbox: true
+- footnotes

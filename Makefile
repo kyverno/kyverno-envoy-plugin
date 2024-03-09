@@ -36,7 +36,7 @@ COMMA                              := ,
 $(KIND):
 	@echo Install kind... >&2
 	@GOBIN=$(TOOLS_DIR) go install sigs.k8s.io/kind@$(KIND_VERSION)
-@
+
 .PHONY: install-tools
 install-tools: ## Install tools
 install-tools: $(TOOLS)
@@ -61,9 +61,6 @@ $(PACKAGE_SHIM): $(GOPATH_SHIM)
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
-codegen-mkdocs: codegen-cli-docs
-codegen-mkdocs: codegen-api-docs
-codegen-mkdocs: codegen-jp-docs
 	@echo Generate mkdocs website... >&2
 	@$(PIP) install mkdocs
 	@$(PIP) install --upgrade pip
@@ -72,14 +69,7 @@ codegen-mkdocs: codegen-jp-docs
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
-codegen: codegen-api-docs
-codegen: codegen-cli-docs
-codegen: codegen-crds
-codegen: codegen-deepcopy
 codegen: codegen-mkdocs
-codegen: codegen-register
-codegen: codegen-schemas-json
-codegen: codegen-tests-catalog
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date

@@ -1,0 +1,4 @@
+INHERIT: ./mkdocs.base.yaml
+
+nav:
+- Home: index.md

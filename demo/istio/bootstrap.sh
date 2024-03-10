@@ -12,5 +12,3 @@ helm upgrade --install istio-base       --namespace $ISTIO_NS --create-namespace
 helm upgrade --install istiod           --namespace $ISTIO_NS --create-namespace --wait --repo $ISTIO_REPO istiod
 helm upgrade --install istio-ingress    --namespace $ISTIO_NS --create-namespace --wait --repo $ISTIO_REPO gateway
 
-# Label default namespace to inject sidecar automatically
-kubectl label namespace default istio-injection=enabled

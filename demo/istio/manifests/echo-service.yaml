@@ -42,3 +42,36 @@ spec:
   ports:
   - port: 8080
     targetPort: 8080
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: echo-virtual-service
+  namespace: demo
+spec:
+  hosts:
+  - echo
+  http:
+  - route:
+    - destination:
+        host: echo
+        port:
+          number: 8080
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: echo-gateway
+  namespace: demo
+spec:
+  selector:
+    istio: ingressgateway 
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*" 

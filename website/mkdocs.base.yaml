@@ -29,7 +29,7 @@ theme:
   name: material
   custom_dir: docs/overrides
   language: en
-  logo: static/kyverno-chainsaw-logo.png
+  logo: static/logo.png
   favicon: static/favicon.ico
   include_search_page: false
   search_index_only: true

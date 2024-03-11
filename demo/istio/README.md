@@ -37,7 +37,7 @@ kubectl apply -f ./manifests/sample-application.yaml
 We are going to call the sample application using a pod in the cluster.
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox --  wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
 
 {
   "path": "/foo",
@@ -103,14 +103,14 @@ The provider will be registered later in the istio config map.
 Calling the sample application again at the `/foo` path will return `403 Forbidden`.
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox --  wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
 wget: server returned error: HTTP/1.1 403 Forbidden
 ```
 
 Note that calling another path (like `/bar`) succeeds as it's not part of the policy.
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox --  wget -q --output-document - echo.demo.svc.cluster.local:8080/bar
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/bar
 
 {
   "path": "/bar",

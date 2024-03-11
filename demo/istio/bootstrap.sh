@@ -3,7 +3,6 @@
 KIND_IMAGE=kindest/node:v1.29.2
 ISTIO_REPO=https://istio-release.storage.googleapis.com/charts
 ISTIO_NS=istio-system
-ISTIO_INGRESS_NS=istio-ingress
 
 # Create Kind cluster
 kind create cluster --image $KIND_IMAGE --wait 1m --config - <<EOF
@@ -30,4 +29,3 @@ EOF
 # Install Istio components
 helm upgrade --install istio-base       --namespace $ISTIO_NS           --create-namespace --wait --repo $ISTIO_REPO base
 helm upgrade --install istiod           --namespace $ISTIO_NS           --create-namespace --wait --repo $ISTIO_REPO istiod
-helm upgrade --install istio-ingress    --namespace $ISTIO_INGRESS_NS   --create-namespace --wait --repo $ISTIO_REPO gateway

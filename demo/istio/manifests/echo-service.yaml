@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: echo
-        image: mendhak/http-https-echo
+        image: sanskardevops/testserver:latest
         ports:
         - containerPort: 8080
 ---

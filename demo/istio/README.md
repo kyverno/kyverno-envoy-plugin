@@ -104,6 +104,7 @@ Calling the sample application again at the `/foo` path will return `403 Forbidd
 
 ```console
 kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
+
 wget: server returned error: HTTP/1.1 403 Forbidden
 ```
 
@@ -146,15 +147,115 @@ kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-do
 
 ### Register authorization provider
 
-TODO
+Edit the mesh configmap to register authorization provider with the following command: 
+
+```console  
+kubectl edit configmap istio -n istio-system 
+```
+
+In the editor, add the extension provider definitions to the mesh configmap.
+
+```yaml
+  data:
+    mesh: |-   
+    extensionProviders:
+    - name: "kyverno-ext-authz-grpc"
+      envoyExtAuthzGrpc:
+        service: "ext-authz.demo.svc.cluster.local"
+        port: "9000"
+    - name: "kyverno-ext-authz-http"
+      envoyExtAuthzHttp:
+        service: "ext-authz.demo.svc.cluster.local"
+        port: "8000"
+        includeRequestHeadersInCheck: ["x-ext-authz"]
+```
 
 ### Authorization service
 
-TODO
+The following command will deploy the sample external authorizer which allows requests with the header `x-ext-authz: allow`:
+
+```console
+kubectl apply -n demo -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/extauthz/ext-authz.yaml
+
+```
+Verify the sample external authorizer is up and running:
+
+```console
+kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz
+
+2024/03/12 11:46:42 Starting gRPC server at [::]:9000
+2024/03/12 11:46:42 Starting HTTP server at [::]:8000
+
+```
+
 
 ### Calling the sample application again
 
-TODO
+Calling the sample application again at the `/foo` path with with header `x-ext-authz: allow` will succeed. 
+
+```console
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x-ext-authz: allow" --output-document - echo.demo.svc.cluster.local:8080/foo
+
+{
+  "path": "/foo",
+  "headers": {
+    "host": "echo.demo.svc.cluster.local:8080",
+    "user-agent": "Wget",
+    "x-ext-authz": "allow",
+    "x-forwarded-proto": "http",
+    "x-request-id": "2ef1a0ce-6948-413e-a9a9-91c5b9242b5c",
+    "x-ext-authz-check-result": "allowed",
+    "x-ext-authz-check-received": "source:{address:{socket_address:{address:\"10.244.1.7\" port_value:52396}}} destination:{address:{socket_address:{address:\"10.244.1.3\" port_value:8080}}} request:{time:{seconds:1710245883 nanos:556386000} http:{id:\"15150282829336904450\" method:\"GET\" headers:{key:\":authority\" value:\"echo.demo.svc.cluster.local:8080\"} headers:{key:\":method\" value:\"GET\"} headers:{key:\":path\" value:\"/foo\"} headers:{key:\":scheme\" value:\"http\"} headers:{key:\"user-agent\" value:\"Wget\"} headers:{key:\"x-ext-authz\" value:\"allow\"} headers:{key:\"x-forwarded-proto\" value:\"http\"} headers:{key:\"x-request-id\" value:\"2ef1a0ce-6948-413e-a9a9-91c5b9242b5c\"} path:\"/foo\" host:\"echo.demo.svc.cluster.local:8080\" scheme:\"http\" protocol:\"HTTP/1.1\"}} metadata_context:{}",
+    "x-ext-authz-additional-header-override": "grpc-additional-header-override-value",
+    "x-b3-traceid": "ddc174607e9d88bf1830b48578b53e79",
+    "x-b3-spanid": "1830b48578b53e79",
+    "x-b3-sampled": "0"
+  },
+  "method": "GET",
+  "body": "",
+  "fresh": false,
+  "hostname": "echo.demo.svc.cluster.local",
+  "ip": "::ffff:127.0.0.6",
+  "ips": [],
+  "protocol": "http",
+  "query": {},
+  "subdomains": [
+    "svc",
+    "demo",
+    "echo"
+  ],
+  "xhr": false,
+  "os": {
+    "hostname": "echo-6847f9f85-fg9pd"
+  },
+  "connection": {}
+}pod "test" deleted
+```
+
+Calling the sample application again at the `/foo` path with with header `x-ext-authz: deny` will be de. 
+
+```console
+
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x-ext-authz: deny" --output-document - ec
+ho.demo.svc.cluster.local:8080/foo
+
+wget: server returned error: HTTP/1.1 403 Forbidden
+pod "test" deleted
+pod default/test terminated (Error)
+
+```
+Check the log of the sample ext_authz server to confirm it was called twice. The first one was allowed and the second one was denied:
+
+```console
+kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
+
+
+2024/03/12 11:55:26 Starting HTTP server at [::]:8000
+2024/03/12 11:55:26 Starting gRPC server at [::]:9000
+2024/03/12 12:18:03 [gRPCv3][allowed]: echo.demo.svc.cluster.local:8080/foo, attributes: source:{address:{socket_address:{address:"10.244.1.7" port_value:52396}}} destination:{address:{socket_address:{address:"10.244.1.3" port_value:8080}}} request:{time:{seconds:1710245883 nanos:556386000} http:{id:"15150282829336904450" method:"GET" headers:{key:":authority" value:"echo.demo.svc.cluster.local:8080"} headers:{key:":method" value:"GET"} headers:{key:":path" value:"/foo"} headers:{key:":scheme" value:"http"} headers:{key:"user-agent" value:"Wget"} headers:{key:"x-ext-authz" value:"allow"} headers:{key:"x-forwarded-proto" value:"http"} headers:{key:"x-request-id" value:"2ef1a0ce-6948-413e-a9a9-91c5b9242b5c"} path:"/foo" host:"echo.demo.svc.cluster.local:8080" scheme:"http" protocol:"HTTP/1.1"}} metadata_context:{}
+2024/03/12 12:18:37 [gRPCv3][denied]: echo.demo.svc.cluster.local:8080/foo, attributes: source:{address:{socket_address:{address:"10.244.1.8" port_value:45762}}} destination:{address:{socket_address:{address:"10.244.1.3" port_value:8080}}} request:{time:{seconds:1710245917 nanos:57648000} http:{id:"2185755048778078711" method:"GET" headers:{key:":authority" value:"echo.demo.svc.cluster.local:8080"} headers:{key:":method" value:"GET"} headers:{key:":path" value:"/foo"} headers:{key:":scheme" value:"http"} headers:{key:"user-agent" value:"Wget"} headers:{key:"x-ext-authz" value:"deny"} headers:{key:"x-forwarded-proto" value:"http"} headers:{key:"x-request-id" value:"007781a3-519e-400f-8562-cabf75e989c1"} path:"/foo" host:"echo.demo.svc.cluster.local:8080" scheme:"http" protocol:"HTTP/1.1"}} metadata_context:{}
+
+```
 
 ## Architecture
 

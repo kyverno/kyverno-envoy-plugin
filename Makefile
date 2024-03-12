@@ -115,6 +115,16 @@ build-ko: $(KO)
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) \
 		$(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
 
+########
+# TEST #
+########
+
+.PHONY: tests
+tests: ## Run tests
+	@echo Running tests... >&2
+	@go test ./... -race -coverprofile=coverage.out -covermode=atomic
+	@go tool cover -html=coverage.out
+
 ##########
 # MKDOCS #
 ##########

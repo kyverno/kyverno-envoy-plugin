@@ -146,7 +146,23 @@ kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-do
 
 ### Register authorization provider
 
-TODO
+Edit the mesh configmap to register authorization provider with the following command: 
+
+```console  
+kubectl edit configmap istio -n istio-system 
+```
+
+In the editor, add the extension provider definitions to the mesh configmap.
+
+```yaml
+  data:
+    mesh: |-   
+      extensionProviders:
+      - name: "kyverno-ext-authz-http"
+        envoyExtAuthzHttp:
+          service: "ext-authz.demo.svc.cluster.local"
+          port: "8000"
+```
 
 ### Authorization service
 

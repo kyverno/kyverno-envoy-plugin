@@ -24,7 +24,9 @@ KIND_IMAGE                         ?= kindest/node:v1.29.2
 TOOLS_DIR                          := $(PWD)/.tools
 KIND                               := $(TOOLS_DIR)/kind
 KIND_VERSION                       := v0.22.0
-TOOLS                              := $(KIND)
+KO                                 ?= $(TOOLS_DIR)/ko
+KO_VERSION                         ?= v0.15.1
+TOOLS                              := $(KIND) $(KO)
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -36,6 +38,10 @@ COMMA                              := ,
 $(KIND):
 	@echo Install kind... >&2
 	@GOBIN=$(TOOLS_DIR) go install sigs.k8s.io/kind@$(KIND_VERSION)
+
+$(KO):
+	@echo Install ko... >&2
+	@GOBIN=$(TOOLS_DIR) go install github.com/google/ko@$(KO_VERSION)
 
 .PHONY: install-tools
 install-tools: ## Install tools

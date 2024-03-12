@@ -16,6 +16,8 @@ else
 LD_FLAGS                           := "-s -w"
 endif
 KIND_IMAGE                         ?= kindest/node:v1.29.2
+KO_REGISTRY                        := ko.local
+KO_TAGS                            := $(GIT_SHA)
 
 #########
 # TOOLS #
@@ -85,6 +87,33 @@ verify-codegen: codegen
 	@echo 'If this test fails, it is because the git diff is non-empty after running "make codegen".' >&2
 	@echo 'To correct this, locally run "make codegen", commit the changes, and re-run tests.' >&2
 	@git diff --quiet --exit-code -- .
+
+#########
+# BUILD #
+#########
+
+.PHONY: fmt
+fmt: ## Run go fmt
+	@echo Go fmt... >&2
+	@go fmt ./...
+
+.PHONY: vet
+vet: ## Run go vet
+	@echo Go vet... >&2
+	@go vet ./...
+
+##############
+# BUILD (KO) #
+##############
+
+.PHONY: build-ko
+build-ko: ## Build Docker image with ko
+build-ko: fmt
+build-ko: vet
+build-ko: $(KO)
+	@echo "Build Docker image with ko..." >&2
+	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) \
+		$(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
 
 ##########
 # MKDOCS #

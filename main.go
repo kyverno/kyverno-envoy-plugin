@@ -12,7 +12,10 @@ import (
 func startHTTPserver() {
 	http.HandleFunc("/", handler)
 
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 	fmt.Println("Starting HTTP server on Port 8080")
 }
 
@@ -28,7 +31,9 @@ func startGRPCServer() {
 	}
 	grpcServer := grpc.NewServer()
 	fmt.Println("Starting GRPC server on Port 9090")
-	grpcServer.Serve(lis)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 
 }
 

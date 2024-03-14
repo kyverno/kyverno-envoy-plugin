@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -73,18 +72,17 @@ func (s *Servers) startGRPCServer(ctx context.Context) {
 }
 
 func main() {
-	httpCtx, httpCancel := context.WithCancel(context.Background())
-	grpcCtx, grpcCancel := context.WithCancel(context.Background())
 
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 	srv := NewServers()
-	go srv.startHTTPServer(httpCtx)
-	go srv.startGRPCServer(grpcCtx)
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
-	<-done
-	httpCancel()
-	grpcCancel()
-	time.Sleep(5 * time.Second)
+	go srv.startHTTPServer(ctx)
+	go srv.startGRPCServer(ctx)
 
+	go func() {
+		<-ctx.Done()
+		cancel()
+	}()
+	select {}
 }

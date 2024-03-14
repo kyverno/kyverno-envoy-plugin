@@ -24,11 +24,13 @@ KO_TAGS                            := $(GIT_SHA)
 #########
 
 TOOLS_DIR                          := $(PWD)/.tools
+HELM                               ?= $(TOOLS_DIR)/helm
+HELM_VERSION                       ?= v3.12.3
 KIND                               := $(TOOLS_DIR)/kind
 KIND_VERSION                       := v0.22.0
 KO                                 ?= $(TOOLS_DIR)/ko
 KO_VERSION                         ?= v0.15.1
-TOOLS                              := $(KIND) $(KO)
+TOOLS                              := $(HELM) $(KIND) $(KO)
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -36,6 +38,10 @@ else
 SED                                := sed
 endif
 COMMA                              := ,
+
+$(HELM):
+	@echo Install helm... >&2
+	@GOBIN=$(TOOLS_DIR) go install helm.sh/helm/v3/cmd/helm@$(HELM_VERSION)
 
 $(KIND):
 	@echo Install kind... >&2
@@ -136,6 +142,34 @@ mkdocs-serve: ## Generate and serve mkdocs website
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
 	@mkdocs serve -f ./website/mkdocs.yaml
+
+########	
+# KIND #
+########
+
+.PHONY: kind-create-cluster
+kind-create-cluster: ## Create kind cluster
+kind-create-cluster: $(KIND)
+	@echo Create kind cluster... >&2
+	@$(KIND) create cluster --image $(KIND_IMAGE) --wait 1m
+
+.PHONY: kind-load-image
+kind-load-image: ## Build image and load it in kind cluster
+kind-load-image: $(KIND)
+kind-load-image: build-ko
+	@echo Load image in kind... >&2
+	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
+
+#########	
+# ISTIO #
+#########
+
+.PHONY: install-istio
+install-istio: ## Install ISTIO
+install-istio: $(HELM)
+	@echo Install istio... >&2
+	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
+	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod
 
 ########
 # HELP #

@@ -6,11 +6,13 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type Servers struct {
@@ -72,17 +74,14 @@ func (s *Servers) startGRPCServer(ctx context.Context) {
 }
 
 func main() {
-
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
+	var group wait.Group
 	srv := NewServers()
-
-	go srv.startHTTPServer(ctx)
-	go srv.startGRPCServer(ctx)
-
-	go func() {
+	func() {
+		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
+		group.StartWithContext(ctx, srv.startHTTPServer)
+		group.StartWithContext(ctx, srv.startGRPCServer)
 		<-ctx.Done()
-		cancel()
 	}()
-	select {}
+	group.Wait()
 }

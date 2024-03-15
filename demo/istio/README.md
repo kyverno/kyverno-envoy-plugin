@@ -158,16 +158,16 @@ In the editor, add the extension provider definitions to the mesh configmap.
 ```yaml
   data:
     mesh: |-   
-    extensionProviders:
-    - name: "kyverno-ext-authz-grpc"
-      envoyExtAuthzGrpc:
-        service: "ext-authz.demo.svc.cluster.local"
-        port: "9000"
-    - name: "kyverno-ext-authz-http"
-      envoyExtAuthzHttp:
-        service: "ext-authz.demo.svc.cluster.local"
-        port: "8000"
-        includeRequestHeadersInCheck: ["x-ext-authz"]
+      extensionProviders:
+      - name: "kyverno-ext-authz-grpc"
+        envoyExtAuthzGrpc:
+          service: "ext-authz.demo.svc.cluster.local"
+          port: "9000"
+      - name: "kyverno-ext-authz-http"
+        envoyExtAuthzHttp:
+          service: "ext-authz.demo.svc.cluster.local"
+          port: "8000"
+          includeRequestHeadersInCheck: ["x-ext-authz"]
 ```
 
 ### Authorization service
@@ -232,7 +232,7 @@ kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x
 }pod "test" deleted
 ```
 
-Calling the sample application again at the `/foo` path with with header `x-ext-authz: deny` will be de. 
+Calling the sample application again at the `/foo` path with with header `x-ext-authz: deny` will be denied. 
 
 ```console
 

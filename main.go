@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -11,7 +12,10 @@ import (
 	"syscall"
 	"time"
 
+	authv2 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -48,7 +52,29 @@ func (s *Servers) startHTTPServer(ctx context.Context) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello World!")
+
+	fmt.Printf("Received request from %s %s\n", r.RemoteAddr, r.URL.Path)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+	fmt.Println("Request payload:", string(body))
+
+}
+
+type authServer struct{}
+
+func (s *authServer) Check(ctx context.Context, req *authv2.CheckRequest) (*authv2.CheckResponse, error) {
+	// Log the incoming request
+	fmt.Println("Received authorization request:", req)
+
+	//  implement your authorization logic here
+	// For now, allow all requests
+	return &authv2.CheckResponse{
+		Status: &status.Status{Code: int32(codes.OK)},
+	}, nil
 }
 
 func (s *Servers) startGRPCServer(ctx context.Context) {

@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	authv2 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -22,10 +22,17 @@ import (
 type Servers struct {
 	httpServer *http.Server
 	grpcServer *grpc.Server
+	grpcV3     *extAuthzServerV3
 }
 
+type (
+	extAuthzServerV3 struct{}
+)
+
 func NewServers() *Servers {
-	return &Servers{}
+	return &Servers{
+		grpcV3: &extAuthzServerV3{},
+	}
 }
 
 func (s *Servers) startHTTPServer(ctx context.Context) {
@@ -64,15 +71,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-type authServer struct{}
+func (s *extAuthzServerV3) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 
-func (s *authServer) Check(ctx context.Context, req *authv2.CheckRequest) (*authv2.CheckResponse, error) {
-	// Log the incoming request
-	fmt.Println("Received authorization request:", req)
+	attrs := req.GetAttributes()
 
-	//  implement your authorization logic here
+	// Print each attribute individually
+	for key, value := range attrs.GetRequest().GetHttp().GetHeaders() {
+		fmt.Printf("Header: %s = %s\n", key, value)
+	}
+
+	// Print the entire struct with field names
+	fmt.Printf("Attributes: %+v\n", attrs)
+
+	// Implement your authorization logic here
 	// For now, allow all requests
-	return &authv2.CheckResponse{
+	return &authv3.CheckResponse{
 		Status: &status.Status{Code: int32(codes.OK)},
 	}, nil
 }
@@ -85,6 +98,7 @@ func (s *Servers) startGRPCServer(ctx context.Context) {
 	}
 	s.grpcServer = grpc.NewServer()
 	fmt.Println("Starting GRPC server on Port 9000")
+	authv3.RegisterAuthorizationServer(s.grpcServer, s.grpcV3)
 
 	go func() {
 		<-ctx.Done()

@@ -27,10 +27,10 @@ func NewServers() *Servers {
 func (s *Servers) startHTTPServer(ctx context.Context) {
 
 	s.httpServer = &http.Server{
-		Addr:    ":8080",
+		Addr:    ":8000",
 		Handler: http.HandlerFunc(handler),
 	}
-	fmt.Println("Starting HTTP server on Port 8080")
+	fmt.Println("Starting HTTP server on Port 8000")
 	go func() {
 		<-ctx.Done()
 
@@ -53,12 +53,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Servers) startGRPCServer(ctx context.Context) {
 
-	lis, err := net.Listen("tcp", ":9090")
+	lis, err := net.Listen("tcp", ":9000")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s.grpcServer = grpc.NewServer()
-	fmt.Println("Starting GRPC server on Port 9090")
+	fmt.Println("Starting GRPC server on Port 9000")
 
 	go func() {
 		<-ctx.Done()

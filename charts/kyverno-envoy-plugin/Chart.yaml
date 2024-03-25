@@ -1,0 +1,25 @@
+apiVersion: v2
+name: kyverno-envoy-plugin
+type: application
+description: Kyverno policies based authorization plugin for Envoy
+version: 0.1.0
+appVersion: v0.1.0
+icon: https://github.com/kyverno/kyverno-envoy-plugin/blob/main/website/docs/static/logo.png
+keywords:
+  - kyverno
+  - nirmata
+  - kyverno authorization
+  - kyverno-enovy
+  - envoy proxy 
+  - authorization plugin
+  - service-mesh authorization
+  - policy-based authorization
+  - runtime authorization
+sources:
+  - https://github.com/kyverno/kyverno-envoy-plugin
+maintainers:
+  - name: Nirmata
+    url: https://kyverno.io/
+    email: cncf-kyverno-maintainers@lists.cncf.io
+kubeVersion: ">=1.16.0-0"  
+

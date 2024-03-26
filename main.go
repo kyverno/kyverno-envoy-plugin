@@ -36,7 +36,6 @@ func NewServers() *Servers {
 }
 
 func (s *Servers) startHTTPServer(ctx context.Context) {
-
 	s.httpServer = &http.Server{
 		Addr:    ":8000",
 		Handler: http.HandlerFunc(handler),
@@ -59,7 +58,6 @@ func (s *Servers) startHTTPServer(ctx context.Context) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-
 	fmt.Printf("Received request from %s %s\n", r.RemoteAddr, r.URL.Path)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -68,18 +66,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	fmt.Println("Request payload:", string(body))
-
 }
 
 func (s *extAuthzServerV3) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
-
 	attrs := req.GetAttributes()
 
 	// Print each attribute individually
 	for key, value := range attrs.GetRequest().GetHttp().GetHeaders() {
 		fmt.Printf("Header: %s = %s\n", key, value)
 	}
-
 	// Print the entire struct with field names
 	fmt.Printf("Attributes: %+v\n", attrs)
 
@@ -91,7 +86,6 @@ func (s *extAuthzServerV3) Check(ctx context.Context, req *authv3.CheckRequest) 
 }
 
 func (s *Servers) startGRPCServer(ctx context.Context) {
-
 	lis, err := net.Listen("tcp", ":9000")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

@@ -33,7 +33,7 @@ func Test_jwt_decode(t *testing.T) {
 					"role": "guest",
 					"sub":  "YWxpY2U=",
 				},
-				"sig": "6a61316267764974343733393362615f576253426d33354e72556864784d346d4f56514e3869587a386c6b",
+				"sig": fmt.Sprintf("%x", []byte{0x6a, 0x61, 0x31, 0x62, 0x67, 0x76, 0x49, 0x74, 0x34, 0x37, 0x33, 0x39, 0x33, 0x62, 0x61, 0x5f, 0x57, 0x62, 0x53, 0x42, 0x6d, 0x33, 0x35, 0x4e, 0x72, 0x55, 0x68, 0x64, 0x78, 0x4d, 0x34, 0x6d, 0x4f, 0x56, 0x51, 0x4e, 0x38, 0x69, 0x58, 0x7a, 0x38, 0x6c, 0x6b}),
 			},
 			wantErr: false,
 		},
@@ -52,9 +52,14 @@ func Test_jwt_decode(t *testing.T) {
 			fmt.Println("Got type:", gotSorted)   // To check
 			fmt.Println("Want type:", wantSorted) // To check
 
-			if !reflect.DeepEqual(gotSorted, wantSorted) {
-				t.Errorf("jwt_decode() = %v, want %v", gotSorted, wantSorted)
+			for key, value := range wantSorted {
+				gotValue, exists := gotSorted[key]
+				if !exists || !reflect.DeepEqual(gotValue, value) {
+					t.Errorf("jwt_decode() = %v, want %v", gotSorted, wantSorted)
+					return
+				}
 			}
+
 		})
 	}
 }

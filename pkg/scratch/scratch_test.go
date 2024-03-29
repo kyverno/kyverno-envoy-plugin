@@ -75,3 +75,38 @@ func TestGetFormJWTToken(t *testing.T) {
 		})
 	}
 }
+
+func TestGetFormJWTTokenPayload(t *testing.T) {
+	type args struct {
+		arguments []any
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]interface{}
+		wantErr bool
+	}{
+		{
+			args: args{[]any{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk", "c2VjcmV0"}},
+			want: map[string]interface{}{
+				"exp":  2.241081539e+09,
+				"nbf":  1.514851139e+09,
+				"role": "guest",
+				"sub":  "YWxpY2U=",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetFormJWTTokenPayload(tt.args.arguments)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetFormJWTTokenPayload() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetFormJWTTokenPayload() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

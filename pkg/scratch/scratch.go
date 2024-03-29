@@ -52,3 +52,23 @@ func GetFormJWTToken(arguments []any) (map[string]interface{}, error) {
 	}
 	return out.(map[string]interface{}), nil
 }
+
+func GetFormJWTTokenPayload(arguments []any) (map[string]interface{}, error) {
+	vm := interpreter.NewInterpreter(nil, nil)
+	parser := parsing.NewParser()
+
+	// Construct JMESPath expression with arguments
+	arg1 := fmt.Sprintf("'%s'", arguments[0])
+	arg2 := fmt.Sprintf("'%s'", arguments[1])
+	statement := fmt.Sprintf("jwt_decode(%s, %s).payload", arg1, arg2)
+
+	compiled, err := parser.Parse(statement)
+	if err != nil {
+		return nil, fmt.Errorf("error on compiling , %w", err)
+	}
+	out, err := vm.Execute(compiled, arguments, interpreter.WithFunctionCaller(Caller))
+	if err != nil {
+		return nil, fmt.Errorf("error on execute , %w", err)
+	}
+	return out.(map[string]interface{}), nil
+}

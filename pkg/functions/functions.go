@@ -48,9 +48,20 @@ func jwt_decode(arguments []any) (any, error) {
 		return nil, fmt.Errorf("invalid JWT token: %w", err)
 	}
 
+	// Convert header and payload to regular maps
+	headerMap := make(map[string]interface{})
+	for k, v := range jwt.MapClaims(token.Header) {
+		headerMap[k] = v
+	}
+
+	payloadMap := make(map[string]interface{})
+	for k, v := range jwt.MapClaims(token.Claims.(jwt.MapClaims)) {
+		payloadMap[k] = v
+	}
+
 	result := map[string]any{
-		"header":  jwt.MapClaims(token.Header),
-		"payload": jwt.MapClaims(token.Claims.(jwt.MapClaims)),
+		"header":  headerMap,
+		"payload": payloadMap,
 		"sig":     fmt.Sprintf("%x", token.Signature),
 	}
 	return result, nil

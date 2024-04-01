@@ -45,6 +45,7 @@ func TestGetFormJWTToken(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "positive case - passing correct arguement",
 			args: args{[]any{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk", "c2VjcmV0"}},
 			want: map[string]interface{}{
 				"header": map[string]interface{}{
@@ -60,6 +61,14 @@ func TestGetFormJWTToken(t *testing.T) {
 				"sig": "6a61316267764974343733393362615f576253426d33354e72556864784d346d4f56514e3869587a386c6b",
 			},
 			wantErr: false,
+		},
+		// Negative test case: passing incorrect arguments
+		{
+			name: "negative case - incorrect arguments",
+			args: args{[]any{"invalid_jwt_token", "c2VjcmV0"}},
+			want: nil,
+			// Expecting an error because of the invalid JWT token
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -87,6 +96,7 @@ func TestGetFormJWTTokenPayload(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Positive case",
 			args: args{[]any{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk", "c2VjcmV0"}},
 			want: map[string]interface{}{
 				"exp":  2.241081539e+09,
@@ -95,6 +105,14 @@ func TestGetFormJWTTokenPayload(t *testing.T) {
 				"sub":  "YWxpY2U=",
 			},
 			wantErr: false,
+		},
+		// Negative test case: passing incorrect arguments
+		{
+			name: "negative case - incorrect arguments",
+			args: args{[]any{"invalid_jwt_token", "c2VjcmV0"}},
+			want: nil,
+			// Expecting an error because of the invalid JWT token
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

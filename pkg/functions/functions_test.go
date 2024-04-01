@@ -3,7 +3,7 @@ package functions
 import (
 	"fmt"
 	"reflect"
-	"sort"
+
 	"testing"
 )
 
@@ -21,6 +21,7 @@ func Test_jwt_decode(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Positive case , function returns what we expected",
 			args: args{[]any{token, secret}},
 			want: map[string]interface{}{
 				"header": map[string]interface{}{
@@ -37,6 +38,28 @@ func Test_jwt_decode(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		// Negative test case: passing incorrect arguments (invalid token)
+		{
+			name: "negative case - invalid token",
+			args: args{[]any{"invalid_jwt_token", secret}},
+			want: map[string]interface{}{
+				"header":  nil,
+				"payload": nil,
+				"sig":     nil,
+			},
+			wantErr: true,
+		},
+		// Negative test case: passing incorrect arguments (invalid secret)
+		{
+			name: "negative case - invalid secret",
+			args: args{[]any{token, "invalid_secret"}},
+			want: map[string]interface{}{
+				"header":  nil,
+				"payload": nil,
+				"sig":     nil,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -45,35 +68,15 @@ func Test_jwt_decode(t *testing.T) {
 				t.Errorf("jwt_decode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			gotMap := got.(map[string]any)
-			wantSorted := sortMap(tt.want)
-			gotSorted := sortMap(gotMap)
 
-			fmt.Println("Got type:", gotSorted)   // To check
-			fmt.Println("Want type:", wantSorted) // To check
+			if !tt.wantErr {
+				gotValue := reflect.ValueOf(got)
+				wantValue := reflect.ValueOf(tt.want)
 
-			for key, value := range wantSorted {
-				gotValue, exists := gotSorted[key]
-				if !exists || !reflect.DeepEqual(gotValue, value) {
-					t.Errorf("jwt_decode() = %v, want %v", gotSorted, wantSorted)
-					return
+				if !reflect.DeepEqual(gotValue.Interface(), wantValue.Interface()) {
+					t.Errorf("jwt_decode() = %v, want %v", gotValue.Interface(), wantValue.Interface())
 				}
 			}
-
 		})
 	}
-}
-
-func sortMap(m map[string]interface{}) map[string]interface{} {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	result := make(map[string]interface{}, len(m))
-	for _, k := range keys {
-		result[k] = m[k]
-	}
-	return result
 }

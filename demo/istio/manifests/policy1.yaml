@@ -1,0 +1,16 @@
+apiVersion: json.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: test-policy
+spec:
+  rules:
+    - name: deny-external-calls
+      assert:
+        all:
+        - message: "The GET method is restricted to the /foo path."
+          check:
+            request:
+                http:
+                    method: 'GET'
+                    path: '/foo'  
+                        

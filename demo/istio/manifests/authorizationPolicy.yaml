@@ -1,0 +1,17 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ext-authz
+  namespace: demo
+spec:
+  action: CUSTOM
+  provider:
+    # The provider name must match the extension provider defined in the mesh config.
+    name: kyverno-ext-authz-grpc
+  rules:
+  # The rules specify when to trigger the external authorizer.
+  - to:
+    - operation:
+        paths: ["/foo"]
+    - operation:    
+        paths: ["/bar"]

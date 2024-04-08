@@ -32,9 +32,19 @@ spec:
         app: ext-authz
     spec:
       containers:
-      - image: ko.local/github.com/kyverno/kyverno-envoy-plugin:7bd39c9d958eb408a86cee2d97241895522b317f
+      - image: sanskardevops/plugin:0.0.12
         imagePullPolicy: IfNotPresent
         name: ext-authz
         ports:
         - containerPort: 8000
         - containerPort: 9000
+        args:
+        - "serve"
+        - "--policy=/policies/policy1.yaml"
+        volumeMounts:
+        - name: policy-files
+          mountPath: /policies
+      volumes:
+      - name: policy-files
+        configMap:
+          name: policy-files

@@ -71,80 +71,6 @@ kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-do
 }
 ```
 
-### Authorization policy
-
-Now we can deploy an istio `AuthorizationPolicy`:
-
-```console
-# deploy authorisation policy
-kubectl apply -f - <<EOF
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ext-authz
-  namespace: demo
-spec:
-  action: CUSTOM
-  provider:
-    name: kyverno-ext-authz-http
-  rules:
-  - to:
-    - operation:
-        paths: ["/foo"]
-EOF
-```
-
-This policy configures an external service for authorization. Note that the service is not specified directly in the policy but using a `provider.name` field.
-
-The provider will be registered later in the istio config map.
-
-### Calling the sample application again
-
-Calling the sample application again at the `/foo` path will return `403 Forbidden`.
-
-```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
-
-wget: server returned error: HTTP/1.1 403 Forbidden
-```
-
-Note that calling another path (like `/bar`) succeeds as it's not part of the policy.
-
-```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/bar
-
-{
-  "path": "/bar",
-  "headers": {
-    "host": "echo.demo.svc.cluster.local:8080",
-    "user-agent": "Wget",
-    "x-forwarded-proto": "http",
-    "x-request-id": "ca22cf4c-fd28-4dff-94a1-bc0611d710a4",
-    "x-b3-traceid": "202ef8abae854851c12c033ff52252e4",
-    "x-b3-spanid": "c12c033ff52252e4",
-    "x-b3-sampled": "0"
-  },
-  "method": "GET",
-  "body": "",
-  "fresh": false,
-  "hostname": "echo.demo.svc.cluster.local",
-  "ip": "::ffff:127.0.0.6",
-  "ips": [],
-  "protocol": "http",
-  "query": {},
-  "subdomains": [
-    "svc",
-    "demo",
-    "echo"
-  ],
-  "xhr": false,
-  "os": {
-    "hostname": "echo-6847f9f85-wbgbx"
-  },
-  "connection": {}
-}
-```
-
 ### Register authorization provider
 
 Edit the mesh configmap to register authorization provider with the following command: 
@@ -167,48 +93,134 @@ In the editor, add the extension provider definitions to the mesh configmap.
         envoyExtAuthzHttp:
           service: "ext-authz.demo.svc.cluster.local"
           port: "8000"
-          includeRequestHeadersInCheck: ["x-ext-authz"]
 ```
+
+### Authorization policy
+
+Now we can deploy an istio `AuthorizationPolicy`:
+
+```
+kubectl apply -f ./manifests/authorizationPolicy.yaml
+```
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ext-authz
+  namespace: demo
+spec:
+  action: CUSTOM
+  provider:
+    # The provider name must match the extension provider defined in the mesh config.
+    name: kyverno-ext-authz-grpc
+  rules:
+  # The rules specify when to trigger the external authorizer.
+  - to:
+    - operation:
+        paths: ["/foo"]
+    - operation:    
+        paths: ["/bar"]
+```
+
+This policy configures an external service for authorization. Note that the service is not specified directly in the policy but using a `provider.name` field. 
+The `rules` specify that requests to paths `/foo` and `/bar` .
 
 ### Authorization service
 
-The following command will deploy the sample external authorizer which allows requests with the header `x-ext-authz: allow`:
+Here is the deployment manifest of the ext-authz server , it require policy through configMap 
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ext-authz
+  namespace: demo 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ext-authz 
+  template:
+    metadata:
+      labels:
+        app: ext-authz
+    spec:
+      containers:
+      - image: sanskardevops/plugin:0.0.12
+        imagePullPolicy: IfNotPresent
+        name: ext-authz
+        ports:
+        - containerPort: 8000
+        - containerPort: 9000
+        args:
+        - "serve"
+        - "--policy=/policies/policy1.yaml"
+        volumeMounts:
+        - name: policy-files
+          mountPath: /policies
+      volumes:
+      - name: policy-files
+        configMap:
+          name: policy-files
+```
+
+Apply the configMap which the following command:
 
 ```console
-kubectl apply -n demo -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/extauthz/ext-authz.yaml
+kubectl apply -f ./manifests/configmap.yaml
+```
+The policy allows `GET` method for path `/foo` only .
+Here is the ValidatingPolicy which is passed through configMap
 
+```yaml
+apiVersion: json.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: test-policy
+spec:
+  rules:
+    - name: deny-external-calls
+      assert:
+        all:
+        - message: "The GET method is restricted to the /foo path."
+          check:
+            request:
+                http:
+                    method: 'GET'
+                    path: '/foo'                          
+```
+
+The following command will deploy the kyverno external authorizer server:
+
+```console
+kubectl apply -f ./manifests/ext-authz.yaml
 ```
 Verify the sample external authorizer is up and running:
 
 ```console
-kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz
-
-2024/03/12 11:46:42 Starting gRPC server at [::]:9000
-2024/03/12 11:46:42 Starting HTTP server at [::]:8000
+kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
+Starting HTTP server on Port 8000
+Starting GRPC server on Port 9000
 
 ```
 
-
 ### Calling the sample application again
 
-Calling the sample application again at the `/foo` path with with header `x-ext-authz: allow` will succeed. 
+Calling the sample application again at the `/foo` path will succeed. 
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x-ext-authz: allow" --output-document - echo.demo.svc.cluster.local:8080/foo
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
 
 {
   "path": "/foo",
   "headers": {
     "host": "echo.demo.svc.cluster.local:8080",
     "user-agent": "Wget",
-    "x-ext-authz": "allow",
     "x-forwarded-proto": "http",
-    "x-request-id": "2ef1a0ce-6948-413e-a9a9-91c5b9242b5c",
-    "x-ext-authz-check-result": "allowed",
-    "x-ext-authz-check-received": "source:{address:{socket_address:{address:\"10.244.1.7\" port_value:52396}}} destination:{address:{socket_address:{address:\"10.244.1.3\" port_value:8080}}} request:{time:{seconds:1710245883 nanos:556386000} http:{id:\"15150282829336904450\" method:\"GET\" headers:{key:\":authority\" value:\"echo.demo.svc.cluster.local:8080\"} headers:{key:\":method\" value:\"GET\"} headers:{key:\":path\" value:\"/foo\"} headers:{key:\":scheme\" value:\"http\"} headers:{key:\"user-agent\" value:\"Wget\"} headers:{key:\"x-ext-authz\" value:\"allow\"} headers:{key:\"x-forwarded-proto\" value:\"http\"} headers:{key:\"x-request-id\" value:\"2ef1a0ce-6948-413e-a9a9-91c5b9242b5c\"} path:\"/foo\" host:\"echo.demo.svc.cluster.local:8080\" scheme:\"http\" protocol:\"HTTP/1.1\"}} metadata_context:{}",
-    "x-ext-authz-additional-header-override": "grpc-additional-header-override-value",
-    "x-b3-traceid": "ddc174607e9d88bf1830b48578b53e79",
-    "x-b3-spanid": "1830b48578b53e79",
+    "x-request-id": "978ffdf4-28a3-4c97-83a9-059b110d625c",
+    "x-b3-traceid": "db0f88897f788c540f752b8fc027b2b9",
+    "x-b3-spanid": "0f752b8fc027b2b9",
     "x-b3-sampled": "0"
   },
   "method": "GET",
@@ -226,47 +238,44 @@ kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x
   ],
   "xhr": false,
   "os": {
-    "hostname": "echo-6847f9f85-fg9pd"
+    "hostname": "echo-6847f9f85-hdjzz"
   },
   "connection": {}
 }pod "test" deleted
 ```
-
-Calling the sample application again at the `/foo` path with with header `x-ext-authz: deny` will be denied. 
+Check the log of the sample ext_authz server to confirm it was called .
 
 ```console
+sanskar@sanskar-HP-Laptop-15s-du1xxx:~$ kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
+Starting HTTP server on Port 8000
+Starting GRPC server on Port 9000
+Request is initialized in kyvernojson engine .
+Request passed the policies.
+```
 
+Calling the sample application again at the `/bar` path  will be denied. 
+
+```console
 kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x-ext-authz: deny" --output-document - ec
-ho.demo.svc.cluster.local:8080/foo
+ho.demo.svc.cluster.local:8080/bar
 
 wget: server returned error: HTTP/1.1 403 Forbidden
 pod "test" deleted
 pod default/test terminated (Error)
-
 ```
+
 Check the log of the sample ext_authz server to confirm it was called twice. The first one was allowed and the second one was denied:
 
 ```console
 kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
 
-
-2024/03/12 11:55:26 Starting HTTP server at [::]:8000
-2024/03/12 11:55:26 Starting gRPC server at [::]:9000
-2024/03/12 12:18:03 [gRPCv3][allowed]: echo.demo.svc.cluster.local:8080/foo, attributes: source:{address:{socket_address:{address:"10.244.1.7" port_value:52396}}} destination:{address:{socket_address:{address:"10.244.1.3" port_value:8080}}} request:{time:{seconds:1710245883 nanos:556386000} http:{id:"15150282829336904450" method:"GET" headers:{key:":authority" value:"echo.demo.svc.cluster.local:8080"} headers:{key:":method" value:"GET"} headers:{key:":path" value:"/foo"} headers:{key:":scheme" value:"http"} headers:{key:"user-agent" value:"Wget"} headers:{key:"x-ext-authz" value:"allow"} headers:{key:"x-forwarded-proto" value:"http"} headers:{key:"x-request-id" value:"2ef1a0ce-6948-413e-a9a9-91c5b9242b5c"} path:"/foo" host:"echo.demo.svc.cluster.local:8080" scheme:"http" protocol:"HTTP/1.1"}} metadata_context:{}
-2024/03/12 12:18:37 [gRPCv3][denied]: echo.demo.svc.cluster.local:8080/foo, attributes: source:{address:{socket_address:{address:"10.244.1.8" port_value:45762}}} destination:{address:{socket_address:{address:"10.244.1.3" port_value:8080}}} request:{time:{seconds:1710245917 nanos:57648000} http:{id:"2185755048778078711" method:"GET" headers:{key:":authority" value:"echo.demo.svc.cluster.local:8080"} headers:{key:":method" value:"GET"} headers:{key:":path" value:"/foo"} headers:{key:":scheme" value:"http"} headers:{key:"user-agent" value:"Wget"} headers:{key:"x-ext-authz" value:"deny"} headers:{key:"x-forwarded-proto" value:"http"} headers:{key:"x-request-id" value:"007781a3-519e-400f-8562-cabf75e989c1"} path:"/foo" host:"echo.demo.svc.cluster.local:8080" scheme:"http" protocol:"HTTP/1.1"}} metadata_context:{}
+sanskar@sanskar-HP-Laptop-15s-du1xxx:~$ kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
+Starting HTTP server on Port 8000
+Starting GRPC server on Port 9000
+Request is initialized in kyvernojson engine .
+Request passed the policies.
+Request is initialized in kyvernojson engine .
+Request denied with reason: -> The GET method is restricted to the /foo path.
+ -> all[0].check.request.http.path: Invalid value: "/bar": Expected value: "/foo"
 
 ```
-
-## Architecture
-
-The below architecture illustrates a scenario where no service mesh or Envoy-like components have been pre-installed or already installed.
-
-![Architecture](architecture1.png)
-
-The below architecture illustrates a scenario where a service mesh or Envoy-like components have been pre-installed or already installed.
-![Architecture](architecture2.png)
-
-## Requirements
-
-- Istio Authorizationpolicy manifest  to add "extension provider " concept in MeshConfig to specify Where/how to talk to envoy ext-authz service 
--

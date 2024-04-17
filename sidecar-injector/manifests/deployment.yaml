@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubernetes-sidecar-injector
+  namespace: sidecar-injector
+  labels:
+    app.kubernetes.io/name: sidecar-injector
+    app.kubernetes.io/instance: sidecar-injector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sidecar-injector
+      app.kubernetes.io/instance: sidecar-injector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sidecar-injector
+        app.kubernetes.io/instance: sidecar-injector
+    spec:
+      serviceAccountName: kubernetes-sidecar-injector
+      containers:
+        - name: sidecar-injector
+          image: "sanskardevops/sidecar-injector:0.0.4"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --port=8443
+            - --certFile=/opt/kubernetes-sidecar-injector/certs/tls.crt
+            - --keyFile=/opt/kubernetes-sidecar-injector/certs/tls.key
+            - --injectPrefix=kyverno-envoy-sidecar
+            - --injectName=inject
+            - --sidecarDataKey=sidecars.yaml
+          volumeMounts:
+            - name: kubernetes-sidecar-injector-certs
+              mountPath: /opt/kubernetes-sidecar-injector/certs
+              readOnly: true
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+            timeoutSeconds: 4
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+            timeoutSeconds: 4
+      volumes:
+        - name: kubernetes-sidecar-injector-certs
+          secret:
+            secretName: kubernetes-sidecar-injector-certs
+      

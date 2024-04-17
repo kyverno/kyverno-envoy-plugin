@@ -6,7 +6,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/kyverno/kyverno-envoy-plugin/sidecar-injector/pkg/admission"
-	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,38 +27,9 @@ type Sidecar struct {
 // SidecarInjectorPatcher Sidecar Injector patcher
 type SidecarInjectorPatcher struct {
 	K8sClient                kubernetes.Interface
-	InjectPrefix             string
-	InjectName               string
 	SidecarDataKey           string
 	AllowAnnotationOverrides bool
 	AllowLabelOverrides      bool
-}
-
-func (patcher *SidecarInjectorPatcher) sideCarInjectionAnnotation() string {
-	return patcher.InjectPrefix + "/" + patcher.InjectName
-}
-
-func (patcher *SidecarInjectorPatcher) configmapSidecarNames(namespace string, pod corev1.Pod) []string {
-	podName := pod.GetName()
-	if podName == "" {
-		podName = pod.GetGenerateName()
-	}
-	annotations := map[string]string{}
-	if pod.GetAnnotations() != nil {
-		annotations = pod.GetAnnotations()
-	}
-	if sidecars, ok := annotations[patcher.sideCarInjectionAnnotation()]; ok {
-		parts := lo.Map[string, string](strings.Split(sidecars, ","), func(part string, _ int) string {
-			return strings.TrimSpace(part)
-		})
-
-		if len(parts) > 0 {
-			log.Infof("sideCar injection for %v/%v: sidecars: %v", namespace, podName, sidecars)
-			return parts
-		}
-	}
-	log.Infof("Skipping mutation for [%v]. No action required", pod.GetName())
-	return nil
 }
 
 func createArrayPatches[T any](newCollection []T, existingCollection []T, path string) []admission.PatchOperation {
@@ -118,37 +88,37 @@ func escapeJSONPath(k string) string {
 }
 
 // PatchPodCreate Handle Pod Create Patch
-func (patcher *SidecarInjectorPatcher) PatchPodCreate(ctx context.Context, namespace string, pod corev1.Pod) ([]admission.PatchOperation, error) {
+func (patcher *SidecarInjectorPatcher) PatchPodCreate(ctx context.Context, pod corev1.Pod) ([]admission.PatchOperation, error) {
+	namespace := "sidecar-injector"
 	podName := pod.GetName()
 	if podName == "" {
 		podName = pod.GetGenerateName()
 	}
 	var patches []admission.PatchOperation
-	if configmapSidecarNames := patcher.configmapSidecarNames(namespace, pod); configmapSidecarNames != nil {
-		for _, configmapSidecarName := range configmapSidecarNames {
-			configmapSidecar, err := patcher.K8sClient.CoreV1().ConfigMaps(namespace).Get(ctx, configmapSidecarName, metav1.GetOptions{})
-			if k8serrors.IsNotFound(err) {
-				log.Warnf("sidecar configmap %s/%s was not found", namespace, configmapSidecarName)
-			} else if err != nil {
-				log.Errorf("error fetching sidecar configmap %s/%s - %v", namespace, configmapSidecarName, err)
-			} else if sidecarsStr, ok := configmapSidecar.Data[patcher.SidecarDataKey]; ok {
-				var sidecars []Sidecar
-				if err := yaml.Unmarshal([]byte(sidecarsStr), &sidecars); err != nil {
-					log.Errorf("error unmarshalling %s from configmap %s/%s", patcher.SidecarDataKey, pod.GetNamespace(), configmapSidecarName)
-				}
-				if sidecars != nil {
-					for _, sidecar := range sidecars {
-						patches = append(patches, createArrayPatches(sidecar.InitContainers, pod.Spec.InitContainers, "/spec/initContainers")...)
-						patches = append(patches, createArrayPatches(sidecar.Containers, pod.Spec.Containers, "/spec/containers")...)
-						patches = append(patches, createArrayPatches(sidecar.Volumes, pod.Spec.Volumes, "/spec/volumes")...)
-						patches = append(patches, createArrayPatches(sidecar.ImagePullSecrets, pod.Spec.ImagePullSecrets, "/spec/imagePullSecrets")...)
-						patches = append(patches, createObjectPatches(sidecar.Annotations, pod.Annotations, "/metadata/annotations", patcher.AllowAnnotationOverrides)...)
-						patches = append(patches, createObjectPatches(sidecar.Labels, pod.Labels, "/metadata/labels", patcher.AllowLabelOverrides)...)
-					}
-					log.Debugf("sidecar patches being applied for %v/%v: patches: %v", namespace, podName, patches)
-				}
+	configmapSidecarName := "kyverno-envoy-sidecar"
+	log.Infof("sideCar injection for %v/%v: sidecars: %v", namespace, podName, configmapSidecarName)
+	configmapSidecar, err := patcher.K8sClient.CoreV1().ConfigMaps(namespace).Get(ctx, configmapSidecarName, metav1.GetOptions{})
+	if k8serrors.IsNotFound(err) {
+		log.Warnf("sidecar configmap %s/%s was not found", namespace, configmapSidecarName)
+	} else if err != nil {
+		log.Errorf("error fetching sidecar configmap %s/%s - %v", namespace, configmapSidecarName, err)
+	} else if sidecarsStr, ok := configmapSidecar.Data[patcher.SidecarDataKey]; ok {
+		var sidecars []Sidecar
+		if err := yaml.Unmarshal([]byte(sidecarsStr), &sidecars); err != nil {
+			log.Errorf("error unmarshalling %s from configmap %s/%s", patcher.SidecarDataKey, pod.GetNamespace(), configmapSidecarName)
+		}
+		if sidecars != nil {
+			for _, sidecar := range sidecars {
+				patches = append(patches, createArrayPatches(sidecar.InitContainers, pod.Spec.InitContainers, "/spec/initContainers")...)
+				patches = append(patches, createArrayPatches(sidecar.Containers, pod.Spec.Containers, "/spec/containers")...)
+				patches = append(patches, createArrayPatches(sidecar.Volumes, pod.Spec.Volumes, "/spec/volumes")...)
+				patches = append(patches, createArrayPatches(sidecar.ImagePullSecrets, pod.Spec.ImagePullSecrets, "/spec/imagePullSecrets")...)
+				patches = append(patches, createObjectPatches(sidecar.Annotations, pod.Annotations, "/metadata/annotations", patcher.AllowAnnotationOverrides)...)
+				patches = append(patches, createObjectPatches(sidecar.Labels, pod.Labels, "/metadata/labels", patcher.AllowLabelOverrides)...)
 			}
+			log.Debugf("sidecar patches being applied for %v/%v: patches: %v", namespace, podName, patches)
 		}
 	}
+
 	return patches, nil
 }

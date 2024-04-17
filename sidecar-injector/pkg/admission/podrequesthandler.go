@@ -19,7 +19,7 @@ func (handler *PodAdmissionRequestHandler) handleAdmissionCreate(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return handler.PodHandler.PatchPodCreate(ctx, request.Namespace, pod)
+	return handler.PodHandler.PatchPodCreate(ctx, pod)
 }
 
 func unmarshalPod(rawObject []byte) (corev1.Pod, error) {

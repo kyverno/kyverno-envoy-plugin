@@ -74,12 +74,11 @@ func (handler *Handler) HandleAdmission(writer http.ResponseWriter, request *htt
 
 // Process Handles the AdmissionRequest via the handler
 func (handler *Handler) Process(ctx context.Context, request *admissionv1.AdmissionRequest) ([]PatchOperation, error) {
-	switch request.Operation {
-	case admissionv1.Create:
+
+	if request.Operation == admissionv1.Create {
 		return handler.Handler.handleAdmissionCreate(ctx, request)
-	default:
-		return nil, fmt.Errorf("unhandled request operations type %s", request.Operation)
 	}
+	return nil, fmt.Errorf("unhandled request operation %s", request.Operation)
 }
 
 func validateRequest(req *http.Request) error {

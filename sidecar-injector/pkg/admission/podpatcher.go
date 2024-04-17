@@ -7,5 +7,5 @@ import (
 )
 
 type PodPatcher interface {
-	PatchPodCreate(ctx context.Context, namespace string, pod corev1.Pod) ([]PatchOperation, error)
+	PatchPodCreate(ctx context.Context, pod corev1.Pod) ([]PatchOperation, error)
 }

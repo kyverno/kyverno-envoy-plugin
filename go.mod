@@ -8,7 +8,7 @@ require (
 	github.com/kyverno/kyverno-json v0.0.3-alpha.2
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de
 	google.golang.org/grpc v1.63.0
-	k8s.io/apimachinery v0.29.3
+	k8s.io/apimachinery v0.29.4
 )
 
 require (
@@ -26,10 +26,10 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kyverno/kyverno v1.5.0-rc1.0.20240202083228-5f0d53fe3482 // indirect
 	github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

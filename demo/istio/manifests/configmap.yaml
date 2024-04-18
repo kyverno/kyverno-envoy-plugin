@@ -4,20 +4,24 @@ metadata:
   name: policy-files
   namespace: demo
 data:
-  policy1.yaml: |
+  policy.yaml: |
     apiVersion: json.kyverno.io/v1alpha1
     kind: ValidatingPolicy
     metadata:
-      name: test-policy
+      name: checkrequest
     spec:
       rules:
-        - name: deny-external-calls
+        - name: deny-guest-request
           assert:
             all:
-            - message: "The GET method is restricted to the /foo path."
+            - message: "GET method calls at path /foo are not allowed to guest"
               check:
                 request:
                     http:
-                        method: 'GET'
-                        path: '/foo'
+                        method: GET
+                        headers:
+                            authorization:
+                                (base64_decode(split(@, ' ')[1])): 
+                                    (split(@, ':')[0]): alice
+                        path: /foo        
                      

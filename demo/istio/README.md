@@ -147,7 +147,7 @@ spec:
         app: ext-authz
     spec:
       containers:
-      - image: sanskardevops/plugin:0.0.12
+      - image: sanskardevops/plugin:0.0.25
         imagePullPolicy: IfNotPresent
         name: ext-authz
         ports:
@@ -170,25 +170,29 @@ Apply the configMap which the following command:
 ```console
 kubectl apply -f ./manifests/configmap.yaml
 ```
-The policy allows `GET` method for path `/foo` only .
+The policy allows `GET` method for path `/foo` only for alice not for bob.
 Here is the ValidatingPolicy which is passed through configMap
 
 ```yaml
 apiVersion: json.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: test-policy
+  name: check-Request
 spec:
   rules:
-    - name: deny-external-calls
+    - name: deny-guest-request
       assert:
         all:
-        - message: "The GET method is restricted to the /foo path."
+        - message: "GET method calls at path /foo are not allowed to guest"
           check:
             request:
                 http:
-                    method: 'GET'
-                    path: '/foo'                          
+                    method: GET
+                    headers:
+                        authorization:
+                            (base64_decode(split(@, ' ')[1])): 
+                                (split(@, ':')[0]): alice
+                    path: /foo                              
 ```
 
 The following command will deploy the kyverno external authorizer server:
@@ -207,10 +211,11 @@ Starting GRPC server on Port 9000
 
 ### Calling the sample application again
 
-Calling the sample application again at the `/foo` path will succeed. 
+Calling the sample application again at the `/foo` path with the base64 encode authorization token of `alice` as a header ,  will succeed . 
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Basic YWxpY2U6cGFzc3dvcmQ=" --output-document - echo.demo.svc.cluster.local:8080/foo
+
 
 {
   "path": "/foo",
@@ -246,18 +251,19 @@ kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-do
 Check the log of the sample ext_authz server to confirm it was called .
 
 ```console
-sanskar@sanskar-HP-Laptop-15s-du1xxx:~$ kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
+kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
 Starting HTTP server on Port 8000
 Starting GRPC server on Port 9000
 Request is initialized in kyvernojson engine .
-Request passed the policies.
+2024/04/18 13:35:19 Request passed the deny-guest-request policy rule.
+
 ```
 
-Calling the sample application again at the `/bar` path  will be denied. 
+Calling the sample application again at the `/bar` path with the base64 encode authorization token of `bob` as a header  will be denied. 
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="x-ext-authz: deny" --output-document - ec
-ho.demo.svc.cluster.local:8080/bar
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Basic Ym9iOnBhc3N3b3Jk" --output-document - echo.demo.svc.cluster.local:8080/bar
+
 
 wget: server returned error: HTTP/1.1 403 Forbidden
 pod "test" deleted
@@ -273,9 +279,11 @@ sanskar@sanskar-HP-Laptop-15s-du1xxx:~$ kubectl logs "$(kubectl get pod -l app=e
 Starting HTTP server on Port 8000
 Starting GRPC server on Port 9000
 Request is initialized in kyvernojson engine .
-Request passed the policies.
+2024/04/18 13:35:19 Request passed the deny-guest-request policy rule.
 Request is initialized in kyvernojson engine .
-Request denied with reason: -> The GET method is restricted to the /foo path.
+2024/04/18 13:36:48 Request violation: -> GET method calls at path /foo are not allowed to guest
+ -> all[0].check.request.http.headers.authorization.(base64_decode(split(@, ' ')[1])).(split(@, ':')[0]): Invalid value: "bob": Expected value: "alice"
  -> all[0].check.request.http.path: Invalid value: "/bar": Expected value: "/foo"
+
 
 ```

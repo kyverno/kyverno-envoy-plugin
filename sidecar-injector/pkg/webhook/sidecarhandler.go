@@ -89,7 +89,7 @@ func escapeJSONPath(k string) string {
 
 // PatchPodCreate Handle Pod Create Patch
 func (patcher *SidecarInjectorPatcher) PatchPodCreate(ctx context.Context, pod corev1.Pod) ([]admission.PatchOperation, error) {
-	namespace := "sidecar-injector"
+	namespace := "kyverno-envoy-sidecar-injector"
 	podName := pod.GetName()
 	if podName == "" {
 		podName = pod.GetGenerateName()

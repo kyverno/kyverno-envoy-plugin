@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kubernetes-sidecar-injector
-  namespace: sidecar-injector
+  name: kyverno-envoy-sidecar
+  namespace: kyverno-envoy-sidecar-injector
   labels:
     app.kubernetes.io/name: sidecar-injector
     app.kubernetes.io/instance: sidecar-injector

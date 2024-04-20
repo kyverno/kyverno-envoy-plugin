@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kubernetes-sidecar-injector
-  namespace: sidecar-injector
+  name: kyverno-envoy-sidecar
+  namespace: kyverno-envoy-sidecar-injector
   labels:
     app.kubernetes.io/name: sidecar-injector
     app.kubernetes.io/instance: sidecar-injector
@@ -18,20 +18,18 @@ spec:
         app.kubernetes.io/name: sidecar-injector
         app.kubernetes.io/instance: sidecar-injector
     spec:
-      serviceAccountName: kubernetes-sidecar-injector
+      serviceAccountName: kyverno-envoy-sidecar
       containers:
-        - name: sidecar-injector
-          image: "sanskardevops/sidecar-injector:0.0.4"
+        - name: kyverno-envoy-sidecar
+          image: "sanskardevops/sidecar-injector:0.0.6"
           imagePullPolicy: IfNotPresent
           args:
             - --port=8443
             - --certFile=/opt/kubernetes-sidecar-injector/certs/tls.crt
             - --keyFile=/opt/kubernetes-sidecar-injector/certs/tls.key
-            - --injectPrefix=kyverno-envoy-sidecar
-            - --injectName=inject
             - --sidecarDataKey=sidecars.yaml
           volumeMounts:
-            - name: kubernetes-sidecar-injector-certs
+            - name: kyverno-envoy-sidecar-certs
               mountPath: /opt/kubernetes-sidecar-injector/certs
               readOnly: true
           ports:
@@ -59,7 +57,7 @@ spec:
             failureThreshold: 5
             timeoutSeconds: 4
       volumes:
-        - name: kubernetes-sidecar-injector-certs
+        - name: kyverno-envoy-sidecar-certs
           secret:
-            secretName: kubernetes-sidecar-injector-certs
+            secretName: kyverno-envoy-sidecar-certs
       

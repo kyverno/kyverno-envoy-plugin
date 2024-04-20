@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kyverno-envoy-sidecar
-  namespace: sidecar-injector
+  namespace: kyverno-envoy-sidecar-injector
 data:
   sidecars.yaml: |
     - name: kyverno-envoy-sidecar

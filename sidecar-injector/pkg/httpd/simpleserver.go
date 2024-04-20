@@ -51,7 +51,6 @@ func (simpleServer *SimpleServer) Start() error {
 	if simpleServer.Local {
 		return server.ListenAndServe()
 	}
-	log.Infof("Starting tls server on port %d", simpleServer.Port)
 	return server.ListenAndServeTLS(simpleServer.CertFile, simpleServer.KeyFile)
 }
 

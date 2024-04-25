@@ -22,14 +22,49 @@ The [bootstrap.sh](bootstrap.sh) script contains everything needed to create a l
 # create a local cluster and install istio
 ./bootstrap.sh
 ```
+### Install kyverno-envoy-sidecar-injector admission controller 
+
+First, we need to install the kyverno-envoy-sidecar-injector admission controller to inject kyverno-envoy-plugin sidecar into the sample-application pods(upstream pod which we need to authorization).
+
+Flow this [README](./../../sidecar-injector/README.md) for installation of kyverno-envoy-sidecar-injector admission controller 
 
 ### Sample application
 
-Manifests for the sample application are available in [sample-application.yaml](manifests/sample-application.yaml).
+Manifests for the sample application are available in [test-application.yaml](manifests/test-application.yaml). The sample app provides information about books in a collection and exposes APIs to get, create and delete Book resources.
+
+But first we need to apply [kyverno policy configmap](manifests/policy-config.yaml) this policy will be passed to kyverno-envoy-sidecar:
+
+```console
+kubectl apply -f ./manifests/namespace.yaml
+```
+
+```console
+kubectl apply -f ./manifests/policy-config.yaml
+```
 
 ```console
 # deploy sample application
-kubectl apply -f ./manifests/sample-application.yaml
+kubectl apply -f ./manifests/test-application.yaml      
+```
+Check that their should be three containers should be running in the pod.
+
+```console
+kubectl -n demo get all 
+```
+```bash
+sanskar@sanskar-HP-Laptop-15s-du1xxx:~$ kubectl -n demo  get all
+NAME                        READY   STATUS    RESTARTS   AGE
+pod/echo-55c77757f4-w6979   3/3     Running   0          3h59m
+
+NAME           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/echo   ClusterIP   10.96.110.173   <none>        8080/TCP   4h5m
+
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/echo   1/1     1            1           3h59m
+
+NAME                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/echo-55c77757f4   1         1         1       3h59m
+
 ```
 
 ### Calling the sample application
@@ -37,40 +72,39 @@ kubectl apply -f ./manifests/sample-application.yaml
 We are going to call the sample application using a pod in the cluster.
 
 ```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - echo.demo.svc.cluster.local:8080/foo
-
-{
-  "path": "/foo",
-  "headers": {
-    "host": "echo.demo.svc.cluster.local:8080",
-    "user-agent": "Wget",
-    "x-forwarded-proto": "http",
-    "x-request-id": "1badcd84-75eb-4911-9835-b3588e3c5eee",
-    "x-b3-traceid": "904f847c3db71758fa4076e48440800a",
-    "x-b3-spanid": "fa4076e48440800a",
-    "x-b3-sampled": "0"
-  },
-  "method": "GET",
-  "body": "",
-  "fresh": false,
-  "hostname": "echo.demo.svc.cluster.local",
-  "ip": "::ffff:127.0.0.6",
-  "ips": [],
-  "protocol": "http",
-  "query": {},
-  "subdomains": [
-    "svc",
-    "demo",
-    "echo"
-  ],
-  "xhr": false,
-  "os": {
-    "hostname": "echo-6847f9f85-wbgbx"
-  },
-  "connection": {}
-}
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --output-document - testapp.demo.svc.cluster.local:8080/book
+```
+output 
+```
+[{"id":"1","bookname":"Harry Potter","author":"J.K. Rowling"},{"id":"2","bookname":"Animal Farm","author":"George Orwell"}]
+pod "test" deleted
 ```
 
+### ServiceEntry
+
+ServiceEntry to registor the kyverno-envoy-plugin sidecar as external authorizer.
+
+```console
+kubectl apply -f ./manifests/service-entry.yaml
+```
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: kyverno-ext-authz-grpc-local
+spec:
+  hosts:
+  - "kyverno-ext-authz-grpc.local"
+  # The service name to be used in the extension provider in the mesh config.
+  endpoints:
+  - address: "127.0.0.1"
+  ports:
+  - name: grpc
+    number: 9000
+    # The port number to be used in the extension provider in the mesh config.
+    protocol: GRPC
+  resolution: STATIC
+```
 ### Register authorization provider
 
 Edit the mesh configmap to register authorization provider with the following command: 
@@ -87,27 +121,24 @@ In the editor, add the extension provider definitions to the mesh configmap.
       extensionProviders:
       - name: "kyverno-ext-authz-grpc"
         envoyExtAuthzGrpc:
-          service: "ext-authz.demo.svc.cluster.local"
+          service: "kyverno-ext-authz-grpc.local"
           port: "9000"
-      - name: "kyverno-ext-authz-http"
-        envoyExtAuthzHttp:
-          service: "ext-authz.demo.svc.cluster.local"
-          port: "8000"
 ```
 
 ### Authorization policy
 
 Now we can deploy an istio `AuthorizationPolicy`:
+AuthorizationPolicy to tell Istio to use kyverno-envoy-plugin as the Authz Server
 
-```
-kubectl apply -f ./manifests/authorizationPolicy.yaml
+```console
+kubectl apply -f ./manifests/authorizationpolicy.yaml
 ```
 
 ```yaml
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: ext-authz
+  name: kyverno-ext-authz-grpc
   namespace: demo
 spec:
   action: CUSTOM
@@ -118,172 +149,133 @@ spec:
   # The rules specify when to trigger the external authorizer.
   - to:
     - operation:
-        paths: ["/foo"]
-    - operation:    
-        paths: ["/bar"]
+        notPaths: ["/healthz"]
+    # Allowed all path except /healthz
 ```
 
-This policy configures an external service for authorization. Note that the service is not specified directly in the policy but using a `provider.name` field. 
-The `rules` specify that requests to paths `/foo` and `/bar` .
+This policy configures an external service for authorization. Note that the service is not specified directly in the policy but using a `provider.name` field.
 
-### Authorization service
+### Verify the authorization 
 
-Here is the deployment manifest of the ext-authz server , it require policy through configMap 
+For convenience, we’ll want to store Alice’s and Bob’s tokens in environment variables. Here bob is assigned the admin role and alice is assigned the guest role.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ext-authz
-  namespace: demo 
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ext-authz 
-  template:
-    metadata:
-      labels:
-        app: ext-authz
-    spec:
-      containers:
-      - image: sanskardevops/plugin:0.0.25
-        imagePullPolicy: IfNotPresent
-        name: ext-authz
-        ports:
-        - containerPort: 8000
-        - containerPort: 9000
-        args:
-        - "serve"
-        - "--policy=/policies/policy1.yaml"
-        volumeMounts:
-        - name: policy-files
-          mountPath: /policies
-      volumes:
-      - name: policy-files
-        configMap:
-          name: policy-files
+```bash 
+export ALICE_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk"
+export BOB_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6ImFkbWluIiwic3ViIjoiWVd4cFkyVT0ifQ.veMeVDYlulTdieeX-jxFZ_tCmqQ_K8rwx2OktUHv5Z0"
 ```
 
-Apply the configMap which the following command:
-
-```console
-kubectl apply -f ./manifests/configmap.yaml
-```
-The policy allows `GET` method for path `/foo` only for alice not for bob.
-Here is the ValidatingPolicy which is passed through configMap
+In this policy , we are using the Kyverno JSON API to define a Validating which we have already applied to the cluster. 
+The policy checks the conditions of the incoming request and denies the request if the user is a guest and the request method is POST at the /book path.
 
 ```yaml
 apiVersion: json.kyverno.io/v1alpha1
-kind: ValidatingPolicy
-metadata:
-  name: check-Request
-spec:
-  rules:
-    - name: deny-guest-request
-      assert:
-        all:
-        - message: "GET method calls at path /foo are not allowed to guest"
-          check:
-            request:
-                http:
-                    method: GET
-                    headers:
-                        authorization:
-                            (base64_decode(split(@, ' ')[1])): 
-                                (split(@, ':')[0]): alice
-                    path: /foo                              
+    kind: ValidatingPolicy
+    metadata:
+      name: checkrequest
+    spec:
+      rules:
+        - name: deny-guest-request-at-post
+          assert:
+            any:
+            - message: "POST method calls at path /book are not allowed to guests users"
+              check:
+                request:
+                    http:
+                        method: POST
+                        headers:
+                            authorization:
+                                (split(@, ' ')[1]):
+                                    (jwt_decode(@ , 'secret').payload.role): admin
+                        path: /book                             
+            - message: "GET method call is allowed to both guest and admin users"
+              check:
+                request:
+                    http:
+                        method: GET
+                        headers:
+                            authorization:
+                                (split(@, ' ')[1]):
+                                    (jwt_decode(@ , 'secret').payload.role): admin
+                        path: /book 
+            - message: "GET method call is allowed to both guest and admin users"
+              check:
+                request:
+                    http:
+                        method: GET
+                        headers:
+                            authorization:
+                                (split(@, ' ')[1]):
+                                    (jwt_decode(@ , 'secret').payload.role): guest
+                        path: /book               
+                                                
 ```
 
-The following command will deploy the kyverno external authorizer server:
+Here is the Comman format of CheckRequest payload, Envoy transmits a [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) in Protobuf format to an external authorization service (which is our kyverno-envoy-plugin) for making access control decisions. This payload is then converted into a JSON format (inside kyverno-envoy-plugin) and evaluated against the defined policy within the Kyverno JSON engine.
 
-```console
-kubectl apply -f ./manifests/ext-authz.yaml
-```
-Verify the sample external authorizer is up and running:
-
-```console
-kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
-Starting HTTP server on Port 8000
-Starting GRPC server on Port 9000
-
-```
-
-### Calling the sample application again
-
-Calling the sample application again at the `/foo` path with the base64 encode authorization token of `alice` as a header ,  will succeed . 
-
-```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Basic YWxpY2U6cGFzc3dvcmQ=" --output-document - echo.demo.svc.cluster.local:8080/foo
-
-
+```json
 {
-  "path": "/foo",
-  "headers": {
-    "host": "echo.demo.svc.cluster.local:8080",
-    "user-agent": "Wget",
-    "x-forwarded-proto": "http",
-    "x-request-id": "978ffdf4-28a3-4c97-83a9-059b110d625c",
-    "x-b3-traceid": "db0f88897f788c540f752b8fc027b2b9",
-    "x-b3-spanid": "0f752b8fc027b2b9",
-    "x-b3-sampled": "0"
+  "source": {
+    "address": {
+      "socketAddress": {
+        "address": "10.244.1.10",
+        "portValue": 59252
+      }
+    }
   },
-  "method": "GET",
-  "body": "",
-  "fresh": false,
-  "hostname": "echo.demo.svc.cluster.local",
-  "ip": "::ffff:127.0.0.6",
-  "ips": [],
-  "protocol": "http",
-  "query": {},
-  "subdomains": [
-    "svc",
-    "demo",
-    "echo"
-  ],
-  "xhr": false,
-  "os": {
-    "hostname": "echo-6847f9f85-hdjzz"
+  "destination": {
+    "address": {
+      "socketAddress": {
+        "address": "10.244.1.4",
+        "portValue": 8080
+      }
+    }
   },
-  "connection": {}
-}pod "test" deleted
+  "request": {
+    "time": "2024-04-09T07:42:29.634453Z",
+    "http": {
+      "id": "14694995155993896575",
+      "method": "GET",
+      "headers": {
+        ":authority": "testapp.demo.svc.cluster.local:8080",
+        ":method": "GET",
+        ":path": "/book",
+        ":scheme": "http",
+        "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk",
+        "user-agent": "Wget",
+        "x-forwarded-proto": "http",
+        "x-request-id": "27cd2724-e0f4-4a69-a1b1-9a94edfa31bb"
+      },
+      "path": "/book",
+      "host": "echo.demo.svc.cluster.local:8080",
+      "scheme": "http",
+      "protocol": "HTTP/1.1"
+    }
+  },
+  "metadataContext": {},
+  "routeMetadataContext": {}
+}
 ```
-Check the log of the sample ext_authz server to confirm it was called .
 
-```console
-kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
-Starting HTTP server on Port 8000
-Starting GRPC server on Port 9000
-Request is initialized in kyvernojson engine .
-2024/04/18 13:35:19 Request passed the deny-guest-request policy rule.
+Check for `Alice` which can get book but cannot create book.
 
+```bash
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Bearer "$ALICE_TOKEN"" --output-document - testapp.demo.svc.cluster.local:8080/book
+```
+```bash
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Bearer "$ALICE_TOKEN"" --post-data='{"bookname":"Harry Potter", "author":"J.K. Rowling"}' --output-document - testapp.demo.svc.cluster.local:8080/book
+```
+Check the `Bob` which can get book also create the book 
+
+```bash
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Bearer "$BOB_TOKEN"" --output-document - testapp.demo.svc.cluster.local:8080/book
 ```
 
-Calling the sample application again at the `/bar` path with the base64 encode authorization token of `bob` as a header  will be denied. 
-
-```console
-kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Basic Ym9iOnBhc3N3b3Jk" --output-document - echo.demo.svc.cluster.local:8080/bar
-
-
-wget: server returned error: HTTP/1.1 403 Forbidden
-pod "test" deleted
-pod default/test terminated (Error)
+```bash
+kubectl run test -it --rm --restart=Never --image=busybox -- wget -q --header="authorization: Bearer "$BOB_TOKEN"" --post-data='{"bookname":"Harry Potter", "author":"J.K. Rowling"}' --output-document - testapp.demo.svc.cluster.local:8080/book
 ```
 
-Check the log of the sample ext_authz server to confirm it was called twice. The first one was allowed and the second one was denied:
-
-```console
-kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
-
-sanskar@sanskar-HP-Laptop-15s-du1xxx:~$ kubectl logs "$(kubectl get pod -l app=ext-authz -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
-Starting HTTP server on Port 8000
-Starting GRPC server on Port 9000
-Request is initialized in kyvernojson engine .
-2024/04/18 13:35:19 Request passed the deny-guest-request policy rule.
-Request is initialized in kyvernojson engine .
-2024/04/18 13:36:48 Request violation: -> GET method calls at path /foo are not allowed to guest
- -> all[0].check.request.http.headers.authorization.(base64_decode(split(@, ' ')[1])).(split(@, ':')[0]): Invalid value: "bob": Expected value: "alice"
- -> all[0].check.request.http.path: Invalid value: "/bar": Expected value: "/foo"
-
+Check on logs 
+```bash
+kubectl logs "$(kubectl get pod -l app=testapp -n demo -o jsonpath={.items..metadata.name})" -n demo -c ext-authz -f
 
 ```

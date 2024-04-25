@@ -1,7 +1,7 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: ext-authz
+  name: kyverno-ext-authz-grpc
   namespace: demo
 spec:
   action: CUSTOM
@@ -12,6 +12,5 @@ spec:
   # The rules specify when to trigger the external authorizer.
   - to:
     - operation:
-        paths: ["/foo"]
-    - operation:    
-        paths: ["/bar"]
+        notPaths: ["/healthz"]
+    # Allowed all path except /healthz

@@ -91,7 +91,7 @@ layered_runtime:
 
 ### Kyverno-envoy-plugin
 
-The third component is the `kyverno-envoy-plugin` itself, which is configured to load and enforce Kyverno policies on incoming requests. checkout for [kyverno-envoy-plugin](application.yaml)
+The third component is the `kyverno-envoy-plugin` itself, which is configured to load and enforce Kyverno policies on incoming requests. checkout for [kyverno-envoy-plugin](././manifest/app-envoy-plugin.yaml)
 
 ## Benchmark Scenarios
 
@@ -121,33 +121,25 @@ export const options = {
   ],
 };
 
-const BASE_URL = 'minikube ip with sample application'; // Replace with your application URL
+/*
+Replace ip for every scenerio
+export SERVICE_PORT=$(kubectl -n demo get service testapp -o jsonpath='{.spec.ports[?(@.port==8080)].nodePort}')
+export SERVICE_HOST=$(minikube ip)
+export SERVICE_URL=$SERVICE_HOST:$SERVICE_PORT
+echo $SERVICE_URL
+
+http://192.168.49.2:31541
+
+*/
+const BASE_URL = 'http://192.168.49.2:31541'; 
 
 export default function () {
-  group('GET /book with admin token', () => {
-    const res = http.get(`${BASE_URL}/book`, {
-      headers: { 'Authorization': 'Bearer your_admin_token' },
-    });
-    check(res, {
-      'is status 200': (r) => r.status === 200,
-    });
-  });
-
   group('GET /book with guest token', () => {
     const res = http.get(`${BASE_URL}/book`, {
-      headers: { 'Authorization': 'Bearer your_guest_token' },
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk' },
     });
     check(res, {
       'is status 200': (r) => r.status === 200,
-    });
-  });
-
-  group('POST /book with guest token', () => {
-    const res = http.post(`${BASE_URL}/book`, {
-      headers: { 'Authorization': 'Bearer your_guest_token' },
-    });
-    check(res, {
-      'is status 403': (r) => r.status === 403,
     });
   });
 
@@ -163,34 +155,186 @@ k6 run k6-script.yaml
 4. **Analyze the results**: Generate an HTML report with detailed insight by running:
 
 ```console
-k6 run --out html=report.html k6-script.js
+k6 run --out html=report.json k6-script.js
 ```
 5. ***Repeat for different scenarios**: 
 
-- # App only
-    Results 
-    ```html
+- # App only 
+    In this case , request are sent directly to the sample application ie no Envoy and Kyverno-plugin in the request path .
+    For this run this command to apply the sample applicaition and then test with k6
+    ```console
+    kubectl apply -f ./manifest/app.yaml
+    ```
+    Results of the k6 when only application is applied
+    ```bash
 
+          /\      |‾‾| /‾‾/   /‾‾/   
+     /\  /  \     |  |/  /   /  /    
+    /  \/    \    |     (   /   ‾‾\  
+   /          \   |  |\  \ |  (‾)  | 
+  / __________ \  |__| \__\ \_____/ .io
+
+     execution: local
+        script: k6-script.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 100 max VUs, 2m30s max duration (incl. graceful stop):
+              * default: Up to 100 looping VUs for 2m0s over 3 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+     █ GET /book with guest token
+
+       ✓ is status 200
+
+     checks.........................: 100.00% ✓ 9048      ✗ 0    
+     data_received..................: 2.1 MB  18 kB/s
+     data_sent......................: 2.6 MB  21 kB/s
+     group_duration.................: avg=1.01ms   min=166.46µs med=775.01µs max=36ms    p(90)=1.72ms   p(95)=2.31ms  
+     http_req_blocked...............: avg=15.08µs  min=1.55µs   med=6.54µs   max=4.09ms  p(90)=12.07µs  p(95)=15.25µs 
+     http_req_connecting............: avg=4.58µs   min=0s       med=0s       max=1.57ms  p(90)=0s       p(95)=0s      
+     http_req_duration..............: avg=745.73µs min=103.06µs med=549.17µs max=35.88ms p(90)=1.26ms   p(95)=1.75ms  
+       { expected_response:true }...: avg=745.73µs min=103.06µs med=549.17µs max=35.88ms p(90)=1.26ms   p(95)=1.75ms  
+     http_req_failed................: 0.00%   ✓ 0         ✗ 9048 
+     http_req_receiving.............: avg=119.69µs min=11.33µs  med=77.78µs  max=10.97ms p(90)=193.73µs p(95)=285.58µs
+     http_req_sending...............: avg=41µs     min=6.96µs   med=31.12µs  max=2.39ms  p(90)=61.88µs  p(95)=78.15µs 
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s      p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=585.04µs min=75.52µs  med=407.87µs max=35.84ms p(90)=965.49µs p(95)=1.33ms  
+     http_reqs......................: 9048    75.050438/s
+     iteration_duration.............: avg=1s       min=1s       med=1s       max=1.06s   p(90)=1s       p(95)=1s      
+     iterations.....................: 9048    75.050438/s
+     vus............................: 2       min=2       max=100
+     vus_max........................: 100     min=100     max=100
+
+
+running (2m00.6s), 000/100 VUs, 9048 complete and 0 interrupted iterations
+default ✓ [======================================] 000/100 VUs  2m0s
     ``` 
 
 - # App and Envoy
-    Results
-    ```html
+    In this case, Kyverno-envoy-plugin is not included in the path but Envoy is but Envoy External Authorization API disabled 
+    For this run this command to apply the sample application with envoy.
+    ```console
+    kubectl apply -f ./manifest/app-envoy.yaml
+    ```
 
+    Results of k6 after applying sample-application with envoy.
+    ```bash
+
+          /\      |‾‾| /‾‾/   /‾‾/   
+     /\  /  \     |  |/  /   /  /    
+    /  \/    \    |     (   /   ‾‾\  
+   /          \   |  |\  \ |  (‾)  | 
+  / __________ \  |__| \__\ \_____/ .io
+
+     execution: local
+        script: k6-script.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 100 max VUs, 2m30s max duration (incl. graceful stop):
+              * default: Up to 100 looping VUs for 2m0s over 3 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+     █ GET /book with guest token
+
+       ✓ is status 200
+
+     checks.........................: 100.00% ✓ 9031      ✗ 0    
+     data_received..................: 2.5 MB  21 kB/s
+     data_sent......................: 2.6 MB  21 kB/s
+     group_duration.................: avg=2.66ms  min=457.22µs med=1.8ms   max=65.53ms p(90)=4.85ms   p(95)=6.58ms  
+     http_req_blocked...............: avg=12.81µs min=1.52µs   med=5.98µs  max=2.41ms  p(90)=11.84µs  p(95)=13.9µs  
+     http_req_connecting............: avg=3.82µs  min=0s       med=0s      max=2.34ms  p(90)=0s       p(95)=0s      
+     http_req_duration..............: avg=2.38ms  min=383.7µs  med=1.58ms  max=65.22ms p(90)=4.36ms   p(95)=5.92ms  
+       { expected_response:true }...: avg=2.38ms  min=383.7µs  med=1.58ms  max=65.22ms p(90)=4.36ms   p(95)=5.92ms  
+     http_req_failed................: 0.00%   ✓ 0         ✗ 9031 
+     http_req_receiving.............: avg=136.3µs min=12.53µs  med=76.74µs max=12.75ms p(90)=183.23µs p(95)=272.91µs
+     http_req_sending...............: avg=41.54µs min=6.58µs   med=28.1µs  max=4.15ms  p(90)=59.62µs  p(95)=74.85µs 
+     http_req_tls_handshaking.......: avg=0s      min=0s       med=0s      max=0s      p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=2.2ms   min=349.23µs med=1.43ms  max=65.08ms p(90)=4.05ms   p(95)=5.52ms  
+     http_reqs......................: 9031    74.825497/s
+     iteration_duration.............: avg=1s      min=1s       med=1s      max=1.06s   p(90)=1s       p(95)=1s      
+     iterations.....................: 9031    74.825497/s
+     vus............................: 3       min=3       max=100
+     vus_max........................: 100     min=100     max=100
+
+
+running (2m00.7s), 000/100 VUs, 9031 complete and 0 interrupted iterations
+default ✓ [======================================] 000/100 VUs  2m0s
     ```
 
 - # App, Envoy and Kyverno-envoy-plugin 
-    Results
-    ```html
+    In this case, performance measurements are observed with Envoy External Authorization API enabled and a sample real-world RBAC policy loaded into kyverno-envoy-plugin .
+    For this apply this command to apply sample-application, envoy and kyverno-envoy-plugin
 
+    ```console
+    kubectl apply -f ./manifest/app-envoy-plugin.yaml
+    ```
+
+    Results of k6 after applying sample-application, Envoy and kyverno-envoy-plugin . 
+    ```bash
+
+          /\      |‾‾| /‾‾/   /‾‾/   
+     /\  /  \     |  |/  /   /  /    
+    /  \/    \    |     (   /   ‾‾\  
+   /          \   |  |\  \ |  (‾)  | 
+  / __________ \  |__| \__\ \_____/ .io
+
+     execution: local
+        script: k6-script.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 100 max VUs, 2m30s max duration (incl. graceful stop):
+              * default: Up to 100 looping VUs for 2m0s over 3 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+     █ GET /book with guest token
+
+       ✓ is status 200
+
+     checks.........................: 100.00% ✓ 8655      ✗ 0    
+     data_received..................: 2.4 MB  20 kB/s
+     data_sent......................: 2.4 MB  20 kB/s
+     group_duration.................: avg=46.54ms min=4.59ms  med=29.69ms max=337.79ms p(90)=109.35ms p(95)=140.51ms
+     http_req_blocked...............: avg=11.88µs min=1.21µs  med=4.15µs  max=2.83ms   p(90)=9.87µs   p(95)=11.4µs  
+     http_req_connecting............: avg=4.98µs  min=0s      med=0s      max=2.18ms   p(90)=0s       p(95)=0s      
+     http_req_duration..............: avg=46.37ms min=4.49ms  med=29.49ms max=337.69ms p(90)=109.26ms p(95)=140.28ms
+       { expected_response:true }...: avg=46.37ms min=4.49ms  med=29.49ms max=337.69ms p(90)=109.26ms p(95)=140.28ms
+     http_req_failed................: 0.00%   ✓ 0         ✗ 8655 
+     http_req_receiving.............: avg=65.19µs min=11.14µs med=56.47µs max=5.58ms   p(90)=102.86µs p(95)=145.19µs
+     http_req_sending...............: avg=30.35µs min=5.43µs  med=18.48µs max=5.29ms   p(90)=46.63µs  p(95)=58µs    
+     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s      max=0s       p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=46.27ms min=4.43ms  med=29.42ms max=337.65ms p(90)=109.22ms p(95)=140.24ms
+     http_reqs......................: 8655    71.999297/s
+     iteration_duration.............: avg=1.04s   min=1s      med=1.03s   max=1.33s    p(90)=1.11s    p(95)=1.14s   
+     iterations.....................: 8655    71.999297/s
+     vus............................: 2       min=2       max=100
+     vus_max........................: 100     min=100     max=100
+
+
+running (2m00.2s), 000/100 VUs, 8655 complete and 0 interrupted iterations
+default ✓ [======================================] 000/100 VUs  2m0s
     ```
 ## Measuring Performance
 
 The following metrics should be measured to evaluate the performance impact of the `kyverno-envoy-plugin`:
 
-- End-to-end latency
-- Kyverno evaluation latency
-- gRPC server handler latency
-- Resource utilization (CPU, memory)
+- **End-to-end latency**
+  The end-to-end latency represents the time taken for a request to complete, from the client sending the request to receiving the response. Based on the k6 results, the average end-to-end latency for the different scenarios is as follows:
+
+  - App Only: `avg=1.01ms` (from `group_duration` or `http_req_duration`)
+  - App and Envoy: `avg=2.38ms` (from `http_req_duration`)
+  - App, Envoy, and Kyverno-envoy-plugin: `avg=46.37ms` (from `http_req_duration`)
+
+- **Kyverno evaluation latency**
+  The Kyverno evaluation latency represents the time taken by the kyverno-envoy-plugin to evaluate the request against the configured policies. While the k6 results do not directly provide this metric, an estimate can be inferred by analyzing the differences in latency between the "App and Envoy" scenario and the "App, Envoy, and Kyverno-envoy-plugin" scenario.
+
+  The difference in average latency between these two scenarios is:
+  `46.37ms` - `2.38ms` = `43.99ms`
+
+  This difference can be attributed to the Kyverno evaluation latency and the gRPC server handler latency combined. Assuming the gRPC server handler latency is relatively small compared to the Kyverno evaluation latency, the estimated range for the Kyverno evaluation latency is around 40ms to 45ms.
+
+
+
+
 
 

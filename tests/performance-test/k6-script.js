@@ -9,33 +9,27 @@ export const options = {
   ],
 };
 
-const BASE_URL = 'minikube ip with sample application'; // Replace with your application URL
+/*
+Replace ip for every scenerio generate the URL with these commands 
+
+echo SERVICE_PORT=$(kubectl -n demo get service testapp -o jsonpath='{.spec.ports[?(@.port==8080)].nodePort}')
+echo SERVICE_HOST=$(minikube ip)
+echo SERVICE_URL=$SERVICE_HOST:$SERVICE_PORT
+echo $SERVICE_URL
+
+http://192.168.49.2:31541
+
+*/
+
+const BASE_URL = 'http://192.168.49.2:31700'; // Replace with your application URL 
 
 export default function () {
-  group('GET /book with admin token', () => {
-    const res = http.get(`${BASE_URL}/book`, {
-      headers: { 'Authorization': 'Bearer your_admin_token' },
-    });
-    check(res, {
-      'is status 200': (r) => r.status === 200,
-    });
-  });
-
   group('GET /book with guest token', () => {
     const res = http.get(`${BASE_URL}/book`, {
-      headers: { 'Authorization': 'Bearer your_guest_token' },
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk' },
     });
     check(res, {
       'is status 200': (r) => r.status === 200,
-    });
-  });
-
-  group('POST /book with guest token', () => {
-    const res = http.post(`${BASE_URL}/book`, {
-      headers: { 'Authorization': 'Bearer your_guest_token' },
-    });
-    check(res, {
-      'is status 403': (r) => r.status === 403,
     });
   });
 

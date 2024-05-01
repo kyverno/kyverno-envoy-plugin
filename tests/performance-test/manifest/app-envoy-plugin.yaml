@@ -203,7 +203,7 @@ metadata:
   name: testapp
   namespace: demo
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: testapp
   ports:

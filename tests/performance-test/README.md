@@ -152,10 +152,10 @@ export default function () {
 ```console
 k6 run k6-script.yaml
 ```
-4. **Analyze the results**: Generate an HTML report with detailed insight by running:
+4. **Analyze the results**: Generate an json report with detailed insight by running:
 
 ```console
-k6 run --out html=report.json k6-script.js
+k6 run --out json=report.json k6-script.js
 ```
 5. ***Repeat for different scenarios**: 
 
@@ -333,8 +333,60 @@ The following metrics should be measured to evaluate the performance impact of t
 
   This difference can be attributed to the Kyverno evaluation latency and the gRPC server handler latency combined. Assuming the gRPC server handler latency is relatively small compared to the Kyverno evaluation latency, the estimated range for the Kyverno evaluation latency is around 40ms to 45ms.
 
+- **Resource utilization**
+  Refers to CPU and memory usage of the Kyverno-Envoy-Plugin container , `kubectl top` utility can be laveraged to measure the resource utilization.
+
+  Get the resource utilization of the kyverno-envoy-plugin container using the following command:
+  ```bash
+  kubectl top pod -n demo --containers
+  ```
+  To monitor resource utilization overtime use the following command:
+  ```bash
+  watch -n 1 "kubectl top pod -n demo --containers"
+  ```
+  Now run the k6 script in different terminal window and observe the resource utilization of the kyverno-envoy-plugin container.
+
+  Initial resource utilization of the kyverno-envoy-plugin container:
+  ```
+  POD                        NAME                   CPU(cores)   MEMORY(bytes)
+  testapp-5955cd6f8b-dbvgd   envoy                  4m           70Mi
+  testapp-5955cd6f8b-dbvgd   kyverno-envoy-plugin   1m           51Mi
+  testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
+  ```
+  Resource utilization of the kyverno-envoy-plugin container after 100 requests:
+
+  ```
+  POD                        NAME                   CPU(cores)   MEMORY(bytes)
+  testapp-5955cd6f8b-dbvgd   envoy                  110m         70Mi
+  testapp-5955cd6f8b-dbvgd   kyverno-envoy-plugin   895m         60Mi
+  testapp-5955cd6f8b-dbvgd   test-application       17m          15Mi
+
+  ```
+
+  Observations:
+
+  - The CPU utilization of the kyverno-envoy-plugin container increased significantly from 1m to 895m after receiving 100   requests during the load test.
+  - The memory utilization also increased, but to a lesser extent, from 51Mi to 60Mi.
+
+  Resource utilization of the kyverno-envoy-plugin container after load completion:
+
+  ```
+  POD                        NAME                   CPU(cores)   MEMORY(bytes)
+  testapp-5955cd6f8b-dbvgd   envoy                  4m           70Mi
+  testapp-5955cd6f8b-dbvgd   kyverno-envoy-plugin   1m           51Mi
+  testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
+  ```
+
+  Observations:
+  - After the load test completed and the request volume returned to normal levels, the CPU and memory utilization of the kyverno-envoy-plugin container returned to their initial values. This indicates that the kyverno-envoy-plugin can efficiently handle the increased load during the test and release the additional resources when the load subsides.
+
+  Correlation with k6 results:
+  - The k6 script simulated a load test scenario with 100 virtual users, ramping up over 30 seconds, staying at 100 users for 1 minute, and then ramping down over 30 seconds.
+  - During the load test, when the request volume was at its peak (100 virtual users), the kyverno-envoy-plugin container experienced a significant increase in CPU utilization, reaching 895m.
+  - This CPU utilization spike aligns with the increased processing demand on the kyverno-envoy-plugin to evaluate the incoming requests against the configured Kyverno policies.
+  - The memory utilization increase during the load test was relatively modest, suggesting that the policy evaluation did not significantly impact the memory requirements of the kyverno-envoy-plugin.
 
 
 
-
+ 
 

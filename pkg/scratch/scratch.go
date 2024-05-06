@@ -7,7 +7,7 @@ import (
 	jpfunctions "github.com/jmespath-community/go-jmespath/pkg/functions"
 	"github.com/jmespath-community/go-jmespath/pkg/interpreter"
 	"github.com/jmespath-community/go-jmespath/pkg/parsing"
-	function "github.com/kyverno/kyverno-envoy-plugin/pkg/functions"
+	function "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/template/functions"
 	"github.com/kyverno/kyverno-json/pkg/engine/template"
 )
 

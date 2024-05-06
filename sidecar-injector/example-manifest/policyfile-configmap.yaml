@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policy-files
+  namespace: default
+data:
+  policy.yaml: |
+    apiVersion: json.kyverno.io/v1alpha1
+    kind: ValidatingPolicy
+    metadata:
+      name: check-dockerfile
+    spec:
+      rules:
+        - name: deny-external-calls
+          assert:
+            all:
+            - message: "HTTP calls are not allowed"
+              check:
+                request:
+                    http:
+                        method: GET
+                        headers:
+                            authorization:
+                                (base64_decode(split(@, ' ')[1])): 
+                                    (split(@, ':')[0]): alice
+                        path: /foo        
+                     

@@ -160,6 +160,14 @@ kind-load-image: build-ko
 	@echo Load image in kind... >&2
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
 
+.PHONY: kind-load-taged-image
+kind-load-taged-image: ## Build image and load it in kind cluster
+kind-load-taged-image: $(KIND)
+kind-load-taged-image: build-ko
+	@echo Load image in kind... >&2
+	docker tag $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA) $(KO_REGISTRY)/$(PACKAGE):latest
+	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):latest
+
 #########	
 # ISTIO #
 #########

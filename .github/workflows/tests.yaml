@@ -32,7 +32,7 @@ jobs:
         set -e
         make tests
     - name: Upload coverage
-      uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+      uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.3.2
       with:
         name: coverage.out
         path: coverage.out
@@ -75,3 +75,23 @@ jobs:
         make kind-create-cluster
         make install-istio
         make kind-load-image
+  
+  e2e-tests-chainsaw:      
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+    - name: Setup Go
+      uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+      with:
+        go-version-file: go.mod
+        cache-dependency-path: go.sum
+    - name: Run tests
+      run: |
+        set -e
+        make kind-create-cluster
+        make kind-load-taged-image    
+    - name: Install Chainsaw
+      uses: kyverno/action-install-chainsaw@73115d8a049c89dd8e3799daac9d6c36f8b9b139 # v0.2.0
+    - name: Run Chainsaw Tests
+      run: chainsaw test tests/e2e-test/chainsaw-test.yaml        

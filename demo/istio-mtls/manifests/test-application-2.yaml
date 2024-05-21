@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testapp-2
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testapp-2
+  template:
+    metadata:
+      labels:
+        app: testapp-2
+    spec:
+      containers:
+      - name: testapp-2
+        image: sanskardevops/test-application-1:0.0.3
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: testapp-2
+  namespace: demo
+spec:
+  type: ClusterIP
+  selector:
+    app: testapp-2
+  ports:
+  - port: 8080
+    targetPort: 8080

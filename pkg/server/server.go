@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,6 +29,7 @@ import (
 
 type extAuthzServerV3 struct {
 	policies []string
+	address  string
 }
 
 type Servers struct {
@@ -35,10 +38,11 @@ type Servers struct {
 	grpcV3     *extAuthzServerV3
 }
 
-func NewServers(policies []string) *Servers {
+func NewServers(policies []string, address string) *Servers {
 	return &Servers{
 		grpcV3: &extAuthzServerV3{
 			policies: policies,
+			address:  address,
 		},
 	}
 }
@@ -89,12 +93,39 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Servers) startGRPCServer(ctx context.Context) {
-	lis, err := net.Listen("tcp", ":9000")
+
+	address := s.grpcV3.address
+	if !strings.Contains(address, "://") {
+		address = "grpc://" + address
+	}
+
+	parsedURL, err := url.Parse(address)
+	if err != nil {
+		log.Fatalf("failed to parse address url: %v", err)
+	}
+
+	var lis net.Listener
+
+	switch parsedURL.Scheme {
+	case "unix":
+		socketPath := parsedURL.Host + parsedURL.Path
+		if strings.HasPrefix(parsedURL.String(), parsedURL.Scheme+"://@") {
+			socketPath = "@" + socketPath
+		} else {
+			os.Remove(socketPath)
+		}
+		lis, err = net.Listen("unix", socketPath)
+	case "grpc":
+		lis, err = net.Listen("tcp", parsedURL.Host)
+	default:
+		err = fmt.Errorf("invalid url schema %q", parsedURL.Scheme)
+	}
+
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s.grpcServer = grpc.NewServer()
-	fmt.Println("Starting GRPC server on Port 9000")
+	log.Printf("Starting GRPC server on %s", s.grpcV3.address)
 
 	authv3.RegisterAuthorizationServer(s.grpcServer, s.grpcV3)
 

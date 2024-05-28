@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -28,8 +27,9 @@ import (
 )
 
 type extAuthzServerV3 struct {
-	policies []string
-	address  string
+	policies      []string
+	address       string
+	healthaddress string
 }
 
 type Servers struct {
@@ -38,11 +38,12 @@ type Servers struct {
 	grpcV3     *extAuthzServerV3
 }
 
-func NewServers(policies []string, address string) *Servers {
+func NewServers(policies []string, address string, healthaddress string) *Servers {
 	return &Servers{
 		grpcV3: &extAuthzServerV3{
-			policies: policies,
-			address:  address,
+			policies:      policies,
+			address:       address,
+			healthaddress: healthaddress,
 		},
 	}
 }
@@ -60,11 +61,22 @@ func StartServers(srv *Servers) {
 }
 
 func (s *Servers) startHTTPServer(ctx context.Context) {
-	s.httpServer = &http.Server{
-		Addr:    ":8000",
-		Handler: http.HandlerFunc(handler),
+
+	healthaddress := s.grpcV3.healthaddress
+	if !strings.Contains(healthaddress, "://") {
+		healthaddress = "http://" + healthaddress
 	}
-	fmt.Println("Starting HTTP server on Port 8000")
+
+	parsedURL, err := url.Parse(healthaddress)
+	if err != nil {
+		log.Fatalf("failed to parse address url: %v", err)
+	}
+
+	s.httpServer = &http.Server{
+		Addr:    parsedURL.Host,
+		Handler: http.HandlerFunc(healthHandler),
+	}
+	log.Printf("Starting HTTP health checks on port %s", parsedURL.Host)
 	go func() {
 		<-ctx.Done()
 
@@ -81,15 +93,14 @@ func (s *Servers) startHTTPServer(ctx context.Context) {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("Received request from %s %s\n", r.RemoteAddr, r.URL.Path)
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if the request path is /health
+	if r.URL.Path == "/health" {
+		// Return a 200 OK status to indicate the server is healthy
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
 		return
 	}
-	defer r.Body.Close()
-	fmt.Println("Request payload:", string(body))
 }
 
 func (s *Servers) startGRPCServer(ctx context.Context) {
@@ -125,7 +136,7 @@ func (s *Servers) startGRPCServer(ctx context.Context) {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s.grpcServer = grpc.NewServer()
-	log.Printf("Starting GRPC server on %s", s.grpcV3.address)
+	log.Printf("Starting GRPC server on port %s", parsedURL.Host)
 
 	authv3.RegisterAuthorizationServer(s.grpcServer, s.grpcV3)
 

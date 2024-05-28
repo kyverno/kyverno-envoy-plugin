@@ -12,5 +12,5 @@ spec:
   # The rules specify when to trigger the external authorizer.
   - to:
     - operation:
-        notPaths: ["/healthz"]
+        notPaths: ["/health"]
     # Allowed all path except /healthz

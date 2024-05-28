@@ -67,16 +67,32 @@ data:
       containers:
       - image: sanskardevops/plugin:0.0.25
         imagePullPolicy: IfNotPresent
-        name: ext-authz
+        name: kyverno-envoy-plugin
         ports:
         - containerPort: 8000
         - containerPort: 9000
         args:
         - "serve"
         - "--policy=/policies/policy.yaml"
+        - "--address=:9000"
+        - "--healthaddress=:8181"
         volumeMounts:
         - name: policy-files
           mountPath: /policies
+        livenessProbe:
+          httpGet:
+            path: /health
+            scheme: HTTP
+            port: 8181
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            scheme: HTTP
+            port: 8181
+          initialDelaySeconds: 5
+          periodSeconds: 5           
       volumes:
       - name: policy-files
         configMap:

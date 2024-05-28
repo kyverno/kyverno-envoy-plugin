@@ -98,7 +98,6 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/health" {
 		// Return a 200 OK status to indicate the server is healthy
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
 		return
 	}
 }

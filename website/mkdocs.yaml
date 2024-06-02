@@ -2,3 +2,20 @@ INHERIT: ./mkdocs.base.yaml
 
 nav:
 - Home: index.md
+- Documentation:
+  - intro.md
+  - quickstart.md
+  - Writing policies:
+    - policies/policies.md
+    - policies/asserts.md  
+    - policies/authz-policy.md
+  - JMESPath:
+    - Overview: jp.md
+    - Functions: jp/functions.md     
+- Tutorials:
+  - tutorials/standalone-envoy.md
+  - tutorials/istio.md
+  - tutorials/mtls-istio.md
+- Performance: performance.md
+
+    

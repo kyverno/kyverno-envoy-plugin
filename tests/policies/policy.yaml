@@ -1,0 +1,20 @@
+apiVersion: json.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: checkrequest
+spec:
+  rules:
+    - name: deny-guest-request-at-post
+      assert:
+        any:
+        - message: "GET method calls at path /book are not allowed to guests users"
+          check:
+            request:
+                http:
+                    method: GET
+                    headers:
+                        authorization:
+                            (split(@, ' ')[1]):
+                                (jwt_decode(@ , 'secret').payload.role): admin
+                    path: /book                             
+        

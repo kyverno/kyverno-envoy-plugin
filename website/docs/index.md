@@ -1,4 +1,4 @@
 ---
 template: home.html
-title: chainsaw
+title: kyverno-envoy-plugin
 ---

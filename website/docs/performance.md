@@ -91,7 +91,40 @@ layered_runtime:
 
 ### Kyverno-envoy-plugin
 
-The third component is the `kyverno-envoy-plugin` itself, which is configured to load and enforce Kyverno policies on incoming requests. checkout for [kyverno-envoy-plugin](././manifest/app-envoy-plugin.yaml)
+The third component is the `kyverno-envoy-plugin` itself, which is configured to load and enforce Kyverno policies on incoming requests. 
+
+```yaml
+containers:
+- name: kyverno-envoy-plugin
+  image: sanskardevops/plugin:0.0.34
+  imagePullPolicy: IfNotPresent
+  ports:
+    - containerPort: 8181
+    - containerPort: 9000
+  volumeMounts:
+    - readOnly: true
+      mountPath: /policies
+      name: policy-files
+  args:
+    - "serve"
+    - "--policy=/policies/policy.yaml"
+    - "--address=:9000"
+    - "--healthaddress=:8181"
+  livenessProbe:
+    httpGet:
+      path: /health
+      scheme: HTTP
+      port: 8181
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /health
+      scheme: HTTP
+      port: 8181
+    initialDelaySeconds: 5
+    periodSeconds: 5  
+```
 
 ## Benchmark Scenarios
 
@@ -107,7 +140,7 @@ To perform load testing, we'll use the k6 tool. Follow these steps:
 
 1. **Install k6**: Install k6 on your machine by following the instructions on the official website: https://k6.io/docs/getting-started/installation/
 
-2. **Write the k6 script**:  An example script is provided in the repository [k6-script.js](k6-script.js)
+2. **Write the k6 script**:  Below is the example k6 script. 
 
 ```js
 import http from 'k6/http';

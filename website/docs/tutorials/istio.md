@@ -110,7 +110,7 @@ metadata:
 EOF
 ```
 
-First we need to apply [kyverno policy configmap](manifests/policy-config.yaml) this policy will be passed to kyverno-envoy-sidecar injector admission controller:
+First we need to apply kyverno policy configmap this policy will be passed to kyverno-envoy-sidecar injector admission controller:
 
 ```shell
 $ kubectl apply -f - <<EOF

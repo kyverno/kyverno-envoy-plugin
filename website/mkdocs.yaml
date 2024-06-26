@@ -4,7 +4,7 @@ nav:
 - Home: index.md
 - Documentation:
   - intro.md
-  - quickstart.md
+  - quick-start.md
   - Writing policies:
     - policies/policies.md
     - policies/asserts.md  

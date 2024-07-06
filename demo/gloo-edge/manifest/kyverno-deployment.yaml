@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyverno
+  labels:
+    app: kyverno
+spec:
+  ports:
+  - name: grpc
+    port: 9191
+    targetPort: 9191
+    protocol: TCP
+  selector:
+    app: kyverno
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyverno
+  labels:
+    app: kyverno
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kyverno
+  template:
+    metadata:
+      labels:
+        app: kyverno
+    spec:
+      containers:
+      - name: kyverno
+        image: sanskardevops/plugin:0.0.34
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8181
+          - containerPort: 9191
+        volumeMounts:
+          - readOnly: true
+            mountPath: /policy
+            name: kyverno-policy
+        args:
+          - "serve"
+          - "--policy=/policy/policy.yaml"
+          - "--address=:9191"
+          - "--healthaddress=:8181"
+      volumes:
+      - name: kyverno-policy
+        secret:
+          secretName: kyverno-policy

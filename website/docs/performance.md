@@ -217,7 +217,7 @@ EOF
 ```console
 k6 run --out json=report.json k6-script.js
 ```
-5. ***Repeat for different scenarios**: 
+5. **Repeat for different scenarios**: 
 
 - # App only 
     In this case , request are sent directly to the sample application ie no Envoy and Kyverno-plugin in the request path .
@@ -226,8 +226,10 @@ k6 run --out json=report.json k6-script.js
     ```shell
     $ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/tests/performance-test/manifest/app.yaml
     ```
-    Results of the k6 when only application is applied
-    ```bash
+
+    Results of the k6 when only application is applied:
+
+```bash
 
           /\      |‾‾| /‾‾/   /‾‾/   
      /\  /  \     |  |/  /   /  /    
@@ -269,9 +271,10 @@ k6 run --out json=report.json k6-script.js
 
 running (2m00.6s), 000/100 VUs, 9048 complete and 0 interrupted iterations
 default ✓ [======================================] 000/100 VUs  2m0s
-    ``` 
+``` 
 
 - # App and Envoy
+
     In this case, Kyverno-envoy-plugin is not included in the path but Envoy is but Envoy External Authorization API disabled 
     For this run this command to apply the sample application with envoy.
 
@@ -280,7 +283,8 @@ default ✓ [======================================] 000/100 VUs  2m0s
     ```
 
     Results of k6 after applying sample-application with envoy.
-    ```bash
+
+```bash
 
           /\      |‾‾| /‾‾/   /‾‾/   
      /\  /  \     |  |/  /   /  /    
@@ -322,9 +326,10 @@ default ✓ [======================================] 000/100 VUs  2m0s
 
 running (2m00.7s), 000/100 VUs, 9031 complete and 0 interrupted iterations
 default ✓ [======================================] 000/100 VUs  2m0s
-    ```
+```
 
-- # App, Envoy and Kyverno-envoy-plugin 
+- # App, Envoy and Kyverno-envoy-plugin
+
     In this case, performance measurements are observed with Envoy External Authorization API enabled and a sample real-world RBAC policy loaded into kyverno-envoy-plugin .
     For this apply this command to apply sample-application, envoy and kyverno-envoy-plugin
 
@@ -333,7 +338,8 @@ default ✓ [======================================] 000/100 VUs  2m0s
     ```
 
     Results of k6 after applying sample-application, Envoy and kyverno-envoy-plugin . 
-    ```console
+
+```bash
 
           /\      |‾‾| /‾‾/   /‾‾/   
      /\  /  \     |  |/  /   /  /    
@@ -375,7 +381,8 @@ default ✓ [======================================] 000/100 VUs  2m0s
 
 running (2m00.2s), 000/100 VUs, 8655 complete and 0 interrupted iterations
 default ✓ [======================================] 000/100 VUs  2m0s
-    ```
+```
+
 ## Measuring Performance
 
 The following metrics should be measured to evaluate the performance impact of the `kyverno-envoy-plugin`:
@@ -445,14 +452,19 @@ The following metrics should be measured to evaluate the performance impact of t
   testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
   ```
 
-  Observations:
-  - After the load test completed and the request volume returned to normal levels, the CPU and memory utilization of the kyverno-envoy-plugin container returned to their initial values. This indicates that the kyverno-envoy-plugin can efficiently handle the increased load during the test and release the additional resources when the load subsides.
+Observations:
 
-  Correlation with k6 results:
-  - The k6 script simulated a load test scenario with 100 virtual users, ramping up over 30 seconds, staying at 100 users for 1 minute, and then ramping down over 30 seconds.
-  - During the load test, when the request volume was at its peak (100 virtual users), the kyverno-envoy-plugin container experienced a significant increase in CPU utilization, reaching 895m.
-  - This CPU utilization spike aligns with the increased processing demand on the kyverno-envoy-plugin to evaluate the incoming requests against the configured Kyverno policies.
-  - The memory utilization increase during the load test was relatively modest, suggesting that the policy evaluation did not significantly impact the memory requirements of the kyverno-envoy-plugin.
+- After the load test completed and the request volume returned to normal levels, the CPU and memory utilization of the kyverno-envoy-plugin container returned to their initial values. This indicates that the kyverno-envoy-plugin can efficiently handle the increased load during the test and release the additional resources when the load subsides.
+
+Correlation with k6 results:
+
+- The k6 script simulated a load test scenario with 100 virtual users, ramping up over 30 seconds, staying at 100 users for 1 minute, and then ramping down over 30 seconds.
+
+- During the load test, when the request volume was at its peak (100 virtual users), the kyverno-envoy-plugin container experienced a significant increase in CPU utilization, reaching 895m.
+
+- This CPU utilization spike aligns with the increased processing demand on the kyverno-envoy-plugin to evaluate the incoming requests against the configured Kyverno policies.
+
+- The memory utilization increase during the load test was relatively modest, suggesting that the policy evaluation did not significantly impact the memory requirements of the kyverno-envoy-plugin.
 
 
 

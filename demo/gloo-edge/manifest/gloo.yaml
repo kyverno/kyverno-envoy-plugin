@@ -1,0 +1,6 @@
+global:
+  extensions:
+    extAuth:
+      extauthzServerRef:
+        name: gloo-system-kyverno-9191
+        namespace: gloo-system

@@ -1,6 +1,8 @@
 package serve
 
 import (
+	"context"
+
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"github.com/spf13/cobra"
 )
@@ -13,8 +15,9 @@ func Command() *cobra.Command {
 		Use:   "serve",
 		Short: "Start the kyverno-envoy-plugin server",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
 			srv := server.NewServers(policies, address, healthaddress)
-			server.StartServers(srv)
+			server.StartServers(ctx, srv)
 		},
 	}
 	return serve

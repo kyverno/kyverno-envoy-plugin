@@ -11,7 +11,7 @@ func Command() *cobra.Command {
 	var policies []string
 	var address string
 	var healthaddress string
-	serve := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "serve",
 		Short: "Start the kyverno-envoy-plugin server",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -20,5 +20,8 @@ func Command() *cobra.Command {
 			server.StartServers(ctx, srv)
 		},
 	}
-	return serve
+	command.Flags().StringSliceVar(&policies, "policy", nil, "Path to kyverno-json policies")
+	command.Flags().StringVar(&address, "address", ":9000", "Address to listen on")
+	command.Flags().StringVar(&healthaddress, "healthaddress", ":8181", "Address to listen on for health checks")
+	return command
 }

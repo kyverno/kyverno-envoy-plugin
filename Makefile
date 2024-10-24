@@ -108,6 +108,18 @@ vet: ## Run go vet
 	@echo Go vet... >&2
 	@go vet ./...
 
+#########
+# BUILD #
+#########
+
+.PHONY: build
+build: ## Build
+build: fmt
+build: vet
+build:
+	@echo "Build..." >&2
+	@LD_FLAGS=$(LD_FLAGS) go build .
+
 ##############
 # BUILD (KO) #
 ##############
@@ -118,8 +130,7 @@ build-ko: fmt
 build-ko: vet
 build-ko: $(KO)
 	@echo "Build Docker image with ko..." >&2
-	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) \
-		$(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
+	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
 
 ########
 # TEST #

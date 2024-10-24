@@ -8,15 +8,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	typev3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
 	jsonengine "github.com/kyverno/kyverno-envoy-plugin/pkg/json-engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/request"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/server/handlers"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-json/pkg/policy"
 	"go.uber.org/multierr"
 	"google.golang.org/genproto/googleapis/rpc/status"
@@ -32,7 +32,6 @@ type extAuthzServerV3 struct {
 }
 
 type Servers struct {
-	httpServer *http.Server
 	grpcServer *grpc.Server
 	grpcV3     *extAuthzServerV3
 }
@@ -47,10 +46,10 @@ func NewServers(policies []string, address string, healthaddress string) *Server
 	}
 }
 
-func StartServers(srv *Servers) {
+func StartServers(ctx context.Context, srv *Servers) {
 	var group wait.Group
 	func() {
-		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		ctx, cancel := signals.Context(ctx)
 		defer cancel()
 		group.StartWithContext(ctx, srv.startHTTPServer)
 		group.StartWithContext(ctx, srv.startGRPCServer)
@@ -60,20 +59,19 @@ func StartServers(srv *Servers) {
 }
 
 func (s *Servers) startHTTPServer(ctx context.Context) {
-
 	healthaddress := s.grpcV3.healthaddress
 	if !strings.Contains(healthaddress, "://") {
 		healthaddress = "http://" + healthaddress
 	}
-
 	parsedURL, err := url.Parse(healthaddress)
 	if err != nil {
 		log.Fatalf("failed to parse address url: %v", err)
 	}
-
-	s.httpServer = &http.Server{
+	mux := http.NewServeMux()
+	mux.Handle("GET /health/", handlers.Health())
+	server := &http.Server{
 		Addr:    parsedURL.Host,
-		Handler: http.HandlerFunc(healthHandler),
+		Handler: mux,
 	}
 	log.Printf("Starting HTTP health checks on port %s", parsedURL.Host)
 	go func() {
@@ -82,22 +80,12 @@ func (s *Servers) startHTTPServer(ctx context.Context) {
 		fmt.Println("HTTP server shutting down...")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := s.httpServer.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+		if err := server.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
 			log.Fatal("Shutdown HTTP server:", err)
 		}
 	}()
-
-	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("ListenAndServe: ", err)
-	}
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	// Check if the request path is /health
-	if r.URL.Path == "/health" {
-		// Return a 200 OK status to indicate the server is healthy
-		w.WriteHeader(http.StatusOK)
-		return
 	}
 }
 

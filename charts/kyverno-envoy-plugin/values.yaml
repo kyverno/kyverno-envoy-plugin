@@ -1,0 +1,343 @@
+# -- Internal settings used with `helm template` to generate install manifest
+# @ignored
+templating:
+  enabled: false
+  debug: false
+  version: ~
+
+# -- (string) Override the name of the chart
+nameOverride: ~
+
+# -- (string) Override the expanded name of the chart
+fullnameOverride: ~
+
+# -- (string) Override the namespace the chart deploys to
+namespaceOverride: ~
+
+# Sidecar injector configuration
+sidecarInjector:
+
+  # -- Enable sidecar injector
+  enabled: true
+
+  rbac:
+    # -- Create RBAC resources
+    create: true
+
+    serviceAccount:
+      # -- The ServiceAccount name
+      name:
+
+      # -- Annotations for the ServiceAccount
+      annotations: {}
+        # example.com/annotation: value
+
+  # -- Create self-signed certificates at deployment time.
+  # The certificates won't be automatically renewed if this is set to `true`.
+  createSelfSignedCert: true
+
+  # -- (int) Desired number of pods
+  replicas: ~
+
+  # -- The number of revisions to keep
+  revisionHistoryLimit: 10
+
+  # -- Resync period for informers
+  resyncPeriod: 15m
+
+  # -- Additional labels to add to each pod
+  podLabels: {}
+    # example.com/label: foo
+
+  # -- Additional annotations to add to each pod
+  podAnnotations: {}
+    # example.com/annotation: foo
+
+  # -- Deployment annotations.
+  annotations: {}
+
+  # -- Deployment update strategy.
+  # Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+  # @default -- See [values.yaml](values.yaml)
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 40%
+    type: RollingUpdate
+
+  # -- Optional priority class
+  priorityClassName: ''
+
+  # -- Change `apiPriorityAndFairness` to `true` if you want to insulate the API calls made by Kyverno admission controller activities.
+  # This will help ensure Kyverno stability in busy clusters.
+  # Ref: https://kubernetes.io/docs/concepts/cluster-administration/flow-control/
+  apiPriorityAndFairness: false
+
+  # -- Priority level configuration.
+  # The block is directly forwarded into the priorityLevelConfiguration, so you can use whatever specification you want.
+  # ref: https://kubernetes.io/docs/concepts/cluster-administration/flow-control/#prioritylevelconfiguration
+  # @default -- See [values.yaml](values.yaml)
+  priorityLevelConfigurationSpec:
+    type: Limited
+    limited:
+      nominalConcurrencyShares: 10
+      limitResponse:
+        queuing:
+          queueLengthLimit: 50
+        type: Queue
+
+  # -- Change `hostNetwork` to `true` when you want the pod to share its host's network namespace.
+  # Useful for situations like when you end up dealing with a custom CNI over Amazon EKS.
+  # Update the `dnsPolicy` accordingly as well to suit the host network mode.
+  hostNetwork: false
+
+  # -- admissionController webhook server port
+  # in case you are using hostNetwork: true, you might want to change the port the webhookServer is listening to
+  webhookServer:
+    port: 9443
+
+  # -- `dnsPolicy` determines the manner in which DNS resolution happens in the cluster.
+  # In case of `hostNetwork: true`, usually, the `dnsPolicy` is suitable to be `ClusterFirstWithHostNet`.
+  # For further reference: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy.
+  dnsPolicy: ClusterFirst
+
+  # -- Startup probe.
+  # The block is directly forwarded into the deployment, so you can use whatever startupProbes configuration you want.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+  # @default -- See [values.yaml](values.yaml)
+  startupProbe:
+    httpGet:
+      path: /health/liveness
+      port: 9443
+      scheme: HTTPS
+    failureThreshold: 20
+    initialDelaySeconds: 2
+    periodSeconds: 6
+
+  # -- Liveness probe.
+  # The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+  # @default -- See [values.yaml](values.yaml)
+  livenessProbe:
+    httpGet:
+      path: /health/liveness
+      port: 9443
+      scheme: HTTPS
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 2
+    successThreshold: 1
+
+  # -- Readiness Probe.
+  # The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+  # @default -- See [values.yaml](values.yaml)
+  readinessProbe:
+    httpGet:
+      path: /health/readiness
+      port: 9443
+      scheme: HTTPS
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  # -- Node labels for pod assignment
+  nodeSelector: {}
+
+  # -- List of node taints to tolerate
+  tolerations: []
+
+  antiAffinity:
+    # -- Pod antiAffinities toggle.
+    # Enabled by default but can be disabled if you want to schedule pods to the same node.
+    enabled: true
+
+  # -- Pod anti affinity constraints.
+  # @default -- See [values.yaml](values.yaml)
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - admission-controller
+          topologyKey: kubernetes.io/hostname
+
+  # -- Pod affinity constraints.
+  podAffinity: {}
+
+  # -- Node affinity constraints.
+  nodeAffinity: {}
+
+  # -- Topology spread constraints.
+  topologySpreadConstraints: []
+
+  # -- Security context for the pod
+  podSecurityContext: {}
+
+  podDisruptionBudget:
+    # -- Enable PodDisruptionBudget.
+    # Will always be enabled if replicas > 1. This non-declarative behavior should ideally be avoided, but changing it now would be breaking.
+    enabled: false
+    # -- Configures the minimum available pods for disruptions.
+    # Cannot be used if `maxUnavailable` is set.
+    minAvailable: 1
+    # -- Configures the maximum unavailable pods for disruptions.
+    # Cannot be used if `minAvailable` is set.
+    maxUnavailable:
+
+  # -- A writable volume to use for the TUF root initialization.
+  tufRootMountPath: /.sigstore
+
+  # -- Volume to be mounted in pods for TUF/cosign work.
+  sigstoreVolume:
+    emptyDir: {}
+
+  caCertificates:
+    # -- CA certificates to use with Kyverno deployments
+    # This value is expected to be one large string of CA certificates
+    data: ~
+    # -- Volume to be mounted for CA certificates
+    # Not used when `.Values.admissionController.caCertificates.data` is defined
+    volume: {}
+    # Example to use hostPath:
+    # hostPath:
+    #   path: /etc/pki/tls/ca-certificates.crt
+    #   type: File
+
+  # -- Image pull secrets
+  imagePullSecrets: []
+    # - secretName
+
+  initContainer:
+
+    image:
+      # -- Image registry
+      registry: ghcr.io
+      # -- Image repository
+      repository: kyverno/kyvernopre
+      # -- (string) Image tag
+      # If missing, defaults to image.tag
+      tag: ~
+      # -- (string) Image pull policy
+      # If missing, defaults to image.pullPolicy
+      pullPolicy: ~
+
+    resources:
+      # -- Pod resource limits
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      # -- Pod resource requests
+      requests:
+        cpu: 10m
+        memory: 64Mi
+
+    # -- Container security context
+    securityContext:
+      runAsNonRoot: true
+      privileged: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+
+    # -- Additional container args.
+    extraArgs: {}
+
+    # -- Additional container environment variables.
+    extraEnvVars: []
+    # Example setting proxy
+    # extraEnvVars:
+    # - name: HTTPS_PROXY
+    #   value: 'https://proxy.example.com:3128'
+
+  container:
+
+    image:
+      # -- Image registry
+      registry: ghcr.io
+      # -- Image repository
+      repository: kyverno/kyverno
+      # -- (string) Image tag
+      # Defaults to appVersion in Chart.yaml if omitted
+      tag: ~
+      # -- Image pull policy
+      pullPolicy: IfNotPresent
+
+    resources:
+      # -- Pod resource limits
+      limits:
+        memory: 384Mi
+      # -- Pod resource requests
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # -- Container security context
+    securityContext:
+      runAsNonRoot: true
+      privileged: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+
+    # -- Additional container args.
+    extraArgs: {}
+
+    # -- Additional container environment variables.
+    extraEnvVars: []
+    # Example setting proxy
+    # extraEnvVars:
+    # - name: HTTPS_PROXY
+    #   value: 'https://proxy.example.com:3128'
+
+  # -- Array of extra init containers
+  extraInitContainers: []
+    # - name: init-container
+    #   image: busybox
+    #   command: ['sh', '-c', 'echo Hello']
+
+  # -- Array of extra containers to run alongside kyverno
+  extraContainers: []
+    # - name: myapp-container
+    #   image: busybox
+    #   command: ['sh', '-c', 'echo Hello && sleep 3600']
+
+  service:
+    # -- Service port.
+    port: 443
+    # -- Service type.
+    type: ClusterIP
+    # -- Service node port.
+    # Only used if `type` is `NodePort`.
+    nodePort:
+    # -- Service annotations.
+    annotations: {}
+
+  metricsService:
+    # -- Create service.
+    create: true
+    # -- Service port.
+    # Kyverno's metrics server will be exposed at this port.
+    port: 8000
+    # -- Service type.
+    type: ClusterIP
+    # -- Service node port.
+    # Only used if `type` is `NodePort`.
+    nodePort:
+    # -- Service annotations.
+    annotations: {}

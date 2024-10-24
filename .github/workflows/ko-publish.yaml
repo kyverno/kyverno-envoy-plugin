@@ -7,7 +7,7 @@ permissions: {}
 on:
   push:
     tags:
-      - v*
+    - main
 
 jobs:
   ko-publish:
@@ -30,4 +30,4 @@ jobs:
     - name: Run ko
       run: |
         set -e
-        make publish-ko
+        KO_REGISTRY=ghcr.io/kyverno/kyverno-envoy-plugin make publish-ko

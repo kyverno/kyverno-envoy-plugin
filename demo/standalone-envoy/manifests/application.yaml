@@ -19,9 +19,10 @@ spec:
           image: sanskardevops/proxyinit:latest
           # Configure the iptables bootstrap script to redirect traffic to the
           # Envoy proxy on port 8000, specify that Envoy will be running as user
-          # 1111, These values must match up with the configuration
+          # 1111, and that we want to exclude port 8181 from the proxy for the Kyverno health checks.
+          # These values must match up with the configuration
           # defined below for the "envoy" and "kyverno-envoy-plugin" containers.
-          args: ["-p", "7000", "-u", "1111"]
+          args: ["-p", "7000", "-u", "1111", -w, "8181"]
           securityContext:
             capabilities:
               add:
@@ -47,10 +48,10 @@ spec:
             - "--config-path"
             - "/config/envoy.yaml"
         - name: kyverno-envoy-plugin
-          image: sanskardevops/plugin:0.0.25
+          image: sanskardevops/plugin:0.0.34
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8000
+            - containerPort: 8181
             - containerPort: 9000
           volumeMounts:
             - readOnly: true
@@ -59,6 +60,22 @@ spec:
           args:
             - "serve"
             - "--policy=/policies/policy.yaml"
+            - "--address=:9000"
+            - "--healthaddress=:8181"
+          livenessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 5  
       volumes:
         - name: proxy-config
           configMap:

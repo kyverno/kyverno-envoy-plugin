@@ -196,7 +196,7 @@ helm upgrade --install istiod           --namespace $ISTIO_NS           --create
 
 ### Sample applications
 
-Manifests for the sample applications are available in [test-application-1.yaml](manifests/test-application-1.yaml) and [test-application-2.yaml](manifests/test-application-2.yaml). The sample app `testapp-1` provides information about books in a collection and exposes APIs to get, create and delete Book resources. The sample app `testapp-2` provides information about movies in a collection and exposes APIs to get, create and delete Movie resources.
+Manifests for the sample applications are available in test-application-1.yaml and test-application-2.yaml. The sample app `testapp-1` provides information about books in a collection and exposes APIs to get, create and delete Book resources. The sample app `testapp-2` provides information about movies in a collection and exposes APIs to get, create and delete Movie resources.
 
 ```shell
 $ kubectl apply -f - <<EOF
@@ -210,7 +210,8 @@ EOF
 ```
 
 ```shell
-# deploy sample application testapp-1 
+# test-application-1.yaml
+# Deploy sample application testapp-1 
 $ kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -249,7 +250,8 @@ EOF
 ```
 
 ```shell
-# deploy sample application testapp-2
+# test-application-2.yaml
+# Deploy sample application testapp-2
 $ kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -358,7 +360,7 @@ This policy configures an external service for authorization. Note that the serv
 
 ### Authorization service deployment 
 
-The deployment manifest of the authorization service is available in [ext-auth-server.yaml](manifests/ext-auth-server.yaml). This deployment require policy through configmap .
+The deployment manifest of the authorization service is available in ext-auth-server.yaml. This deployment require policy through configmap .
 
 Apply the policy configmap with the following command.
 
@@ -416,7 +418,8 @@ EOF
 ```
 
 ```shell
-#Deploy the kyverno external authorizer server
+# ext-auth-server.yaml
+# Deploy the kyverno external authorizer server
 $ kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Service

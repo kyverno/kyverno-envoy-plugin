@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/kyverno/kyverno-envoy-plugin/sidecar-injector/pkg/admission"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/admission"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -119,6 +119,5 @@ func (patcher *SidecarInjectorPatcher) PatchPodCreate(ctx context.Context, pod c
 			log.Debugf("sidecar patches being applied for %v/%v: patches: %v", namespace, podName, patches)
 		}
 	}
-
 	return patches, nil
 }

@@ -16,6 +16,9 @@ else
 LD_FLAGS                           := "-s -w"
 endif
 KIND_IMAGE                         ?= kindest/node:v1.29.2
+REGISTRY                           ?= ghcr.io
+REPO                               ?= kyverno
+IMAGE                              ?= kyverno-envoy-plugin
 KO_REGISTRY                        ?= ko.local
 KO_TAGS                            ?= $(GIT_SHA)
 KO_PLATFORMS                       ?= all
@@ -125,6 +128,10 @@ build:
 # BUILD (KO) #
 ##############
 
+.PHONY: ko-login
+ko-login: $(KO)
+	@$(KO) login $(REGISTRY) --username $(REGISTRY_USERNAME) --password $(REGISTRY_PASSWORD)
+
 .PHONY: build-ko
 build-ko: ## Build Docker image with ko
 build-ko: fmt
@@ -137,9 +144,10 @@ build-ko: $(KO)
 publish-ko: ## Publish Docker image with ko
 publish-ko: fmt
 publish-ko: vet
+publish-ko: ko-login
 publish-ko: $(KO)
 	@echo "Publish Docker image with ko..." >&2
-	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
+	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(REGISTRY)/$(REPO)/$(IMAGE) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
 
 ########
 # TEST #

@@ -12,10 +12,8 @@ on:
 jobs:
   ko-publish:
     permissions:
-      contents: write
       id-token: write
       packages: write
-      pull-requests: write
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -28,4 +26,7 @@ jobs:
     - name: Run ko
       run: |
         set -e
-        KO_REGISTRY=ghcr.io/kyverno/kyverno-envoy-plugin make publish-ko
+        REGISTRY=ghcr.io \
+        REGISTRY_USERNAME=${{ github.actor }} \
+        REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} \
+        make publish-ko

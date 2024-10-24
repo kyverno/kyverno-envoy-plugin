@@ -1,0 +1,18 @@
+{{- if .Values.sidecarInjector.enabled -}}
+{{- if .Values.sidecarInjector.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "kyverno.sidecar-injector.role.name" . }}
+  labels:
+    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "kyverno.sidecar-injector.role.name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "kyverno.sidecar-injector.service-account.name" . }}
+    namespace: {{ template "kyverno.namespace" . }}
+{{- end -}}
+{{- end -}}

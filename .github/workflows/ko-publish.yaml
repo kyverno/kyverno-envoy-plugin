@@ -25,8 +25,6 @@ jobs:
       with:
         go-version-file: go.mod
         cache-dependency-path: go.sum
-    - name: Install Ko
-      uses: ko-build/setup-ko@3aebd0597dc1e9d1a26bcfdb7cbeb19c131d3037 # v0.7
     - name: Run ko
       run: |
         set -e

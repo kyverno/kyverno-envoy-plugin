@@ -1,14 +1,14 @@
 version: 2
 updates:
-- package-ecosystem: gomod
-  directory: /
-  schedule:
-    interval: daily
-  labels:
-  - bot
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: daily
-  labels:
-  - bot
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: daily
+    labels:
+      - bot
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    labels:
+      - bot

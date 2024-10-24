@@ -7,10 +7,10 @@ permissions: {}
 on:
   pull_request:
     branches:
-    - main
+      - main
   push:
     branches:
-    - main
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,24 +20,24 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    - name: Setup Go
-      uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
-      with:
-        go-version-file: go.mod
-        cache-dependency-path: go.sum
-    - name: Run tests
-      run: |
-        set -e
-        make tests
-    - name: Upload coverage
-      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
-      with:
-        name: coverage.out
-        path: coverage.out
-        retention-days: 1
-        if-no-files-found: error
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Go
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Run tests
+        run: |
+          set -e
+          make tests
+      - name: Upload coverage
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: coverage.out
+          path: coverage.out
+          retention-days: 1
+          if-no-files-found: error
 
   # upload-to-codecov:
   #   needs:
@@ -62,40 +62,40 @@ jobs:
   istio-tests:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    - name: Setup Go
-      uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
-      with:
-        go-version-file: go.mod
-        cache-dependency-path: go.sum
-    - name: Run tests
-      run: |
-        set -e
-        make kind-create-cluster
-        make install-istio
-        make kind-load-image
-  
-  e2e-tests-chainsaw:      
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Go
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Run tests
+        run: |
+          set -e
+          make kind-create-cluster
+          make install-istio
+          make kind-load-image
+
+  e2e-tests-chainsaw:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    - name: Setup Go
-      uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
-      with:
-        go-version-file: go.mod
-        cache-dependency-path: go.sum
-    - name: Run tests
-      run: |
-        set -e
-        make kind-create-cluster
-        make kind-load-taged-image    
-    - name: Install Cosign
-      uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
-    - name: Install chainsaw
-      uses: kyverno/action-install-chainsaw@d311eacde764f806c9658574ff64c9c3b21f8397 # v0.2.11
-      with:
-        verify: true
-    - name: Run Chainsaw Tests
-      run: chainsaw test tests/e2e-test/chainsaw-test.yaml        
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Go
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Run tests
+        run: |
+          set -e
+          make kind-create-cluster
+          make kind-load-taged-image
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+      - name: Install chainsaw
+        uses: kyverno/action-install-chainsaw@d311eacde764f806c9658574ff64c9c3b21f8397 # v0.2.11
+        with:
+          verify: true
+      - name: Run Chainsaw Tests
+        run: chainsaw test tests/e2e-test

@@ -7,10 +7,10 @@ permissions: {}
 on:
   pull_request:
     branches:
-    - main
+      - main
   push:
     branches:
-    - main
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,10 +35,10 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH,MEDIUM
           scanners: vuln,secret
-          exit-code: '0'
+          exit-code: "0"
           vuln-type: os,library
         env:
-          TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+          TRIVY_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-db:2"
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
         with:

@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"strings"
-
 	"fmt"
 	"log"
 	"net"
@@ -11,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 

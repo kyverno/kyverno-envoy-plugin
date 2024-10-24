@@ -16,8 +16,9 @@ else
 LD_FLAGS                           := "-s -w"
 endif
 KIND_IMAGE                         ?= kindest/node:v1.29.2
-KO_REGISTRY                        := ko.local
-KO_TAGS                            := $(GIT_SHA)
+KO_REGISTRY                        ?= ko.local
+KO_TAGS                            ?= $(GIT_SHA)
+KO_PLATFORMS                       ?= all
 
 #########
 # TOOLS #
@@ -131,6 +132,14 @@ build-ko: vet
 build-ko: $(KO)
 	@echo "Build Docker image with ko..." >&2
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
+
+.PHONY: publish-ko
+publish-ko: ## Publish Docker image with ko
+publish-ko: fmt
+publish-ko: vet
+publish-ko: $(KO)
+	@echo "Publish Docker image with ko..." >&2
+	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
 
 ########
 # TEST #

@@ -15,31 +15,25 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Parse semver string
-        id: semver 
-        uses: booxmedialtd/ws-action-parse-semver@7784200024d6b3fc01253e617ec0168daf603de3 # v1.4.7
-        with:
-          input_string: ${{ github.ref_name }}
-          version_extractor_regex: '^docs-v(.*)$'
-      - name: Checkout
-        if: ${{ steps.semver.outputs.prerelease == '' }}
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      # - name: Setup Go
-      #   uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-      #   if: ${{ steps.semver.outputs.prerelease == '' }}
-      #   with:
-      #     go-version-file: go.mod
-      #     cache-dependency-path: go.sum
-      - name: Build site
-        if: ${{ steps.semver.outputs.prerelease == '' }}
-        run: |
-          set -e
-          make codegen-mkdocs
-      - name: Deploy site
-        if: ${{ steps.semver.outputs.prerelease == '' }}
-        run: |
-          set -e
-          git fetch origin gh-pages --depth=1
-          git config user.name ci-bot
-          git config user.email ci-bot@example.com
-          mike deploy -F ./website/mkdocs.yaml --push --update-aliases ${{ steps.semver.outputs.fullversion }} latest
+    - name: Parse semver string
+      id: semver 
+      uses: booxmedialtd/ws-action-parse-semver@7784200024d6b3fc01253e617ec0168daf603de3 # v1.4.7
+      with:
+        input_string: ${{ github.ref_name }}
+        version_extractor_regex: '^docs-v(.*)$'
+    - name: Checkout
+      if: ${{ steps.semver.outputs.prerelease == '' }}
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+    - name: Build site
+      if: ${{ steps.semver.outputs.prerelease == '' }}
+      run: |
+        set -e
+        make codegen-mkdocs
+    - name: Deploy site
+      if: ${{ steps.semver.outputs.prerelease == '' }}
+      run: |
+        set -e
+        git fetch origin gh-pages --depth=1
+        git config user.name ci-bot
+        git config user.email ci-bot@example.com
+        mike deploy -F ./website/mkdocs.yaml --push --update-aliases ${{ steps.semver.outputs.fullversion }} latest

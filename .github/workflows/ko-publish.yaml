@@ -1,23 +1,21 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
-name: Lint
+name: KO publish
 
 permissions: {}
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    tags:
+      - v*
 
 jobs:
-  required:
+  ko-publish:
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -27,8 +25,9 @@ jobs:
       with:
         go-version-file: go.mod
         cache-dependency-path: go.sum
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@971e284b6050e8a5849b72094c50ab08da042db8 # v3.7.1
-      with:
-        skip-cache: true
-        args: --timeout 5m
+    - name: Install Ko
+      uses: ko-build/setup-ko@3aebd0597dc1e9d1a26bcfdb7cbeb19c131d3037 # v0.7
+    - name: Run ko
+      run: |
+        set -e
+        make publish-ko

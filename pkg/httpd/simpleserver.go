@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kyverno/kyverno-envoy-plugin/sidecar-injector/pkg/admission"
-	"github.com/kyverno/kyverno-envoy-plugin/sidecar-injector/pkg/webhook"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/admission"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -25,21 +25,18 @@ type SimpleServer struct {
 	Debug    bool
 }
 
-/*Start the simple http server supporting TLS*/
+// Start the simple http server supporting TLS
 func (simpleServer *SimpleServer) Start() error {
 	k8sClient, err := simpleServer.CreateClient()
 	if err != nil {
 		return err
 	}
-
 	simpleServer.Patcher.K8sClient = k8sClient
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%d", simpleServer.Port),
 	}
-
 	mux := http.NewServeMux()
 	server.Handler = mux
-
 	admissionHandler := &admission.Handler{
 		Handler: &admission.PodAdmissionRequestHandler{
 			PodHandler: &simpleServer.Patcher,
@@ -47,7 +44,6 @@ func (simpleServer *SimpleServer) Start() error {
 	}
 	mux.HandleFunc("/healthz", webhook.HealthCheckHandler)
 	mux.HandleFunc("/mutate", admissionHandler.HandleAdmission)
-
 	if simpleServer.Local {
 		return server.ListenAndServe()
 	}
@@ -57,11 +53,9 @@ func (simpleServer *SimpleServer) Start() error {
 // CreateClient Create the server
 func (simpleServer *SimpleServer) CreateClient() (*kubernetes.Clientset, error) {
 	config, err := simpleServer.buildConfig()
-
 	if err != nil {
 		return nil, errors.Wrapf(err, "error setting up cluster config")
 	}
-
 	return kubernetes.NewForConfig(config)
 }
 

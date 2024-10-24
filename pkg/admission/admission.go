@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -96,7 +96,7 @@ func validateRequest(req *http.Request) error {
 }
 
 func readRequestBody(req *http.Request) ([]byte, error) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read Request Body: %v", err)
 	}

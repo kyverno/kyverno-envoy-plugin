@@ -92,6 +92,6 @@ jobs:
         make kind-create-cluster
         make kind-load-taged-image    
     - name: Install Chainsaw
-      uses: kyverno/action-install-chainsaw@73115d8a049c89dd8e3799daac9d6c36f8b9b139 # v0.2.0
+      uses: kyverno/action-install-chainsaw@d311eacde764f806c9658574ff64c9c3b21f8397 # v0.2.0
     - name: Run Chainsaw Tests
       run: chainsaw test tests/e2e-test/chainsaw-test.yaml        

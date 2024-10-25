@@ -6,13 +6,21 @@ metadata:
   namespace: {{ template "kyverno.namespace" . }}
   labels:
     {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+  {{- with .Values.sidecarInjector.service.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.sidecarInjector.service.type }}
   ports:
   - name: https
+    port: {{ .Values.sidecarInjector.service.port }}
     protocol: TCP
-    port: 443
-    targetPort: 8443
+    appProtocol: https
+    targetPort: https
+    {{- if and (eq .Values.sidecarInjector.service.type "NodePort") (not (empty .Values.sidecarInjector.service.nodePort)) }}
+    nodePort: {{ .Values.sidecarInjector.service.nodePort }}
+    {{- end }}
   selector:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "kyverno.sidecar-injector.labels.match" . | nindent 4 }}
 {{- end -}}

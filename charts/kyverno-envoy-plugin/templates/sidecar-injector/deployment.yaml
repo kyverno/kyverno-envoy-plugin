@@ -74,6 +74,10 @@ spec:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
       serviceAccountName: {{ template "kyverno.sidecar-injector.service-account.name" . }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ template "kyverno.sidecar-injector.name" . }}
       containers:
         {{- with .Values.sidecarInjector.containers.injector }}
         - name: injector
@@ -107,5 +111,9 @@ spec:
           args:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
+          volumeMounts:
+            - name: certs
+              mountPath: /opt/kubernetes-sidecar-injector/certs
+              readOnly: true
         {{- end }}
 {{- end -}}

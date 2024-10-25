@@ -7,8 +7,40 @@ import (
 	"io"
 	"net/http"
 
+	"gomodules.xyz/jsonpatch/v2"
 	admissionv1 "k8s.io/api/admission/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
+
+func AdmissionResponse(r *admissionv1.AdmissionRequest, err error, patch ...jsonpatch.Operation) *admissionv1.AdmissionResponse {
+	response := admissionv1.AdmissionResponse{
+		UID: r.UID,
+	}
+	var patchBytes []byte
+	if err == nil {
+		if len(patch) != 0 {
+			patchBytes, err = json.Marshal(patch)
+		}
+	}
+	if err != nil {
+		response.Allowed = false
+		response.Result = &metav1.Status{
+			Status:  metav1.StatusFailure,
+			Message: err.Error(),
+		}
+	} else {
+		response.Allowed = true
+		response.Result = &metav1.Status{
+			Status: metav1.StatusSuccess,
+		}
+		if patchBytes != nil {
+			response.PatchType = ptr.To(admissionv1.PatchTypeJSONPatch)
+			response.Patch = patchBytes
+		}
+	}
+	return &response
+}
 
 func AdmissionReview(inner func(context.Context, *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

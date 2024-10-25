@@ -10,97 +10,62 @@ import (
 	"time"
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server/handlers"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/sidecar"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	jsonpatch "gomodules.xyz/jsonpatch/v2"
 	admissionv1 "k8s.io/api/admission/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/utils/ptr"
 )
 
 func Command() *cobra.Command {
 	var address string
 	var certFile string
 	var keyFile string
+	var sidecarImage string
 	command := &cobra.Command{
 		Use:   "sidecar-injector",
 		Short: "Responsible for injecting sidecars into pod containers",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runServer(context.Background(), address, certFile, keyFile)
+			mux := setupMux(sidecarImage)
+			server := setupServer(address, mux)
+			return runServer(context.Background(), server, certFile, keyFile)
 		},
 	}
 	command.Flags().StringVar(&address, "address", ":9443", "Address to listen on")
 	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
 	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
+	command.Flags().StringVar(&sidecarImage, "sidecar-image", "", "Image to use in sidecar")
 	return command
 }
 
-func setupMux() http.Handler {
+func setupMux(sidecarImage string) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("/livez", handlers.Health())
-	mux.Handle("/readyz", handlers.Health())
+	mux.Handle("/livez", handlers.Healthy(handlers.True))
+	mux.Handle("/readyz", handlers.Ready(handlers.True))
 	mux.Handle("/mutate", handlers.AdmissionReview(func(ctx context.Context, r *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
-		response := func(err error, warnings ...string) *admissionv1.AdmissionResponse {
-			response := admissionv1.AdmissionResponse{
-				Allowed: err == nil,
-				UID:     r.UID,
-			}
-			if err != nil {
-				response.Result = &metav1.Status{
-					Status:  metav1.StatusFailure,
-					Message: err.Error(),
-				}
-			}
-			response.Warnings = warnings
-			return &response
+		var pod corev1.Pod
+		if err := json.Unmarshal(r.Object.Raw, &pod); err != nil {
+			return handlers.AdmissionResponse(r, err)
 		}
-		var object unstructured.Unstructured
-		if err := object.UnmarshalJSON(r.Object.Raw); err != nil {
-			fmt.Println("object.UnmarshalJSON")
-			return response(err)
-		}
-		var pod v1.Pod
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(object.UnstructuredContent(), &pod); err != nil {
-			fmt.Println("FromUnstructured")
-			return response(err)
-		}
-		pod.Spec.Containers = append(pod.Spec.Containers, v1.Container{
-			Name:            "kyverno-envoy-plugin",
-			ImagePullPolicy: v1.PullIfNotPresent,
-			Image:           "foo",
-			Args: []string{
-				"serve",
-			},
-		})
+		pod = sidecar.Inject(pod, sidecar.Sidecar(sidecarImage))
 		if data, err := json.Marshal(&pod); err != nil {
-			fmt.Println("json.Marshal", string(data))
-			return response(err)
+			return handlers.AdmissionResponse(r, err)
 		} else if patch, err := jsonpatch.CreatePatch(r.Object.Raw, data); err != nil {
-			fmt.Println("jsonpatch.CreateMergePatch", string(data))
-			return response(err)
-		} else if patch, err := json.Marshal(patch); err != nil {
-			fmt.Println("jsonpatch.CreateMergePatch", string(data))
-			return response(err)
+			return handlers.AdmissionResponse(r, err)
 		} else {
-			rspn := response(nil)
-			rspn.PatchType = ptr.To(admissionv1.PatchTypeJSONPatch)
-			rspn.Patch = patch
-			fmt.Println("ok", string(patch))
-			return rspn
+			return handlers.AdmissionResponse(r, nil, patch...)
 		}
 	}))
 	return mux
 }
 
-func setupServer(addr string) *http.Server {
+func setupServer(addr string, handler http.Handler) *http.Server {
 	return &http.Server{
 		Addr:    addr,
-		Handler: setupMux(),
+		Handler: handler,
 		TLSConfig: &tls.Config{
 			MinVersion: tls.VersionTLS12,
 			CipherSuites: []uint16{
@@ -120,9 +85,8 @@ func setupServer(addr string) *http.Server {
 	}
 }
 
-func runServer(ctx context.Context, addr, certFile, keyFile string) error {
+func runServer(ctx context.Context, server *http.Server, certFile, keyFile string) error {
 	var group wait.Group
-	server := setupServer(addr)
 	err := func() error {
 		signalsCtx, signalsCancel := signals.Context(ctx)
 		defer signalsCancel()
@@ -134,7 +98,7 @@ func runServer(ctx context.Context, addr, certFile, keyFile string) error {
 			defer shutdownCancel()
 			shutdownErr = server.Shutdown(shutdownCtx)
 		})
-		fmt.Printf("Starting server at %s...\n", addr)
+		fmt.Printf("Starting server at %s...\n", server.Addr)
 		var serveErr error
 		if certFile != "" && keyFile != "" {
 			serveErr = server.ListenAndServeTLS(certFile, keyFile)

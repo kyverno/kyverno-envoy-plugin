@@ -9,4 +9,4 @@ spec:
     args:
     - sleep
     - 1d
-  - name: kyverno-envoy-plugin
+  - name: kyverno-authz-server

@@ -67,8 +67,8 @@ func (s *Servers) startHTTPServer(ctx context.Context) {
 		log.Fatalf("failed to parse address url: %v", err)
 	}
 	mux := http.NewServeMux()
-	mux.Handle("/livez", handlers.Health())
-	mux.Handle("/readyz", handlers.Health())
+	mux.Handle("/livez", handlers.Healthy(handlers.True))
+	mux.Handle("/readyz", handlers.Ready(handlers.True))
 	server := &http.Server{
 		Addr:    parsedURL.Host,
 		Handler: mux,

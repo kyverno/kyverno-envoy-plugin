@@ -25,6 +25,10 @@ metadata:
   name: {{ template "kyverno.sidecar-injector.name" . }}
   labels:
     {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+  {{- with .Values.sidecarInjector.webhook.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 webhooks:
   - name: kyverno-envoy-sidecar.kyverno-envoy-sidecar-injector.svc
     clientConfig:
@@ -33,24 +37,21 @@ webhooks:
         namespace: {{ template "kyverno.namespace" . }}
         path: "/mutate"
       caBundle: {{ $ca.Cert | b64enc }}
-    failurePolicy: Fail
+    failurePolicy: {{ .Values.sidecarInjector.webhook.failurePolicy }}
     sideEffects: None
-    admissionReviewVersions:
-    - v1
+    admissionReviewVersions: [ v1 ]
     rules:
-      - apiGroups:
-          - ''
-        apiVersions:
-          - v1
-        resources:
-          - pods
-        operations:
-          - CREATE
-        scope: '*'  
+      - apiGroups: [ '' ]
+        apiVersions: [ v1 ]
+        resources: [ pods ]
+        operations: [ CREATE ]
+        scope: '*'
+    {{- with .Values.sidecarInjector.webhook.objectSelector }}
     objectSelector:
-      matchExpressions:
-        - key: kyverno-envoy-sidecar/injection
-          operator: In
-          values:
-          - enabled
+      {{- tpl (toYaml .) $ | nindent 6 }}
+    {{- end }}
+    {{- with .Values.sidecarInjector.webhook.namespaceSelector }}
+    namespaceSelector:
+      {{- tpl (toYaml .) $ | nindent 6 }}
+    {{- end }}
 {{- end -}}

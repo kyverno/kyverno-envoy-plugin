@@ -1,0 +1,6 @@
+dependencies:
+- name: kyverno-lib
+  repository: file://../kyverno-lib
+  version: 0.1.0
+digest: sha256:6d7c461dd41b61e7062e79587c46c54b4a301b58f3e5c34f0ac9626e6ba3d4ce
+generated: "2024-10-25T19:52:44.757128+02:00"

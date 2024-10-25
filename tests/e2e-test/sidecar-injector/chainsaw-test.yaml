@@ -1,0 +1,11 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: sidecar-injector
+spec:
+  steps: 
+  - try:
+    - create:
+        file: ./pod.yaml
+    - assert:
+        file: ./pod-assert.yaml

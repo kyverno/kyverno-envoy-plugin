@@ -165,7 +165,7 @@ sidecarInjector:
       # @default -- See [values.yaml](values.yaml)
       startupProbe:
         httpGet:
-          path: /health/liveness
+          path: /livez
           port: 9443
           scheme: HTTPS
         failureThreshold: 20
@@ -178,7 +178,7 @@ sidecarInjector:
       # @default -- See [values.yaml](values.yaml)
       livenessProbe:
         httpGet:
-          path: /health/liveness
+          path: /livez
           port: 9443
           scheme: HTTPS
         initialDelaySeconds: 15
@@ -193,7 +193,7 @@ sidecarInjector:
       # @default -- See [values.yaml](values.yaml)
       readinessProbe:
         httpGet:
-          path: /health/readiness
+          path: /readyz
           port: 9443
           scheme: HTTPS
         initialDelaySeconds: 5
@@ -211,7 +211,9 @@ sidecarInjector:
       # -- Container args.
       args:
         - sidecar-injector
-        - --port=9443
+        - --address=:9443
+        - --cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt
+        - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
 
   service:
 

@@ -36,10 +36,9 @@ type Servers struct {
 	grpcV3     *extAuthzServerV3
 }
 
-func NewServers(policies []string, address string, healthaddress string) *Servers {
+func NewServers(address string, healthaddress string) *Servers {
 	return &Servers{
 		grpcV3: &extAuthzServerV3{
-			policies:      policies,
 			address:       address,
 			healthaddress: healthaddress,
 		},
@@ -68,7 +67,8 @@ func (s *Servers) startHTTPServer(ctx context.Context) {
 		log.Fatalf("failed to parse address url: %v", err)
 	}
 	mux := http.NewServeMux()
-	mux.Handle("GET /health/", handlers.Health())
+	mux.Handle("/livez", handlers.Health())
+	mux.Handle("/readyz", handlers.Health())
 	server := &http.Server{
 		Addr:    parsedURL.Host,
 		Handler: mux,

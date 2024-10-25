@@ -1,10 +1,10 @@
 {{/* vim: set filetype=mustache: */}}
 
-{{- define "kyverno.names.name" -}}
+{{- define "kyverno.lib.names.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "kyverno.names.fullname" -}}
+{{- define "kyverno.lib.names.fullname" -}}
 {{- if .Values.fullnameOverride -}}
   {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -17,6 +17,6 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "kyverno.namespace" -}}
+{{- define "kyverno.lib.namespace" -}}
 {{ default .Release.Namespace .Values.namespaceOverride }}
 {{- end -}}

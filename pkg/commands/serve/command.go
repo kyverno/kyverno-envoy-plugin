@@ -8,20 +8,18 @@ import (
 )
 
 func Command() *cobra.Command {
-	var policies []string
-	var address string
-	var healthaddress string
+	var httpAddress string
+	var grpcAddress string
 	command := &cobra.Command{
 		Use:   "serve",
 		Short: "Start the kyverno-envoy-plugin server",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			srv := server.NewServers(policies, address, healthaddress)
+			srv := server.NewServers(grpcAddress, httpAddress)
 			server.StartServers(ctx, srv)
 		},
 	}
-	command.Flags().StringSliceVar(&policies, "policy", nil, "Path to kyverno-json policies")
-	command.Flags().StringVar(&address, "address", ":9000", "Address to listen on")
-	command.Flags().StringVar(&healthaddress, "healthaddress", ":8181", "Address to listen on for health checks")
+	command.Flags().StringVar(&httpAddress, "http-address", "", "Address to listen on")
+	command.Flags().StringVar(&grpcAddress, "grpc-address", "", "Address to listen on for health checks")
 	return command
 }

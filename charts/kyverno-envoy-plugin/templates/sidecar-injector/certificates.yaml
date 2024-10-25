@@ -1,15 +1,15 @@
 {{- if .Values.sidecarInjector.enabled -}}
-{{- $ca := genCA (printf "*.%s.svc" (include "kyverno.namespace" .)) 1024 -}}
-{{- $svcName := (printf "%s.%s.svc" (include "kyverno.sidecar-injector.name" .) (include "kyverno.namespace" .)) -}}
+{{- $ca := genCA (printf "*.%s.svc" (include "kyverno.lib.namespace" .)) 1024 -}}
+{{- $svcName := (printf "%s.%s.svc" (include "sidecar-injector.name" .) (include "kyverno.lib.namespace" .)) -}}
 {{- $tls := genSignedCert $svcName nil (list $svcName) 1024 $ca -}}
 {{- if .Values.sidecarInjector.certificates.selfSigned -}}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ template "kyverno.sidecar-injector.name" . }}
-  namespace: {{ template "kyverno.namespace" . }}
+  name: {{ template "sidecar-injector.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
   labels:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
   annotations:
     self-signed-cert: "true"
 type: kubernetes.io/tls
@@ -22,9 +22,9 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: {{ template "kyverno.sidecar-injector.name" . }}
+  name: {{ template "sidecar-injector.name" . }}
   labels:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
   {{- with .Values.sidecarInjector.webhook.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -33,8 +33,8 @@ webhooks:
   - name: kyverno-envoy-sidecar.kyverno-envoy-sidecar-injector.svc
     clientConfig:
       service:
-        name: {{ template "kyverno.sidecar-injector.name" . }}
-        namespace: {{ template "kyverno.namespace" . }}
+        name: {{ template "sidecar-injector.name" . }}
+        namespace: {{ template "kyverno.lib.namespace" . }}
         path: "/mutate"
       caBundle: {{ $ca.Cert | b64enc }}
     failurePolicy: {{ .Values.sidecarInjector.webhook.failurePolicy }}

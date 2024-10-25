@@ -1,8 +1,7 @@
-{{- if .Values.sidecarInjector.enabled -}}
 {{- $ca := genCA (printf "*.%s.svc" (include "kyverno.lib.namespace" .)) 1024 -}}
 {{- $svcName := (printf "%s.%s.svc" (include "sidecar-injector.name" .) (include "kyverno.lib.namespace" .)) -}}
 {{- $tls := genSignedCert $svcName nil (list $svcName) 1024 $ca -}}
-{{- if .Values.sidecarInjector.certificates.selfSigned -}}
+{{- if .Values.certificates.selfSigned -}}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -25,7 +24,7 @@ metadata:
   name: {{ template "sidecar-injector.name" . }}
   labels:
     {{- include "sidecar-injector.labels" . | nindent 4 }}
-  {{- with .Values.sidecarInjector.webhook.annotations }}
+  {{- with .Values.webhook.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -37,7 +36,7 @@ webhooks:
         namespace: {{ template "kyverno.lib.namespace" . }}
         path: "/mutate"
       caBundle: {{ $ca.Cert | b64enc }}
-    failurePolicy: {{ .Values.sidecarInjector.webhook.failurePolicy }}
+    failurePolicy: {{ .Values.webhook.failurePolicy }}
     sideEffects: None
     admissionReviewVersions: [ v1 ]
     rules:
@@ -46,12 +45,11 @@ webhooks:
         resources: [ pods ]
         operations: [ CREATE ]
         scope: '*'
-    {{- with .Values.sidecarInjector.webhook.objectSelector }}
+    {{- with .Values.webhook.objectSelector }}
     objectSelector:
       {{- tpl (toYaml .) $ | nindent 6 }}
     {{- end }}
-    {{- with .Values.sidecarInjector.webhook.namespaceSelector }}
+    {{- with .Values.webhook.namespaceSelector }}
     namespaceSelector:
       {{- tpl (toYaml .) $ | nindent 6 }}
     {{- end }}
-{{- end -}}

@@ -192,9 +192,9 @@ kind-load-image: ko-build
 # ISTIO #
 #########
 
-.PHONY: istio-install
-istio-install: ## Install ISTIO
-istio-install: $(HELM)
+.PHONY: install-istio
+install-istio: ## Install istio
+install-istio: $(HELM)
 	@echo Install istio... >&2
 	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
 	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod
@@ -203,17 +203,17 @@ istio-install: $(HELM)
 # HELM #
 ########
 
-.PHONY: install-kyverno-envoy-plugin
-install-kyverno-envoy-plugin: ## Install kyverno-envoy-plugin chart
-install-kyverno-envoy-plugin: kind-load-image
-install-kyverno-envoy-plugin: $(HELM)
-	@echo Build kyverno-envoy-plugin dependecy... >&2
-	@$(HELM) dependency build --skip-refresh ./charts/kyverno-envoy-plugin
-	@echo Install kyverno-envoy-plugin chart... >&2
-	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-envoy-plugin \
-		--set sidecarInjector.containers.injector.image.registry=$(KO_REGISTRY) \
-		--set sidecarInjector.containers.injector.image.repository=$(PACKAGE) \
-		--set sidecarInjector.containers.injector.image.tag=$(GIT_SHA)
+.PHONY: install-kyverno-sidecar-injector
+install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
+install-kyverno-sidecar-injector: kind-load-image
+install-kyverno-sidecar-injector: $(HELM)
+	@echo Build kyverno-sidecar-injector dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-sidecar-injector
+	@echo Install kyverno-sidecar-injector chart... >&2
+	@$(HELM) upgrade --install kyverno-sidecar-injector --namespace kyverno --create-namespace --wait ./charts/kyverno-sidecar-injector \
+		--set containers.injector.image.registry=$(KO_REGISTRY) \
+		--set containers.injector.image.repository=$(PACKAGE) \
+		--set containers.injector.image.tag=$(GIT_SHA)
 
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart

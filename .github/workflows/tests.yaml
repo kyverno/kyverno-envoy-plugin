@@ -79,6 +79,6 @@ jobs:
         run: |
           set -e
           make kind-create-cluster
-          make install-kyverno-envoy-plugin
+          make install-kyverno-sidecar-injector
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e-test

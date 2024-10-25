@@ -26,6 +26,7 @@ sidecarInjector:
     create: true
 
     serviceAccount:
+
       # -- The ServiceAccount name
       name:
 
@@ -119,6 +120,7 @@ sidecarInjector:
     nodeAffinity: {}
 
   containers:
+
     injector:
 
       image:
@@ -231,5 +233,23 @@ sidecarInjector:
     annotations: {}
 
   webhook:
+
+    # -- Webhook annotations
+    annotations: {}
+      # example.com/annotation: value
+
+    # -- Webhook object selector
+    objectSelector: ~
+
+    # -- Webhook failure policy
+    failurePolicy: Fail
+
+    # -- Webhook namespace selector
+    namespaceSelector:
+      matchExpressions:
+        - key: kyverno-injection
+          operator: In
+          values:
+          - enabled
 
   pdb:

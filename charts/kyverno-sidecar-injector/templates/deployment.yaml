@@ -1,4 +1,3 @@
-{{- if .Values.sidecarInjector.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,72 +5,72 @@ metadata:
   namespace: {{ template "kyverno.lib.namespace" . }}
   labels:
     {{- include "sidecar-injector.labels" . | nindent 4 }}
-  {{- with .Values.sidecarInjector.deployment.annotations }}
+  {{- with .Values.deployment.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
   {{- end }}
 spec:
-  {{- with .Values.sidecarInjector.deployment.replicas }}
+  {{- with .Values.deployment.replicas }}
   replicas: {{ . }}
   {{- end }}
-  revisionHistoryLimit: {{ .Values.sidecarInjector.deployment.revisionHistoryLimit }}
-  {{- with .Values.sidecarInjector.deployment.updateStrategy }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  {{- with .Values.deployment.updateStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "sidecar-injector.labels.match" . | nindent 6 }}
+      {{- include "sidecar-injector.labels.selector" . | nindent 6 }}
   template:
     metadata:
       labels:
         {{- include "sidecar-injector.labels" . | nindent 8 }}
-        {{- with .Values.sidecarInjector.pod.labels }}
+        {{- with .Values.pod.labels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
-      {{- with .Values.sidecarInjector.pod.annotations }}
+      {{- with .Values.pod.annotations }}
       annotations: {{ tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.sidecarInjector.pod.imagePullSecrets }}
+      {{- with .Values.pod.imagePullSecrets }}
       imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.securityContext }}
+      {{- with .Values.pod.securityContext }}
       securityContext:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.nodeSelector }}
+      {{- with .Values.pod.nodeSelector }}
       nodeSelector:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.tolerations }}
+      {{- with .Values.pod.tolerations }}
       tolerations:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.topologySpreadConstraints }}
+      {{- with .Values.pod.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.priorityClassName }}
+      {{- with .Values.pod.priorityClassName }}
       priorityClassName: {{ . | quote }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.hostNetwork }}
+      {{- with .Values.pod.hostNetwork }}
       hostNetwork: {{ . }}
       {{- end }}
-      {{- with .Values.sidecarInjector.pod.dnsPolicy }}
+      {{- with .Values.pod.dnsPolicy }}
       dnsPolicy: {{ . }}
       {{- end }}
       affinity:
-        {{- with .Values.sidecarInjector.pod.antiAffinity }}
+        {{- with .Values.pod.antiAffinity }}
         podAntiAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- with .Values.sidecarInjector.pod.affinity }}
+        {{- with .Values.pod.affinity }}
         podAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- with .Values.sidecarInjector.pod.nodeAffinity }}
+        {{- with .Values.pod.nodeAffinity }}
         nodeAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
@@ -81,7 +80,7 @@ spec:
           secret:
             secretName: {{ template "sidecar-injector.name" . }}
       containers:
-        {{- with .Values.sidecarInjector.containers.injector }}
+        {{- with .Values.containers.injector }}
         - name: injector
           image: {{ include "sidecar-injector.image" .image }}
           imagePullPolicy: {{ .image.pullPolicy }}
@@ -118,4 +117,3 @@ spec:
               mountPath: /opt/kubernetes-sidecar-injector/certs
               readOnly: true
         {{- end }}
-{{- end -}}

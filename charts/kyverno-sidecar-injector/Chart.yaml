@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kyverno-envoy-plugin
+name: kyverno-sidecar-injector
 description: Kyverno policies based authorization plugin for Envoy ❤️
 icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
 home: https://kyverno.github.io/kyverno-envoy-plugin

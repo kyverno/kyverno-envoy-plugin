@@ -29,4 +29,4 @@ jobs:
           REGISTRY=ghcr.io \
           REGISTRY_USERNAME=${{ github.actor }} \
           REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} \
-          make publish-ko
+          make ko-publish

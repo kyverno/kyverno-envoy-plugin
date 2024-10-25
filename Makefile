@@ -132,20 +132,20 @@ build:
 ko-login: $(KO)
 	@$(KO) login $(REGISTRY) --username $(REGISTRY_USERNAME) --password $(REGISTRY_PASSWORD)
 
-.PHONY: build-ko
-build-ko: ## Build Docker image with ko
-build-ko: fmt
-build-ko: vet
-build-ko: $(KO)
+.PHONY: ko-build
+ko-build: ## Build Docker image with ko
+ko-build: fmt
+ko-build: vet
+ko-build: $(KO)
 	@echo "Build Docker image with ko..." >&2
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
 
-.PHONY: publish-ko
-publish-ko: ## Publish Docker image with ko
-publish-ko: fmt
-publish-ko: vet
-publish-ko: ko-login
-publish-ko: $(KO)
+.PHONY: ko-publish
+ko-publish: ## Publish Docker image with ko
+ko-publish: fmt
+ko-publish: vet
+ko-publish: ko-login
+ko-publish: $(KO)
 	@echo "Publish Docker image with ko..." >&2
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(REGISTRY)/$(REPO)/$(IMAGE) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
 
@@ -184,25 +184,17 @@ kind-create-cluster: $(KIND)
 .PHONY: kind-load-image
 kind-load-image: ## Build image and load it in kind cluster
 kind-load-image: $(KIND)
-kind-load-image: build-ko
+kind-load-image: ko-build
 	@echo Load image in kind... >&2
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
-
-.PHONY: kind-load-taged-image
-kind-load-taged-image: ## Build image and load it in kind cluster
-kind-load-taged-image: $(KIND)
-kind-load-taged-image: build-ko
-	@echo Load image in kind... >&2
-	docker tag $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA) $(KO_REGISTRY)/$(PACKAGE):latest
-	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):latest
 
 #########
 # ISTIO #
 #########
 
-.PHONY: install-istio
-install-istio: ## Install ISTIO
-install-istio: $(HELM)
+.PHONY: istio-install
+istio-install: ## Install ISTIO
+istio-install: $(HELM)
 	@echo Install istio... >&2
 	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
 	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod
@@ -217,8 +209,8 @@ chart-install: kind-load-image
 chart-install: $(HELM)
 	@echo Install helm chart... >&2
 	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-envoy-plugin \
-		--set sidecarInjector.containers.injector.image.registry=ko.local \
-		--set sidecarInjector.containers.injector.image.repository=github.com/kyverno/kyverno-envoy-plugin \
+		--set sidecarInjector.containers.injector.image.registry=$(KO_REGISTRY) \
+		--set sidecarInjector.containers.injector.image.repository=$(PACKAGE) \
 		--set sidecarInjector.containers.injector.image.tag=$(GIT_SHA)
 
 ########

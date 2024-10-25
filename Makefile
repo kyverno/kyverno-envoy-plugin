@@ -207,6 +207,8 @@ istio-install: $(HELM)
 chart-install: ## Install chart
 chart-install: kind-load-image
 chart-install: $(HELM)
+	@echo Build helm dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-envoy-plugin
 	@echo Install helm chart... >&2
 	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-envoy-plugin \
 		--set sidecarInjector.containers.injector.image.registry=$(KO_REGISTRY) \

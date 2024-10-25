@@ -20,3 +20,7 @@ maintainers:
   - name: Kyverno
     url: https://kyverno.io/
 kubeVersion: ">=1.25.0-0"
+dependencies:
+- name: kyverno-lib
+  version: 0.1.0
+  repository: file://../kyverno-lib

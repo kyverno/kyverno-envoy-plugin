@@ -1,0 +1,35 @@
+{{- if .Values.sidecarInjector.enabled -}}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ template "kyverno.sidecar-injector.name" . }}
+  labels:
+    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+webhooks:
+  - name: kyverno-envoy-sidecar.kyverno-envoy-sidecar-injector.svc
+    clientConfig:
+      service:
+        name: {{ template "kyverno.sidecar-injector.name" . }}
+        namespace: {{ template "kyverno.namespace" . }}
+        path: "/mutate"
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+    - v1
+    rules:
+      - apiGroups:
+          - ''
+        apiVersions:
+          - v1
+        resources:
+          - pods
+        operations:
+          - CREATE
+        scope: '*'  
+    objectSelector:
+      matchExpressions:
+        - key: kyverno-envoy-sidecar/injection
+          operator: In
+          values:
+          - enabled
+{{- end -}}

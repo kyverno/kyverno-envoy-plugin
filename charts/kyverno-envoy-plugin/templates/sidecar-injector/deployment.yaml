@@ -1,0 +1,111 @@
+{{- if .Values.sidecarInjector.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kyverno.sidecar-injector.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+  {{- with .Values.sidecarInjector.deployment.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ template "kyverno.deployment.replicas" .Values.sidecarInjector.deployment.replicas }}
+  revisionHistoryLimit: {{ .Values.sidecarInjector.deployment.revisionHistoryLimit }}
+  {{- with .Values.sidecarInjector.deployment.updateStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "kyverno.sidecar-injector.labels.match" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kyverno.sidecar-injector.labels" . | nindent 8 }}
+        {{- with .Values.sidecarInjector.pod.labels }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
+      {{- with .Values.sidecarInjector.pod.annotations }}
+      annotations: {{ tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.sidecarInjector.pod.imagePullSecrets }}
+      imagePullSecrets:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.securityContext }}
+      securityContext:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.nodeSelector }}
+      nodeSelector:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.tolerations }}
+      tolerations:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.hostNetwork }}
+      hostNetwork: {{ . }}
+      {{- end }}
+      {{- with .Values.sidecarInjector.pod.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
+      affinity:
+        {{- with .Values.sidecarInjector.pod.antiAffinity }}
+        podAntiAffinity:
+          {{- tpl (toYaml .) $ | nindent 10 }}
+        {{- end }}
+        {{- with .Values.sidecarInjector.pod.affinity }}
+        podAffinity:
+          {{- tpl (toYaml .) $ | nindent 10 }}
+        {{- end }}
+        {{- with .Values.sidecarInjector.pod.nodeAffinity }}
+        nodeAffinity:
+          {{- tpl (toYaml .) $ | nindent 10 }}
+        {{- end }}
+      serviceAccountName: {{ template "kyverno.sidecar-injector.service-account.name" . }}
+      containers:
+        {{- with .Values.sidecarInjector.containers.injector }}
+        - name: injector
+          image: {{ include "kyverno.sidecar-injector.image" .image }}
+          imagePullPolicy: {{ .image.pullPolicy }}
+          {{- with .resources }}
+          resources:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .startupProbe }}
+          startupProbe:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .livenessProbe }}
+          livenessProbe:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .readinessProbe }}
+          readinessProbe:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .ports }}
+          ports:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .args }}
+          args:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+        {{- end }}
+{{- end -}}

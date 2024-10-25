@@ -171,7 +171,7 @@ mkdocs-serve: ## Generate and serve mkdocs website
 	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
 	@mkdocs serve -f ./website/mkdocs.yaml
 
-########	
+########
 # KIND #
 ########
 
@@ -196,7 +196,7 @@ kind-load-taged-image: build-ko
 	docker tag $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA) $(KO_REGISTRY)/$(PACKAGE):latest
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):latest
 
-#########	
+#########
 # ISTIO #
 #########
 
@@ -206,6 +206,20 @@ install-istio: $(HELM)
 	@echo Install istio... >&2
 	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
 	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod
+
+########
+# HELM #
+########
+
+.PHONY: chart-install
+chart-install: ## Install chart
+chart-install: kind-load-image
+chart-install: $(HELM)
+	@echo Install helm chart... >&2
+	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-envoy-plugin \
+		--set sidecarInjector.containers.injector.image.registry=ko.local \
+		--set sidecarInjector.containers.injector.image.repository=github.com/kyverno/kyverno-envoy-plugin \
+		--set sidecarInjector.containers.injector.image.tag=$(GIT_SHA)
 
 ########
 # HELP #

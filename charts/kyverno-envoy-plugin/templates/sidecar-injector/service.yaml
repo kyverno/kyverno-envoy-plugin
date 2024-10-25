@@ -1,0 +1,18 @@
+{{- if .Values.sidecarInjector.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kyverno.sidecar-injector.service-account.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 8443
+  selector:
+    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+{{- end -}}

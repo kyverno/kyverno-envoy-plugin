@@ -203,17 +203,29 @@ istio-install: $(HELM)
 # HELM #
 ########
 
-.PHONY: chart-install
-chart-install: ## Install chart
-chart-install: kind-load-image
-chart-install: $(HELM)
-	@echo Build helm dependecy... >&2
+.PHONY: install-kyverno-envoy-plugin
+install-kyverno-envoy-plugin: ## Install kyverno-envoy-plugin chart
+install-kyverno-envoy-plugin: kind-load-image
+install-kyverno-envoy-plugin: $(HELM)
+	@echo Build kyverno-envoy-plugin dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-envoy-plugin
-	@echo Install helm chart... >&2
+	@echo Install kyverno-envoy-plugin chart... >&2
 	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-envoy-plugin \
 		--set sidecarInjector.containers.injector.image.registry=$(KO_REGISTRY) \
 		--set sidecarInjector.containers.injector.image.repository=$(PACKAGE) \
 		--set sidecarInjector.containers.injector.image.tag=$(GIT_SHA)
+
+.PHONY: install-kyverno-authz-server
+install-kyverno-authz-server: ## Install kyverno-authz-server chart
+install-kyverno-authz-server: kind-load-image
+install-kyverno-authz-server: $(HELM)
+	@echo Build kyverno-authz-server dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
+	@echo Install kyverno-authz-server chart... >&2
+	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
+		--set containers.server.image.registry=$(KO_REGISTRY) \
+		--set containers.server.image.repository=$(PACKAGE) \
+		--set containers.server.image.tag=$(GIT_SHA)
 
 ########
 # HELP #

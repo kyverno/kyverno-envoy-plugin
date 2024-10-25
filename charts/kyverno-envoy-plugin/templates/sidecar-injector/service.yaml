@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "kyverno.sidecar-injector.service-account.name" . }}
-  namespace: {{ template "kyverno.namespace" . }}
+  name: {{ template "sidecar-injector.service-account.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
   labels:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
   {{- with .Values.sidecarInjector.service.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
@@ -22,5 +22,5 @@ spec:
     nodePort: {{ .Values.sidecarInjector.service.nodePort }}
     {{- end }}
   selector:
-    {{- include "kyverno.sidecar-injector.labels.match" . | nindent 4 }}
+    {{- include "sidecar-injector.labels.match" . | nindent 4 }}
 {{- end -}}

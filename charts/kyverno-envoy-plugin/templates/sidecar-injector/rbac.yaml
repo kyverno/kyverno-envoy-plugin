@@ -3,10 +3,10 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ template "kyverno.sidecar-injector.service-account.name" . }}
-  namespace: {{ template "kyverno.namespace" . }}
+  name: {{ template "sidecar-injector.service-account.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
   labels:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
   {{- with .Values.sidecarInjector.rbac.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -15,9 +15,9 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ template "kyverno.sidecar-injector.role.name" . }}
+  name: {{ template "sidecar-injector.role.name" . }}
   labels:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
 rules:
   - apiGroups:
       - ''
@@ -30,16 +30,16 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ template "kyverno.sidecar-injector.role.name" . }}
+  name: {{ template "sidecar-injector.role.name" . }}
   labels:
-    {{- include "kyverno.sidecar-injector.labels" . | nindent 4 }}
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ template "kyverno.sidecar-injector.role.name" . }}
+  name: {{ template "sidecar-injector.role.name" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "kyverno.sidecar-injector.service-account.name" . }}
-    namespace: {{ template "kyverno.namespace" . }}
+    name: {{ template "sidecar-injector.service-account.name" . }}
+    namespace: {{ template "kyverno.lib.namespace" . }}
 {{- end -}}
 {{- end -}}

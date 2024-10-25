@@ -79,6 +79,6 @@ jobs:
         run: |
           set -e
           make kind-create-cluster
-          make chart-install
+          make install-kyverno-envoy-plugin
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e-test

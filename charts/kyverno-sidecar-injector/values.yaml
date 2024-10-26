@@ -207,6 +207,7 @@ containers:
       - --address=:9443
       - --cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt
       - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
+      - --sidecar-image={{ include "sidecar-injector.image" .Values.containers.injector.image }}
 
 service:
 

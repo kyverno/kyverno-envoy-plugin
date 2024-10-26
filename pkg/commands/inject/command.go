@@ -4,20 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server/handlers"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/sidecar"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
-	"go.uber.org/multierr"
 	jsonpatch "gomodules.xyz/jsonpatch/v2"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func Command() *cobra.Command {
@@ -29,9 +26,9 @@ func Command() *cobra.Command {
 		Use:   "sidecar-injector",
 		Short: "Responsible for injecting sidecars into pod containers",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			mux := setupMux(sidecarImage)
-			server := setupServer(address, mux)
-			return runServer(context.Background(), server, certFile, keyFile)
+			return signals.Do(context.Background(), func(ctx context.Context) error {
+				return server.Run(ctx, setupServer(address, setupMux(sidecarImage)), certFile, keyFile)
+			})
 		},
 	}
 	command.Flags().StringVar(&address, "address", ":9443", "Address to listen on")
@@ -83,34 +80,4 @@ func setupServer(addr string, handler http.Handler) *http.Server {
 		ReadHeaderTimeout: 30 * time.Second,
 		IdleTimeout:       5 * time.Minute,
 	}
-}
-
-func runServer(ctx context.Context, server *http.Server, certFile, keyFile string) error {
-	var group wait.Group
-	err := func() error {
-		signalsCtx, signalsCancel := signals.Context(ctx)
-		defer signalsCancel()
-		var shutdownErr error
-		group.StartWithContext(signalsCtx, func(ctx context.Context) {
-			<-ctx.Done()
-			fmt.Println("Shutting down server...")
-			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer shutdownCancel()
-			shutdownErr = server.Shutdown(shutdownCtx)
-		})
-		fmt.Printf("Starting server at %s...\n", server.Addr)
-		var serveErr error
-		if certFile != "" && keyFile != "" {
-			serveErr = server.ListenAndServeTLS(certFile, keyFile)
-		} else {
-			serveErr = server.ListenAndServe()
-		}
-		if errors.Is(serveErr, http.ErrServerClosed) {
-			serveErr = nil
-		}
-		return multierr.Combine(serveErr, shutdownErr)
-	}()
-	group.Wait()
-	fmt.Println("Server stopped")
-	return err
 }

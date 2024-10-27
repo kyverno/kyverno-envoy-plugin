@@ -12,14 +12,6 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  - name: http
-    port: {{ .Values.service.port }}
-    protocol: TCP
-    appProtocol: http
-    targetPort: http
-    {{- if and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePort)) }}
-    nodePort: {{ .Values.service.nodePort }}
-    {{- end }}
   - name: grpc
     port: {{ .Values.service.port }}
     protocol: TCP

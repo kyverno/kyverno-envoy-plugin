@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func Run(ctx context.Context, server *http.Server, certFile, keyFile string) error {
-	defer fmt.Println("Server stopped")
+func RunHttp(ctx context.Context, server *http.Server, certFile, keyFile string) error {
+	defer fmt.Println("HTTP Server stopped")
 	// track shutdown error
 	var shutdownErr error
 	// track serve error
@@ -29,14 +29,15 @@ func Run(ctx context.Context, server *http.Server, certFile, keyFile string) err
 		group.StartWithContext(ctx, func(ctx context.Context) {
 			// wait context cancelled
 			<-ctx.Done()
-			fmt.Println("Server shutting down...")
+			fmt.Println("HTTP Server shutting down...")
 			// create a context with timeout
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
+			// gracefully shutdown server
 			shutdownErr = server.Shutdown(ctx)
 		})
 		serve := func() error {
-			fmt.Printf("Server starting at %s...\n", server.Addr)
+			fmt.Printf("HTTP Server starting at %s...\n", server.Addr)
 			if certFile != "" && keyFile != "" {
 				// server over https
 				return server.ListenAndServeTLS(certFile, keyFile)

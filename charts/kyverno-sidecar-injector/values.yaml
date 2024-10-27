@@ -29,6 +29,15 @@ certificates:
 
   # -- Static data to set in certificate secret
   static: {}
+    # crt: ...
+    # key: ...
+
+  # -- Infos for creating certificate with cert manager
+  certManager: {}
+    # issuerRef:
+    #   name: selfsigned-issuer
+    #   kind: ClusterIssuer
+    #   group: cert-manager.io
 
 deployment:
 

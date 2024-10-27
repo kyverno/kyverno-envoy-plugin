@@ -79,6 +79,8 @@ jobs:
         run: |
           set -e
           make kind-create-cluster
+          make install-cert-manager
+          make install-cluster-issuer
           make install-kyverno-sidecar-injector
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e-test

@@ -27,9 +27,8 @@ rbac:
 
 certificates:
 
-  # -- Create self-signed certificates at deployment time.
-  # The certificates won't be automatically renewed if this is set to `true`.
-  selfSigned: true
+  # -- Static data to set in certificate secret
+  static: {}
 
 deployment:
 
@@ -230,11 +229,11 @@ webhook:
   annotations: {}
     # example.com/annotation: value
 
-  # -- Webhook object selector
-  objectSelector: ~
-
   # -- Webhook failure policy
   failurePolicy: Fail
+
+  # -- Webhook object selector
+  objectSelector: ~
 
   # -- Webhook namespace selector
   namespaceSelector:

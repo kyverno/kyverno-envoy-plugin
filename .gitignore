@@ -1,3 +1,4 @@
+.certs/
 .tools/
 website/site/
 /kyverno-envoy-plugin

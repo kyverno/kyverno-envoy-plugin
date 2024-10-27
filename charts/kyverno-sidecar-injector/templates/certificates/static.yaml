@@ -1,0 +1,13 @@
+{{- if .Values.certificates.static -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "sidecar-injector.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
+  labels:
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ .Values.certificates.static.crt | b64enc }}
+  tls.key: {{ .Values.certificates.static.key | b64enc }}
+{{- end }}

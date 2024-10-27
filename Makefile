@@ -188,6 +188,21 @@ kind-load-image: ko-build
 	@echo Load image in kind... >&2
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
 
+################
+# CERTIFICATES #
+################
+
+.PHONY: generate-certs
+generate-certs: ## Generate certificates
+generate-certs:
+	@echo Generating certificates... >&2
+	@rm -rf .certs
+	@mkdir -p .certs
+	@openssl req -new -x509  \
+        -subj "/CN=kyverno-sidecar-injector.kyverno.svc" \
+        -addext "subjectAltName = DNS:kyverno-sidecar-injector.kyverno.svc" \
+        -nodes -newkey rsa:4096 -keyout .certs/tls.key -out .certs/tls.crt 
+
 #########
 # ISTIO #
 #########
@@ -206,6 +221,7 @@ install-istio: $(HELM)
 .PHONY: install-kyverno-sidecar-injector
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
 install-kyverno-sidecar-injector: kind-load-image
+install-kyverno-sidecar-injector: generate-certs
 install-kyverno-sidecar-injector: $(HELM)
 	@echo Build kyverno-sidecar-injector dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-sidecar-injector
@@ -213,7 +229,9 @@ install-kyverno-sidecar-injector: $(HELM)
 	@$(HELM) upgrade --install kyverno-sidecar-injector --namespace kyverno --create-namespace --wait ./charts/kyverno-sidecar-injector \
 		--set containers.injector.image.registry=$(KO_REGISTRY) \
 		--set containers.injector.image.repository=$(PACKAGE) \
-		--set containers.injector.image.tag=$(GIT_SHA)
+		--set containers.injector.image.tag=$(GIT_SHA) \
+		--set-file certificates.static.crt=.certs/tls.crt \
+		--set-file certificates.static.key=.certs/tls.key
 
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart

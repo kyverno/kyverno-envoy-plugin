@@ -12,7 +12,7 @@ func Context(ctx context.Context) (context.Context, context.CancelFunc) {
 	return signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 }
 
-func Do(ctx context.Context, f func(context.Context) error) error {
+func Do(ctx context.Context, callback func(context.Context) error) error {
 	// create a wait group
 	var group wait.Group
 	// wait all tasks in the group are over
@@ -28,5 +28,6 @@ func Do(ctx context.Context, f func(context.Context) error) error {
 		// wait signals are triggered
 		<-ctx.Done()
 	})
-	return f(ctx)
+	// invoke callback with signals aware context
+	return callback(ctx)
 }

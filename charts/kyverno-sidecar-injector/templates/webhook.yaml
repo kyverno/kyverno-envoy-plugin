@@ -19,7 +19,7 @@ webhooks:
       service:
         name: {{ template "sidecar-injector.name" . }}
         namespace: {{ template "kyverno.lib.namespace" . }}
-        path: "/mutate"
+        path: /mutate
       {{- if .Values.certificates.static }}
       caBundle: {{ index .Values.certificates.static.crt | b64enc }}
       {{- end }}

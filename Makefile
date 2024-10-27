@@ -268,7 +268,7 @@ install-kyverno-authz-server: $(HELM)
 	@echo Build kyverno-authz-server dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2
-	@$(HELM) upgrade --install kyverno-envoy-plugin --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
+	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
 		--set containers.server.image.registry=$(KO_REGISTRY) \
 		--set containers.server.image.repository=$(PACKAGE) \
 		--set containers.server.image.tag=$(GIT_SHA)

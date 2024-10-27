@@ -1,0 +1,17 @@
+{{- if .Values.certificates.certManager -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "sidecar-injector.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
+  labels:
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
+spec:
+  secretName: {{ template "sidecar-injector.name" . }}
+  dnsNames:
+    - {{ printf "%s.%s.svc" (include "sidecar-injector.name" .) (include "kyverno.lib.namespace" .) }}
+  {{- with .Values.certificates.certManager.issuerRef }}
+  issuerRef:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+{{- end }}

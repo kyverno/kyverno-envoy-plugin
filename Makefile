@@ -203,6 +203,23 @@ generate-certs:
         -addext "subjectAltName = DNS:kyverno-sidecar-injector.kyverno.svc" \
         -nodes -newkey rsa:4096 -keyout .certs/tls.key -out .certs/tls.crt 
 
+################
+# CERT MANAGER #
+################
+
+.PHONY: install-cert-manager
+install-cert-manager: ## Install cert-manager
+install-cert-manager: $(HELM)
+	@echo Install cert-manager... >&2
+	@$(HELM) upgrade --install cert-manager --namespace cert-manager --create-namespace --wait --repo https://charts.jetstack.io cert-manager \
+		--set crds.enabled=true
+
+.PHONY: install-cluster-issuer
+install-cluster-issuer: ## Install cert-manager cluster issuer
+install-cluster-issuer:
+	@echo Install cert-manager cluster issuer... >&2
+	@kubectl apply -f manifests/cert-manager/cluster-issuer.yaml
+
 #########
 # ISTIO #
 #########
@@ -221,7 +238,6 @@ install-istio: $(HELM)
 .PHONY: install-kyverno-sidecar-injector
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
 install-kyverno-sidecar-injector: kind-load-image
-install-kyverno-sidecar-injector: generate-certs
 install-kyverno-sidecar-injector: $(HELM)
 	@echo Build kyverno-sidecar-injector dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-sidecar-injector
@@ -230,8 +246,9 @@ install-kyverno-sidecar-injector: $(HELM)
 		--set containers.injector.image.registry=$(KO_REGISTRY) \
 		--set containers.injector.image.repository=$(PACKAGE) \
 		--set containers.injector.image.tag=$(GIT_SHA) \
-		--set-file certificates.static.crt=.certs/tls.crt \
-		--set-file certificates.static.key=.certs/tls.key
+		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
+		--set certificates.certManager.issuerRef.group=cert-manager.io
 
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart

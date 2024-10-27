@@ -1,22 +1,28 @@
-{{- if .Values.certificates.static -}}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: {{ template "sidecar-injector.name" . }}
   labels:
     {{- include "sidecar-injector.labels" . | nindent 4 }}
-  {{- with .Values.webhook.annotations }}
+  {{- if (or .Values.certificates.certManager .Values.webhook.annotations) }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- with .Values.webhook.annotations }}
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
+    {{- if .Values.certificates.certManager }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s" (include "kyverno.lib.namespace" .) (include "sidecar-injector.name" .) }}
+    {{- end }}
   {{- end }}
 webhooks:
-  - name: kyverno-envoy-sidecar.kyverno-envoy-sidecar-injector.svc
+  - name: {{ printf "%s.%s.svc" (include "sidecar-injector.name" .) (include "kyverno.lib.namespace" .) }}
     clientConfig:
       service:
         name: {{ template "sidecar-injector.name" . }}
         namespace: {{ template "kyverno.lib.namespace" . }}
         path: "/mutate"
+      {{- if .Values.certificates.static }}
       caBundle: {{ index .Values.certificates.static.crt | b64enc }}
+      {{- end }}
     failurePolicy: {{ .Values.webhook.failurePolicy }}
     sideEffects: None
     admissionReviewVersions: [ v1 ]
@@ -34,4 +40,3 @@ webhooks:
     namespaceSelector:
       {{- tpl (toYaml .) $ | nindent 6 }}
     {{- end }}
-{{- end }}

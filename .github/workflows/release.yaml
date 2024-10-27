@@ -40,18 +40,18 @@ jobs:
         run: |
           set -e
           git fetch --force --tags
-      - name: Setup Go
+      - name: Setup go
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version-file: go.mod
           cache-dependency-path: go.sum
-      - name: Install Cosign
+      - name: Install cosign
         uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
-      - name: Install Syft
+      - name: Install syft
         uses: anchore/sbom-action/download-syft@8d0a6505bf28ced3e85154d13dc6af83299e13f1 # v0.17.4
-      - name: Install Ko
+      - name: Install ko
         uses: ko-build/setup-ko@3aebd0597dc1e9d1a26bcfdb7cbeb19c131d3037 # v0.7
-      - name: Run GoReleaser
+      - name: Run goreleaser
         id: goreleaser
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
         with:

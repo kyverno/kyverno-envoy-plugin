@@ -149,6 +149,18 @@ ko-publish: $(KO)
 	@echo "Publish Docker image with ko..." >&2
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(REGISTRY)/$(REPO)/$(IMAGE) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
 
+##########
+# DOCKER #
+##########
+
+.PHONY: docker-save-image
+docker-save-image: ## Save docker image in archive
+	@docker save $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA) > image.tar
+
+.PHONY: docker-load-image
+docker-load-image: ## Load docker image in archive
+	@docker load --input image.tar
+
 ########
 # TEST #
 ########
@@ -184,7 +196,6 @@ kind-create-cluster: $(KIND)
 .PHONY: kind-load-image
 kind-load-image: ## Build image and load it in kind cluster
 kind-load-image: $(KIND)
-kind-load-image: ko-build
 	@echo Load image in kind... >&2
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
 

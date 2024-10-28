@@ -7,15 +7,9 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	status "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"
-)
-
-var (
-	_response = types.NewObjectType("envoy.service.auth.v3.CheckResponse")
-	_ok       = types.NewObjectType("envoy.service.auth.v3.OkHttpResponse")
-	_denied   = types.NewObjectType("envoy.service.auth.v3.DeniedHttpResponse")
-	_struct   = types.NewObjectType("google.protobuf.Struct")
-	_header   = types.NewObjectType("envoy.config.core.v3.HeaderValueOption")
 )
 
 type impl struct {
@@ -56,6 +50,28 @@ func (c *impl) ok_with_response_header(ok ref.Val, header ref.Val) ref.Val {
 		return types.WrapErr(err)
 	} else {
 		ok.ResponseHeadersToAdd = append(ok.ResponseHeadersToAdd, header)
+		return c.NativeToValue(ok)
+	}
+}
+
+func (c *impl) ok_with_query_param(ok ref.Val, param ref.Val) ref.Val {
+	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
+		return types.WrapErr(err)
+	} else if param, err := utils.ConvertToNative[*corev3.QueryParameter](param); err != nil {
+		return types.WrapErr(err)
+	} else {
+		ok.QueryParametersToSet = append(ok.QueryParametersToSet, param)
+		return c.NativeToValue(ok)
+	}
+}
+
+func (c *impl) ok_without_query_param(ok ref.Val, param ref.Val) ref.Val {
+	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
+		return types.WrapErr(err)
+	} else if param, err := utils.ConvertToNative[string](param); err != nil {
+		return types.WrapErr(err)
+	} else {
+		ok.QueryParametersToRemove = append(ok.QueryParametersToRemove, param)
 		return c.NativeToValue(ok)
 	}
 }
@@ -115,11 +131,24 @@ func (c *impl) header_keep_empty_value_bool(header ref.Val, flag ref.Val) ref.Va
 	}
 }
 
+func (c *impl) response_code(code ref.Val) ref.Val {
+	if code, err := utils.ConvertToNative[codes.Code](code); err != nil {
+		return types.WrapErr(err)
+	} else {
+		return c.NativeToValue(&authv3.CheckResponse{
+			Status: &status.Status{Code: int32(code)},
+		})
+	}
+}
+
 func (c *impl) response_ok(ok ref.Val) ref.Val {
 	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
 		return types.WrapErr(err)
 	} else {
-		return c.NativeToValue(&authv3.CheckResponse{HttpResponse: &authv3.CheckResponse_OkResponse{OkResponse: ok}})
+		return c.NativeToValue(&authv3.CheckResponse{
+			Status:       &status.Status{Code: int32(codes.OK)},
+			HttpResponse: &authv3.CheckResponse_OkResponse{OkResponse: ok},
+		})
 	}
 }
 
@@ -127,7 +156,21 @@ func (c *impl) response_denied(denied ref.Val) ref.Val {
 	if denied, err := utils.ConvertToNative[*authv3.DeniedHttpResponse](denied); err != nil {
 		return types.WrapErr(err)
 	} else {
-		return c.NativeToValue(&authv3.CheckResponse{HttpResponse: &authv3.CheckResponse_DeniedResponse{DeniedResponse: denied}})
+		return c.NativeToValue(&authv3.CheckResponse{
+			Status:       &status.Status{Code: int32(codes.PermissionDenied)},
+			HttpResponse: &authv3.CheckResponse_DeniedResponse{DeniedResponse: denied},
+		})
+	}
+}
+
+func (c *impl) response_with_message(response ref.Val, message ref.Val) ref.Val {
+	if response, err := utils.ConvertToNative[*authv3.CheckResponse](response); err != nil {
+		return types.WrapErr(err)
+	} else if message, err := utils.ConvertToNative[string](message); err != nil {
+		return types.WrapErr(err)
+	} else {
+		response.Status.Message = message
+		return c.NativeToValue(response)
 	}
 }
 

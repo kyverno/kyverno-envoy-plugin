@@ -9,6 +9,7 @@
             "program": "${workspaceFolder}",
             "args": [
                 "serve",
+                "--kubeconfig=${userHome}/.kube/config",
             ],
         },
         {

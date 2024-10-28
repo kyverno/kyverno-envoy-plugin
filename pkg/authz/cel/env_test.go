@@ -17,6 +17,7 @@ envoy
 	.WithHeader(envoy.Header("foo", "bar").KeepEmptyValue())
 	.Response()
 	.WithMetadata({"my-new-metadata": "my-new-value"})
+	.WithMessage("hello")
 `
 	env, err := NewEnv()
 	assert.NoError(t, err)

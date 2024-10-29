@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	"fmt"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/cel-go/cel"
@@ -18,9 +19,16 @@ type service struct {
 }
 
 func (s *service) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+	response, err := s.check(ctx, req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return response, err
+}
+
+func (s *service) check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 	// fetch policies
 	var policies v1alpha1.AuthorizationPolicyList
-	// policies.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy"))
 	if err := s.client.List(ctx, &policies, &client.ListOptions{}); err != nil {
 		return nil, err
 	}
@@ -57,29 +65,8 @@ func (s *service) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.
 			}
 			variables[variable.Name] = out.Value()
 		}
-		for _, rule := range policy.Spec.Rules {
-			if rule.When.Expression != "" {
-				ast, issues := env.Compile(rule.When.Expression)
-				if err := issues.Err(); err != nil {
-					return nil, err
-				}
-				prog, err := env.Program(ast)
-				if err != nil {
-					return nil, err
-				}
-				out, _, err := prog.Eval(data)
-				if err != nil {
-					return nil, err
-				}
-				match, err := utils.ConvertToNative[bool](out)
-				if err != nil {
-					return nil, err
-				}
-				if !match {
-					continue
-				}
-			}
-			ast, issues := env.Compile(rule.Return)
+		for _, rule := range policy.Spec.Authorizations {
+			ast, issues := env.Compile(rule.Expression)
 			if err := issues.Err(); err != nil {
 				return nil, err
 			}

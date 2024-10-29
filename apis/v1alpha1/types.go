@@ -31,21 +31,12 @@ type AuthorizationPolicySpec struct {
 
 	// +listType=atomic
 	// +optional
-	Rules []AuthorizationRule `json:"rules,omitempty"`
+	Authorizations []Authorization `json:"authorizations,omitempty"`
 }
 
-type AuthorizationRule struct {
-	// +kubebuilder:default:={}
-	// +optional
-	When When `json:"when"`
-
+type Authorization struct {
 	// +required
-	Return string `json:"return"`
-}
-
-type When struct {
-	// +optional
-	Expression string `json:"expression,omitempty"`
+	Expression string `json:"expression"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -37,19 +37,13 @@ spec:
             type: object
           spec:
             properties:
-              rules:
+              authorizations:
                 items:
                   properties:
-                    return:
+                    expression:
                       type: string
-                    when:
-                      default: {}
-                      properties:
-                        expression:
-                          type: string
-                      type: object
                   required:
-                  - return
+                  - expression
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic

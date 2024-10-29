@@ -10,26 +10,20 @@ spec:
     expression: variables.?request_headers["x-force-unauthenticated"].orValue("disabled") == "enabled"
   - name: force_authorized
     expression: variables.?request_headers["x-force-authorized"].orValue("false") == "true"
-  - name: allowed
-    expression: '!variables.force_unauthenticated && variables.force_authorized'
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
-  rules:
-  - when:
-      expression: '!variables.allowed'
-    return: >
-      envoy
-        .Denied(variables.force_unauthenticated ? 401 : 403)
-        .WithBody(variables.force_unauthenticated ? "Authentication Failed" : "Unauthorized Request")
-        .WithHeader(envoy.Header("x-validated-by", "my-security-checkpoint"))
-        .Response()
-        .WithMetadata(variables.metadata)
-  - when:
-      expression: 'variables.allowed'
-    return: >
-      envoy
-        .Allowed()
-        .WithHeader(envoy.Header("x-validated-by", "my-security-checkpoint"))
-        .WithoutHeader("user-agent")
-        .Response()
-        .WithMetadata(variables.metadata)
+  authorizations:
+  - expression: >
+      !variables.force_unauthenticated && variables.force_authorized
+      ? envoy
+          .Allowed()
+          .WithHeader(envoy.Header("x-validated-by", "my-security-checkpoint"))
+          .WithoutHeader("user-agent")
+          .Response()
+          .WithMetadata(variables.metadata)
+      : envoy
+          .Denied(variables.force_unauthenticated ? 401 : 403)
+          .WithBody(variables.force_unauthenticated ? "Authentication Failed" : "Unauthorized Request")
+          .WithHeader(envoy.Header("x-validated-by", "my-security-checkpoint"))
+          .Response()
+          .WithMetadata(variables.metadata)

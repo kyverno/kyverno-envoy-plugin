@@ -56,6 +56,11 @@ func (_ *lib) extenEnv(env *cel.Env) (*cel.Env, error) {
 			cel.Overload("response_ok", []*cel.Type{OkHttpResponse}, CheckResponse, cel.UnaryBinding(impl.response_ok)),
 			cel.Overload("response_denied", []*cel.Type{DeniedHttpResponse}, CheckResponse, cel.UnaryBinding(impl.response_denied)),
 		},
+		"envoy.Null": {
+			cel.Overload("null", []*cel.Type{}, CheckResponse, cel.FunctionBinding(func(values ...ref.Val) ref.Val {
+				return impl.Adapter.NativeToValue((*authv3.CheckResponse)(nil))
+			})),
+		},
 		"envoy.Header": {
 			cel.Overload("header_key_value", []*cel.Type{types.StringType, types.StringType}, HeaderValueOption, cel.BinaryBinding(impl.header_key_value)),
 		},

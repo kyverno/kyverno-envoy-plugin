@@ -17,11 +17,12 @@ func NewGrpcServer(network, addr string, config *rest.Config) server.ServerFunc 
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()
-		// create kubernetes client
+		// configure scheme
 		scheme := runtime.NewScheme()
 		if err := v1alpha1.Install(scheme); err != nil {
 			return err
 		}
+		// create kubernetes client
 		client, err := client.New(config, client.Options{
 			Scheme: scheme,
 		})
@@ -39,6 +40,7 @@ func NewGrpcServer(network, addr string, config *rest.Config) server.ServerFunc 
 		if err != nil {
 			return err
 		}
+		// run server
 		return server.RunGrpc(ctx, s, l)
 	}
 }

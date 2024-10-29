@@ -2,54 +2,54 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/intro/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/jp/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/performance/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/quick-start/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/blog/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/jp/functions/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/asserts/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/authz-policy/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/policies/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/istio/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/mtls-istio/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/standalone-envoy/</loc>
-         <lastmod>2024-10-28</lastmod>
+         <lastmod>2024-10-29</lastmod>
     </url>
 </urlset>

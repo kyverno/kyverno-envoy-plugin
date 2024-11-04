@@ -16,6 +16,7 @@ nav:
   - tutorials/standalone-envoy.md
   - tutorials/istio.md
   - tutorials/mtls-istio.md
+  - tutorials/gloo.md
 - Performance: performance.md
 
     

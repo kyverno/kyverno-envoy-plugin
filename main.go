@@ -1,42 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
-	"github.com/spf13/cobra"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/commands/root"
 )
 
-var policies []string
-var address string
-var healthaddress string
-
-func init() {
-	serveCmd.Flags().StringSliceVar(&policies, "policy", nil, "Path to kyverno-json policies")
-	serveCmd.Flags().StringVar(&address, "address", ":9000", "Address to listen on")
-	serveCmd.Flags().StringVar(&healthaddress, "healthaddress", ":8181", "Address to listen on for health checks")
-}
-
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "Start the kyverno-envoy-plugin server",
-	Run: func(cmd *cobra.Command, args []string) {
-		srv := server.NewServers(policies, address, healthaddress)
-		server.StartServers(srv)
-	},
-}
-
 func main() {
-	var rootCmd = &cobra.Command{
-		Use:   "kyverno-envoy-plugin",
-		Short: "kyverno-envoy-plugin is a plugin for Envoy",
-	}
-
-	rootCmd.AddCommand(serveCmd)
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+	root := root.Command()
+	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

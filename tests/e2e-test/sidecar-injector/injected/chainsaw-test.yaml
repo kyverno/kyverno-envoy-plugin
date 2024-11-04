@@ -1,0 +1,15 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: injected
+spec:
+  namespaceTemplate:
+    metadata:
+      labels:
+        kyverno-injection: enabled
+  steps: 
+  - try:
+    - create:
+        file: ./pod.yaml
+    - assert:
+        file: ./pod-assert.yaml

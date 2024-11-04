@@ -1,0 +1,26 @@
+apiVersion: v2
+name: kyverno-lib
+description: Kyverno policies based authorization plugin for Envoy ❤️
+icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
+home: https://kyverno.github.io/kyverno-envoy-plugin
+
+type: library
+version: 0.0.0
+appVersion: latest
+kubeVersion: ">=1.25.0-0"
+
+keywords:
+  - kubernetes
+  - kyverno
+  - authz
+  - policy
+  - envoy
+  - istio
+  - security
+
+sources:
+  - https://github.com/kyverno/kyverno-envoy-plugin
+
+maintainers:
+  - name: Kyverno
+    url: https://kyverno.io/

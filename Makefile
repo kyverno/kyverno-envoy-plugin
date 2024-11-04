@@ -16,8 +16,12 @@ else
 LD_FLAGS                           := "-s -w"
 endif
 KIND_IMAGE                         ?= kindest/node:v1.29.2
-KO_REGISTRY                        := ko.local
-KO_TAGS                            := $(GIT_SHA)
+REGISTRY                           ?= ghcr.io
+REPO                               ?= kyverno
+IMAGE                              ?= kyverno-envoy-plugin
+KO_REGISTRY                        ?= ko.local
+KO_TAGS                            ?= $(GIT_SHA)
+KO_PLATFORMS                       ?= all
 
 #########
 # TOOLS #
@@ -108,18 +112,54 @@ vet: ## Run go vet
 	@echo Go vet... >&2
 	@go vet ./...
 
+#########
+# BUILD #
+#########
+
+.PHONY: build
+build: ## Build
+build: fmt
+build: vet
+build:
+	@echo "Build..." >&2
+	@LD_FLAGS=$(LD_FLAGS) go build .
+
 ##############
 # BUILD (KO) #
 ##############
 
-.PHONY: build-ko
-build-ko: ## Build Docker image with ko
-build-ko: fmt
-build-ko: vet
-build-ko: $(KO)
+.PHONY: ko-login
+ko-login: $(KO)
+	@$(KO) login $(REGISTRY) --username $(REGISTRY_USERNAME) --password $(REGISTRY_PASSWORD)
+
+.PHONY: ko-build
+ko-build: ## Build Docker image with ko
+ko-build: fmt
+ko-build: vet
+ko-build: $(KO)
 	@echo "Build Docker image with ko..." >&2
-	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) \
-		$(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
+	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
+
+.PHONY: ko-publish
+ko-publish: ## Publish Docker image with ko
+ko-publish: fmt
+ko-publish: vet
+ko-publish: ko-login
+ko-publish: $(KO)
+	@echo "Publish Docker image with ko..." >&2
+	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(REGISTRY)/$(REPO)/$(IMAGE) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
+
+##########
+# DOCKER #
+##########
+
+.PHONY: docker-save-image
+docker-save-image: ## Save docker image in archive
+	@docker save $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA) > image.tar
+
+.PHONY: docker-load-image
+docker-load-image: ## Load docker image in archive
+	@docker load --input image.tar
 
 ########
 # TEST #
@@ -143,7 +183,7 @@ mkdocs-serve: ## Generate and serve mkdocs website
 	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
 	@mkdocs serve -f ./website/mkdocs.yaml
 
-########	
+########
 # KIND #
 ########
 
@@ -156,28 +196,82 @@ kind-create-cluster: $(KIND)
 .PHONY: kind-load-image
 kind-load-image: ## Build image and load it in kind cluster
 kind-load-image: $(KIND)
-kind-load-image: build-ko
 	@echo Load image in kind... >&2
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
 
-.PHONY: kind-load-taged-image
-kind-load-taged-image: ## Build image and load it in kind cluster
-kind-load-taged-image: $(KIND)
-kind-load-taged-image: build-ko
-	@echo Load image in kind... >&2
-	docker tag $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA) $(KO_REGISTRY)/$(PACKAGE):latest
-	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):latest
+################
+# CERTIFICATES #
+################
 
-#########	
+.PHONY: generate-certs
+generate-certs: ## Generate certificates
+generate-certs:
+	@echo Generating certificates... >&2
+	@rm -rf .certs
+	@mkdir -p .certs
+	@openssl req -new -x509  \
+        -subj "/CN=kyverno-sidecar-injector.kyverno.svc" \
+        -addext "subjectAltName = DNS:kyverno-sidecar-injector.kyverno.svc" \
+        -nodes -newkey rsa:4096 -keyout .certs/tls.key -out .certs/tls.crt 
+
+################
+# CERT MANAGER #
+################
+
+.PHONY: install-cert-manager
+install-cert-manager: ## Install cert-manager
+install-cert-manager: $(HELM)
+	@echo Install cert-manager... >&2
+	@$(HELM) upgrade --install cert-manager --namespace cert-manager --create-namespace --wait --repo https://charts.jetstack.io cert-manager \
+		--set crds.enabled=true
+
+.PHONY: install-cluster-issuer
+install-cluster-issuer: ## Install cert-manager cluster issuer
+install-cluster-issuer:
+	@echo Install cert-manager cluster issuer... >&2
+	@kubectl apply -f manifests/cert-manager/cluster-issuer.yaml
+
+#########
 # ISTIO #
 #########
 
 .PHONY: install-istio
-install-istio: ## Install ISTIO
+install-istio: ## Install istio
 install-istio: $(HELM)
 	@echo Install istio... >&2
 	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
 	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod
+
+########
+# HELM #
+########
+
+.PHONY: install-kyverno-sidecar-injector
+install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
+install-kyverno-sidecar-injector: kind-load-image
+install-kyverno-sidecar-injector: $(HELM)
+	@echo Build kyverno-sidecar-injector dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-sidecar-injector
+	@echo Install kyverno-sidecar-injector chart... >&2
+	@$(HELM) upgrade --install kyverno-sidecar-injector --namespace kyverno --create-namespace --wait ./charts/kyverno-sidecar-injector \
+		--set containers.injector.image.registry=$(KO_REGISTRY) \
+		--set containers.injector.image.repository=$(PACKAGE) \
+		--set containers.injector.image.tag=$(GIT_SHA) \
+		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
+		--set certificates.certManager.issuerRef.group=cert-manager.io
+
+.PHONY: install-kyverno-authz-server
+install-kyverno-authz-server: ## Install kyverno-authz-server chart
+install-kyverno-authz-server: kind-load-image
+install-kyverno-authz-server: $(HELM)
+	@echo Build kyverno-authz-server dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
+	@echo Install kyverno-authz-server chart... >&2
+	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
+		--set containers.server.image.registry=$(KO_REGISTRY) \
+		--set containers.server.image.repository=$(PACKAGE) \
+		--set containers.server.image.tag=$(GIT_SHA)
 
 ########
 # HELP #

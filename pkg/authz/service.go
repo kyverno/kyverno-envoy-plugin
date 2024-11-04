@@ -2,11 +2,11 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	engine "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/envoy"
@@ -38,9 +38,11 @@ func (s *service) check(ctx context.Context, req *authv3.CheckRequest) (*authv3.
 		if err != nil {
 			return nil, err
 		}
+		provider := engine.NewVariablesProvider(base.CELTypeProvider())
 		env, err := base.Extend(
 			cel.Variable("input", envoy.CheckRequest),
-			cel.Variable("variables", types.DynType),
+			cel.Variable("variables", engine.VariablesType),
+			cel.CustomTypeProvider(provider),
 		)
 		if err != nil {
 			return nil, err
@@ -55,6 +57,7 @@ func (s *service) check(ctx context.Context, req *authv3.CheckRequest) (*authv3.
 			if err := issues.Err(); err != nil {
 				return nil, err
 			}
+			provider.RegisterField(variable.Name, ast.OutputType())
 			prog, err := env.Program(ast)
 			if err != nil {
 				return nil, err
@@ -69,6 +72,9 @@ func (s *service) check(ctx context.Context, req *authv3.CheckRequest) (*authv3.
 			ast, issues := env.Compile(rule.Expression)
 			if err := issues.Err(); err != nil {
 				return nil, err
+			}
+			if !ast.OutputType().IsExactType(envoy.CheckResponse) {
+				return nil, errors.New("rule output is expected to be of type envoy.service.auth.v3.CheckResponse")
 			}
 			prog, err := env.Program(ast)
 			if err != nil {

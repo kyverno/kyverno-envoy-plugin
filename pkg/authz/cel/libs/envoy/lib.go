@@ -30,15 +30,15 @@ func (c *lib) CompileOptions() []cel.EnvOption {
 		// register envoy protobuf messages
 		cel.Types((*authv3.CheckRequest)(nil), (*authv3.CheckResponse)(nil)),
 		// extend environment with function overloads
-		c.extenEnv,
+		c.extendEnv,
 	}
 }
 
-func (_ *lib) ProgramOptions() []cel.ProgramOption {
+func (*lib) ProgramOptions() []cel.ProgramOption {
 	return []cel.ProgramOption{}
 }
 
-func (_ *lib) extenEnv(env *cel.Env) (*cel.Env, error) {
+func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	// create implementation, recording the envoy types aware adapter
 	impl := impl{
 		Adapter: env.CELTypeAdapter(),
@@ -98,7 +98,7 @@ func (_ *lib) extenEnv(env *cel.Env) (*cel.Env, error) {
 			cel.MemberOverload("response_with_metadata", []*cel.Type{CheckResponse, Metadata}, CheckResponse, cel.BinaryBinding(impl.response_with_metadata)),
 		},
 	}
-	// creatte env options corresponding to our function overloads
+	// create env options corresponding to our function overloads
 	options := []cel.EnvOption{}
 	for name, overloads := range libraryDecls {
 		options = append(options, cel.Function(name, overloads...))

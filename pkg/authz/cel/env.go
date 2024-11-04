@@ -3,7 +3,8 @@ package cel
 import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwt"
 	"k8s.io/apiserver/pkg/cel/library"
 )
 
@@ -31,7 +32,8 @@ func NewEnv() (*cel.Env, error) {
 		library.Lists(),
 		library.Regex(),
 		library.URLs(),
-		// register our envoy lib
+		// register our libs
 		envoy.Lib(),
+		jwt.Lib(),
 	)
 }

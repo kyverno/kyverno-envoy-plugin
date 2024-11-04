@@ -9,7 +9,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	engine "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
 	"k8s.io/apiserver/pkg/cel/lazy"
 )

@@ -15,6 +15,11 @@ import (
 	"k8s.io/apiserver/pkg/cel/lazy"
 )
 
+const (
+	VariablesKey = "variables"
+	ObjectKey    = "object"
+)
+
 type PolicyFunc func(*authv3.CheckRequest) (*authv3.CheckResponse, error)
 
 type Compiler interface {
@@ -36,8 +41,8 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 	}
 	provider := engine.NewVariablesProvider(base.CELTypeProvider())
 	env, err := base.Extend(
-		cel.Variable("input", envoy.CheckRequest),
-		cel.Variable("variables", engine.VariablesType),
+		cel.Variable(ObjectKey, envoy.CheckRequest),
+		cel.Variable(VariablesKey, engine.VariablesType),
 		cel.CustomTypeProvider(provider),
 	)
 	if err != nil {
@@ -69,11 +74,11 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 		}
 		authorizations = append(authorizations, prog)
 	}
-	eval := func(req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+	eval := func(r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 		vars := lazy.NewMapValue(engine.VariablesType)
 		data := map[string]any{
-			"input":     req,
-			"variables": vars,
+			ObjectKey:    r,
+			VariablesKey: vars,
 		}
 		for name, variable := range variables {
 			vars.Append(name, func(*lazy.MapValue) ref.Val {
@@ -102,8 +107,8 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 		}
 		return nil, nil
 	}
-	return func(req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
-		response, err := eval(req)
+	return func(r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+		response, err := eval(r)
 		if err != nil && policy.Spec.GetFailurePolicy() == admissionregistrationv1.Fail {
 			return nil, err
 		}

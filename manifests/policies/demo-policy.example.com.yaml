@@ -5,7 +5,7 @@ metadata:
 spec:
   variables:
   - name: request_headers
-    expression: input.attributes.request.http.headers
+    expression: object.attributes.request.http.headers
   - name: force_unauthenticated
     expression: variables.?request_headers["x-force-unauthenticated"].orValue("disabled") == "enabled"
   - name: force_authorized

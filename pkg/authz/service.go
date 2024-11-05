@@ -5,12 +5,11 @@ import (
 	"fmt"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
 )
 
 type service struct {
-	client client.Client
+	provider policy.Provider
 }
 
 func (s *service) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
@@ -23,16 +22,12 @@ func (s *service) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.
 
 func (s *service) check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 	// fetch policies
-	var policies v1alpha1.AuthorizationPolicyList
-	if err := s.client.List(ctx, &policies, &client.ListOptions{}); err != nil {
+	policies, err := s.provider.CompiledPolicies(ctx)
+	if err != nil {
 		return nil, err
 	}
-	for _, policy := range policies.Items {
-		compiled, err := compile(policy)
-		if err != nil {
-			return nil, err
-		}
-		result, err := compiled(req)
+	for _, policy := range policies {
+		result, err := policy(req)
 		if err != nil {
 			return nil, err
 		}

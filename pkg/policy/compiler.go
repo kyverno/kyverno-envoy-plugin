@@ -1,4 +1,4 @@
-package authz
+package policy
 
 import (
 	"errors"
@@ -14,9 +14,19 @@ import (
 	"k8s.io/apiserver/pkg/cel/lazy"
 )
 
-type policyFunc func(*authv3.CheckRequest) (*authv3.CheckResponse, error)
+type PolicyFunc func(*authv3.CheckRequest) (*authv3.CheckResponse, error)
 
-func compile(policy v1alpha1.AuthorizationPolicy) (policyFunc, error) {
+type Compiler interface {
+	Compile(v1alpha1.AuthorizationPolicy) (PolicyFunc, error)
+}
+
+func NewCompiler() Compiler {
+	return &compiler{}
+}
+
+type compiler struct{}
+
+func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, error) {
 	variables := map[string]cel.Program{}
 	var authorizations []cel.Program
 	base, err := engine.NewEnv()

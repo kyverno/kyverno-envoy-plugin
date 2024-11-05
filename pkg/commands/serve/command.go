@@ -15,7 +15,7 @@ func Command() *cobra.Command {
 	var httpAddress string
 	var grpcAddress string
 	var grpcNetwork string
-	var kubeconfig string
+	var kubeConfigOverrides clientcmd.ConfigOverrides
 	command := &cobra.Command{
 		Use:   "serve",
 		Short: "Start the kyverno-envoy-plugin server",
@@ -26,7 +26,11 @@ func Command() *cobra.Command {
 				var httpErr, grpcErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
-					config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+						clientcmd.NewDefaultClientConfigLoadingRules(),
+						&kubeConfigOverrides,
+					)
+					config, err := kubeConfig.ClientConfig()
 					if err != nil {
 						return err
 					}
@@ -59,6 +63,6 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&httpAddress, "http-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
-	command.Flags().StringVar(&kubeconfig, "kubeconfig", "", "Path to kubeconfig file")
+	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

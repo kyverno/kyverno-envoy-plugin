@@ -8,12 +8,14 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func Command() *cobra.Command {
 	var httpAddress string
 	var grpcAddress string
 	var grpcNetwork string
+	var kubeConfigOverrides clientcmd.ConfigOverrides
 	command := &cobra.Command{
 		Use:   "serve",
 		Short: "Start the kyverno-envoy-plugin server",
@@ -22,7 +24,16 @@ func Command() *cobra.Command {
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
 				var httpErr, grpcErr error
-				func(ctx context.Context) {
+				err := func(ctx context.Context) error {
+					// create a rest config
+					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+						clientcmd.NewDefaultClientConfigLoadingRules(),
+						&kubeConfigOverrides,
+					)
+					config, err := kubeConfig.ClientConfig()
+					if err != nil {
+						return err
+					}
 					// create a wait group
 					var group wait.Group
 					// wait all tasks in the group are over
@@ -31,7 +42,7 @@ func Command() *cobra.Command {
 					ctx, cancel := context.WithCancel(ctx)
 					// create http and grpc servers
 					http := authz.NewHttpServer(httpAddress)
-					grpc := authz.NewGrpcServer(grpcNetwork, grpcAddress)
+					grpc := authz.NewGrpcServer(grpcNetwork, grpcAddress, config)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
@@ -43,13 +54,15 @@ func Command() *cobra.Command {
 						defer cancel()
 						grpcErr = grpc.Run(ctx)
 					})
+					return nil
 				}(ctx)
-				return multierr.Combine(httpErr, grpcErr)
+				return multierr.Combine(err, httpErr, grpcErr)
 			})
 		},
 	}
 	command.Flags().StringVar(&httpAddress, "http-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
+	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

@@ -34,7 +34,10 @@ KIND                               := $(TOOLS_DIR)/kind
 KIND_VERSION                       := v0.22.0
 KO                                 ?= $(TOOLS_DIR)/ko
 KO_VERSION                         ?= v0.15.1
-TOOLS                              := $(HELM) $(KIND) $(KO)
+CONTROLLER_GEN                     ?= $(TOOLS_DIR)/controller-gen
+CONTROLLER_GEN_VERSION             := latest
+REGISTER_GEN                       ?= $(TOOLS_DIR)/register-gen
+REGISTER_GEN_VERSION               := v0.28.0
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -55,9 +58,19 @@ $(KO):
 	@echo Install ko... >&2
 	@GOBIN=$(TOOLS_DIR) go install github.com/google/ko@$(KO_VERSION)
 
+$(CONTROLLER_GEN):
+	@GOBIN=$(TOOLS_DIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
+
+$(REGISTER_GEN):
+	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/register-gen@$(REGISTER_GEN_VERSION)
+
 .PHONY: install-tools
 install-tools: ## Install tools
-install-tools: $(TOOLS)
+install-tools: $(HELM)
+install-tools: $(KIND)
+install-tools: $(KO)
+install-tools: $(CONTROLLER_GEN)
+install-tools: $(REGISTER_GEN)
 
 .PHONY: clean-tools
 clean-tools: ## Remove installed tools
@@ -77,6 +90,15 @@ $(PACKAGE_SHIM): $(GOPATH_SHIM)
 	@echo Create package shim... >&2
 	@mkdir -p $(GOPATH_SHIM)/src/github.com/$(ORG) && ln -s -f ${PWD} $(PACKAGE_SHIM)
 
+.PHONY: codegen-crds
+codegen-crds: ## Generate CRDs
+codegen-crds: $(CONTROLLER_GEN)
+codegen-crds: $(REGISTER_GEN)
+	@echo Generate CRDs... >&2
+	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
+	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=./config/crds
+	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./hack/boilerplate.go.txt --output-base=.
+
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
 	@echo Generate mkdocs website... >&2
@@ -88,6 +110,7 @@ codegen-mkdocs: ## Generate mkdocs website
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
 codegen: codegen-mkdocs
+codegen: codegen-crds
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date
@@ -121,7 +144,7 @@ build: ## Build
 build: fmt
 build: vet
 build:
-	@echo "Build..." >&2
+	@echo Build... >&2
 	@LD_FLAGS=$(LD_FLAGS) go build .
 
 ##############
@@ -137,7 +160,7 @@ ko-build: ## Build Docker image with ko
 ko-build: fmt
 ko-build: vet
 ko-build: $(KO)
-	@echo "Build Docker image with ko..." >&2
+	@echo Build Docker image with ko... >&2
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(KO_REGISTRY) $(KO) build . --preserve-import-paths --tags=$(KO_TAGS)
 
 .PHONY: ko-publish
@@ -146,7 +169,7 @@ ko-publish: fmt
 ko-publish: vet
 ko-publish: ko-login
 ko-publish: $(KO)
-	@echo "Publish Docker image with ko..." >&2
+	@echo Publish Docker image with ko... >&2
 	@LD_FLAGS=$(LD_FLAGS) KO_DOCKER_REPO=$(REGISTRY)/$(REPO)/$(IMAGE) $(KO) build . --bare --tags=$(KO_TAGS) --platform=$(KO_PLATFORMS)
 
 ##########
@@ -264,7 +287,10 @@ install-kyverno-sidecar-injector: $(HELM)
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart
 install-kyverno-authz-server: kind-load-image
+install-kyverno-authz-server: codegen-crds
 install-kyverno-authz-server: $(HELM)
+	@echo Install CRDs... >&2
+	@kubectl apply -f config/crds
 	@echo Build kyverno-authz-server dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2

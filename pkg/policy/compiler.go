@@ -11,6 +11,7 @@ import (
 	engine "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apiserver/pkg/cel/lazy"
 )
 
@@ -68,7 +69,7 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 		}
 		authorizations = append(authorizations, prog)
 	}
-	return func(req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+	eval := func(req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 		vars := lazy.NewMapValue(engine.VariablesType)
 		data := map[string]any{
 			"input":     req,
@@ -100,5 +101,12 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 			}
 		}
 		return nil, nil
+	}
+	return func(req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+		response, err := eval(req)
+		if err != nil && policy.Spec.GetFailurePolicy() == admissionregistrationv1.Fail {
+			return nil, err
+		}
+		return response, nil
 	}, nil
 }

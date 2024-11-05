@@ -15,6 +15,16 @@ type AuthorizationPolicy struct {
 }
 
 type AuthorizationPolicySpec struct {
+	// FailurePolicy defines how to handle failures for the policy. Failures can
+	// occur from CEL expression parse errors, type check errors, runtime errors and invalid
+	// or mis-configured policy definitions.
+	//
+	// FailurePolicy does not define how validations that evaluate to false are handled.
+	//
+	// Allowed values are Ignore or Fail. Defaults to Fail.
+	// +optional
+	FailurePolicy *admissionregistrationv1.FailurePolicyType `json:"failurePolicy,omitempty"`
+
 	// Variables contain definitions of variables that can be used in composition of other expressions.
 	// Each variable is defined as a named CEL expression.
 	// The variables defined here will be available under `variables` in other expressions of the policy
@@ -27,14 +37,29 @@ type AuthorizationPolicySpec struct {
 	// +listType=map
 	// +listMapKey=name
 	// +optional
-	Variables []admissionregistrationv1.Variable `json:"variables,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,7,rep,name=variables"`
+	Variables []admissionregistrationv1.Variable `json:"variables,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 
+	// Authorizations contain CEL expressions which is used to apply the authorization.
 	// +listType=atomic
 	// +optional
 	Authorizations []Authorization `json:"authorizations,omitempty"`
 }
 
+func (s *AuthorizationPolicySpec) GetFailurePolicy() admissionregistrationv1.FailurePolicyType {
+	if s.FailurePolicy == nil {
+		return admissionregistrationv1.Fail
+	}
+	return *s.FailurePolicy
+}
+
 type Authorization struct {
+	// Expression represents the expression which will be evaluated by CEL.
+	// ref: https://github.com/google/cel-spec
+	// CEL expressions have access to CEL variables as well as some other useful variables:
+	//
+	// - 'object' - The object from the incoming request. (https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest)
+	//
+	// CEL expressions are expected to return an envoy CheckResponse (https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
 	// +required
 	Expression string `json:"expression"`
 }

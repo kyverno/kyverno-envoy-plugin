@@ -68,14 +68,17 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 			cel.MemberOverload("denied_with_body", []*cel.Type{DeniedHttpResponse, types.StringType}, DeniedHttpResponse, cel.BinaryBinding(impl.denied_with_body)),
 		},
 		"WithHeader": {
-			cel.MemberOverload("ok_with_header", []*cel.Type{OkHttpResponse, HeaderValueOption}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_header)),
-			cel.MemberOverload("denied_with_header", []*cel.Type{DeniedHttpResponse, HeaderValueOption}, DeniedHttpResponse, cel.BinaryBinding(impl.denied_with_header)),
+			cel.MemberOverload("ok_with_header_header", []*cel.Type{OkHttpResponse, HeaderValueOption}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_header_header)),
+			cel.MemberOverload("ok_with_header_string_string", []*cel.Type{OkHttpResponse, types.StringType, types.StringType}, OkHttpResponse, cel.FunctionBinding(impl.ok_with_header_string_string)),
+			cel.MemberOverload("denied_with_header_header", []*cel.Type{DeniedHttpResponse, HeaderValueOption}, DeniedHttpResponse, cel.BinaryBinding(impl.denied_with_header_header)),
+			cel.MemberOverload("denied_with_header_string_string", []*cel.Type{DeniedHttpResponse, types.StringType, types.StringType}, DeniedHttpResponse, cel.FunctionBinding(impl.denied_with_header_string_string)),
 		},
 		"WithoutHeader": {
 			cel.MemberOverload("ok_without_header", []*cel.Type{OkHttpResponse, types.StringType}, OkHttpResponse, cel.BinaryBinding(impl.ok_without_header)),
 		},
 		"WithResponseHeader": {
-			cel.MemberOverload("ok_with_response_header", []*cel.Type{OkHttpResponse, HeaderValueOption}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_response_header)),
+			cel.MemberOverload("ok_with_response_header_header", []*cel.Type{OkHttpResponse, HeaderValueOption}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_response_header_header)),
+			cel.MemberOverload("ok_with_response_header_string_string", []*cel.Type{OkHttpResponse, types.StringType, types.StringType}, OkHttpResponse, cel.FunctionBinding(impl.ok_with_response_header_string_string)),
 		},
 		"WithQueryParam": {
 			cel.MemberOverload("ok_with_query_param", []*cel.Type{OkHttpResponse, QueryParameter}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_query_param)),

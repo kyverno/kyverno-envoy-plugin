@@ -21,13 +21,26 @@ func (c *impl) allowed() ref.Val {
 	return c.NativeToValue(r)
 }
 
-func (c *impl) ok_with_header(ok ref.Val, header ref.Val) ref.Val {
+func (c *impl) ok_with_header_header(ok ref.Val, header ref.Val) ref.Val {
 	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[*corev3.HeaderValueOption](header); err != nil {
 		return types.WrapErr(err)
 	} else {
 		ok.Headers = append(ok.Headers, header)
+		return c.NativeToValue(ok)
+	}
+}
+
+func (c *impl) ok_with_header_string_string(values ...ref.Val) ref.Val {
+	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](values[0]); err != nil {
+		return types.WrapErr(err)
+	} else if key, err := utils.ConvertToNative[string](values[1]); err != nil {
+		return types.WrapErr(err)
+	} else if value, err := utils.ConvertToNative[string](values[2]); err != nil {
+		return types.WrapErr(err)
+	} else {
+		ok.Headers = append(ok.Headers, &corev3.HeaderValueOption{Header: &corev3.HeaderValue{Key: key, Value: value}})
 		return c.NativeToValue(ok)
 	}
 }
@@ -43,13 +56,26 @@ func (c *impl) ok_without_header(ok ref.Val, header ref.Val) ref.Val {
 	}
 }
 
-func (c *impl) ok_with_response_header(ok ref.Val, header ref.Val) ref.Val {
+func (c *impl) ok_with_response_header_header(ok ref.Val, header ref.Val) ref.Val {
 	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[*corev3.HeaderValueOption](header); err != nil {
 		return types.WrapErr(err)
 	} else {
 		ok.ResponseHeadersToAdd = append(ok.ResponseHeadersToAdd, header)
+		return c.NativeToValue(ok)
+	}
+}
+
+func (c *impl) ok_with_response_header_string_string(values ...ref.Val) ref.Val {
+	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](values[0]); err != nil {
+		return types.WrapErr(err)
+	} else if key, err := utils.ConvertToNative[string](values[1]); err != nil {
+		return types.WrapErr(err)
+	} else if value, err := utils.ConvertToNative[string](values[2]); err != nil {
+		return types.WrapErr(err)
+	} else {
+		ok.ResponseHeadersToAdd = append(ok.ResponseHeadersToAdd, &corev3.HeaderValueOption{Header: &corev3.HeaderValue{Key: key, Value: value}})
 		return c.NativeToValue(ok)
 	}
 }
@@ -95,13 +121,26 @@ func (c *impl) denied_with_body(denied ref.Val, body ref.Val) ref.Val {
 	}
 }
 
-func (c *impl) denied_with_header(denied ref.Val, header ref.Val) ref.Val {
+func (c *impl) denied_with_header_header(denied ref.Val, header ref.Val) ref.Val {
 	if denied, err := utils.ConvertToNative[*authv3.DeniedHttpResponse](denied); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[*corev3.HeaderValueOption](header); err != nil {
 		return types.WrapErr(err)
 	} else {
 		denied.Headers = append(denied.Headers, header)
+		return c.NativeToValue(denied)
+	}
+}
+
+func (c *impl) denied_with_header_string_string(values ...ref.Val) ref.Val {
+	if denied, err := utils.ConvertToNative[*authv3.DeniedHttpResponse](values[0]); err != nil {
+		return types.WrapErr(err)
+	} else if key, err := utils.ConvertToNative[string](values[1]); err != nil {
+		return types.WrapErr(err)
+	} else if value, err := utils.ConvertToNative[string](values[2]); err != nil {
+		return types.WrapErr(err)
+	} else {
+		denied.Headers = append(denied.Headers, &corev3.HeaderValueOption{Header: &corev3.HeaderValue{Key: key, Value: value}})
 		return c.NativeToValue(denied)
 	}
 }

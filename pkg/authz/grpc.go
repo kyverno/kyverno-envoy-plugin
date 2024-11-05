@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -23,7 +24,25 @@ func NewGrpcServer(network, addr string, config *rest.Config) server.ServerFunc 
 			return err
 		}
 		// create kubernetes client
+		// TODO: do we want to use a cache ?
+		cache, err := cache.New(config, cache.Options{
+			Scheme: scheme,
+		})
+		if err != nil {
+			return err
+		}
+		go func() {
+			if err := cache.Start(ctx); err != nil {
+				// TODO: better error handling
+				panic(err)
+			}
+		}()
+		// TODO: use the result of the wait
+		cache.WaitForCacheSync(ctx)
 		client, err := client.New(config, client.Options{
+			Cache: &client.CacheOptions{
+				Reader: cache,
+			},
 			Scheme: scheme,
 		})
 		if err != nil {

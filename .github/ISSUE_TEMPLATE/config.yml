@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-issue-config.json
+
+blank_issues_enabled: true
+
+contact_links:
+  - name: Discussions
+    url: https://github.com/kyverno/kyverno-envoy-plugin/discussions
+    about: Please ask and answer questions here.
+  - name: Documentation
+    url: https://kyverno.github.io/kyverno-envoy-plugin
+    about: Browse documentation here.

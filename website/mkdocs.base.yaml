@@ -1,5 +1,5 @@
 # site
-site_name: Kyverno Envoy plugin
+site_name: Kyverno Envoy Plugin
 site_url: https://github.io/kyverno/kyverno-envoy-plugin/
 site_description: Kyverno based authz in a mesh
 

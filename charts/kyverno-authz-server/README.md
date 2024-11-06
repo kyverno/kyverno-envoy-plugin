@@ -62,7 +62,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | containers.server.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"}]` | Container ports. |
 | containers.server.args | list | `["serve","--http-address=:9080","--grpc-address=:9081"]` | Container args. |
-| service.port | int | `80` | Service port. |
+| service.port | int | `9081` | Service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
 | service.annotations | object | `{}` | Service annotations. |

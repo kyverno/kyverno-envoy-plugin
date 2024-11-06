@@ -100,6 +100,11 @@ codegen-crds: $(REGISTER_GEN)
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
 	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./hack/boilerplate.go.txt --output-base=.
 
+.PHONY: codegen-helm-docs
+codegen-helm-docs: ## Generate helm docs
+	@echo Generate helm docs... >&2
+	@docker run -v ${PWD}/charts:/work -w /work jnorwood/helm-docs:v1.11.0 -s file
+
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
 	@echo Generate mkdocs website... >&2
@@ -129,6 +134,7 @@ codegen: ## Rebuild all generated code and docs
 codegen: codegen-mkdocs
 codegen: codegen-crds
 codegen: codegen-helm-crds
+codegen: codegen-helm-docs
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date

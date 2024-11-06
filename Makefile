@@ -98,7 +98,7 @@ codegen-crds: $(REGISTER_GEN)
 	@echo Generate CRDs... >&2
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
-	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./hack/boilerplate.go.txt --output-base=.
+	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./.hack/boilerplate.go.txt --output-base=.
 
 .PHONY: codegen-helm-docs
 codegen-helm-docs: ## Generate helm docs

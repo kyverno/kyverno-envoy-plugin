@@ -61,6 +61,18 @@
          <lastmod>2024-11-06</lastmod>
     </url>
     <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/reference/</loc>
+         <lastmod>2024-11-06</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/reference/json-schemas/</loc>
+         <lastmod>2024-11-06</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/reference/apis/policy.v1alpha1/</loc>
+         <lastmod>2024-11-06</lastmod>
+    </url>
+    <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/istio/</loc>
          <lastmod>2024-11-06</lastmod>
     </url>

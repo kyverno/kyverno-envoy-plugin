@@ -142,6 +142,34 @@ codegen-api-docs: codegen-crds
 	@rm -rf ./website/docs/reference/apis
 	@cd ./website/apis && $(REFERENCE_DOCS) -c config.yaml -f markdown -o ../docs/reference/apis
 
+.PHONY: codegen-schemas-openapi
+codegen-schemas-openapi: ## Generate openapi schemas (v2 and v3)
+codegen-schemas-openapi: CURRENT_CONTEXT = $(shell kubectl config current-context)
+codegen-schemas-openapi: codegen-crds
+codegen-schemas-openapi: $(KIND)
+	@echo Generate openapi schema... >&2
+	@rm -rf ./.temp/.schemas
+	@mkdir -p ./.temp/.schemas/openapi/v2
+	@mkdir -p ./.temp/.schemas/openapi/v3/apis/envoy.kyverno.io
+	@$(KIND) create cluster --name schema --image $(KIND_IMAGE)
+	@kubectl create -f $(CRDS_PATH)
+	@sleep 15
+	@kubectl get --raw /openapi/v2 > ./.temp/.schemas/openapi/v2/schema.json
+	@kubectl get --raw /openapi/v3/apis/envoy.kyverno.io/v1alpha1 > ./.temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json
+	@$(KIND) delete cluster --name schema
+	@kubectl config use-context $(CURRENT_CONTEXT) || true
+
+.PHONY: codegen-schemas-json
+codegen-schemas-json: ## Generate json schemas
+codegen-schemas-json: codegen-schemas-openapi
+	@echo Generate json schema... >&2
+	@$(PIP) install -r requirements.txt
+	@rm -rf ./.temp/.schemas/json
+	@rm -rf ./.schemas/json
+	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
+	@mkdir -p ./.schemas/json
+	@cp ./.temp/.schemas/json/authorizationpolicy-envoy-*.json ./.schemas/json
+
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
 codegen: codegen-mkdocs
@@ -149,6 +177,8 @@ codegen: codegen-crds
 codegen: codegen-helm-crds
 codegen: codegen-helm-docs
 codegen: codegen-api-docs
+codegen: codegen-schemas-openapi
+codegen: codegen-schemas-json
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date

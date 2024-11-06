@@ -10,6 +10,7 @@ PACKAGE_SHIM                       := $(GOPATH_SHIM)/src/$(PACKAGE)
 CLI_BIN                            := kyverno-envoy-plugin
 CGO_ENABLED                        ?= 0
 GOOS                               ?= $(shell go env GOOS)
+CRDS_PATH                          := .crds
 ifdef VERSION
 LD_FLAGS                           := "-s -w -X $(PACKAGE)/pkg/version.BuildVersion=$(VERSION)"
 else
@@ -96,7 +97,7 @@ codegen-crds: $(CONTROLLER_GEN)
 codegen-crds: $(REGISTER_GEN)
 	@echo Generate CRDs... >&2
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
-	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=./config/crds
+	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
 	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./hack/boilerplate.go.txt --output-base=.
 
 .PHONY: codegen-helm-docs
@@ -112,10 +113,27 @@ codegen-mkdocs: ## Generate mkdocs website
 	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
 	@mkdocs build -f ./website/mkdocs.yaml
 
+.PHONY: codegen-helm-crds
+codegen-helm-crds: codegen-crds ## Generate helm CRDs
+	@echo Generate helm crds... >&2
+	@cat $(CRDS_PATH)/* \
+		| $(SED) -e '1i{{- if .Values.crds.install }}' \
+		| $(SED) -e '$$a{{- end }}' \
+		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
+ 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
+		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
+ 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
+ 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
+ 		> ./charts/kyverno-authz-server/templates/crds.yaml
+
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
 codegen: codegen-mkdocs
 codegen: codegen-crds
+codegen: codegen-helm-crds
 codegen: codegen-helm-docs
 
 .PHONY: verify-codegen
@@ -296,7 +314,7 @@ install-kyverno-authz-server: kind-load-image
 install-kyverno-authz-server: codegen-crds
 install-kyverno-authz-server: $(HELM)
 	@echo Install CRDs... >&2
-	@kubectl apply -f config/crds
+	@kubectl apply -f $(CRDS_PATH)
 	@echo Build kyverno-authz-server dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2

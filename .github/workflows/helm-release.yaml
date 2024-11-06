@@ -25,10 +25,13 @@ jobs:
           set -e
           TAG=${{ github.ref_name }}
           echo "CHART_VERSION=${TAG#charts-}" >> $GITHUB_ENV
+          VERSION=$(git describe --tags --match "v*" --abbrev=0)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
       - name: Run charts releaser
         uses: stefanprodan/helm-gh-pages@0ad2bb377311d61ac04ad9eb6f252fb68e207260 #v1.7.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           linting: off
           charts_dir: charts
+          app_version: ${{ env.APP_VERSION }}
           chart_version: ${{ env.CHART_VERSION }}

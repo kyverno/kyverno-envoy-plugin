@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/envoyproxy/go-control-plane v0.13.1
-	github.com/google/cel-go v0.20.1
+	github.com/google/cel-go v0.21.0
 	github.com/jmespath-community/go-jmespath v1.1.2-0.20240117150817-e430401a2172
 	github.com/kyverno/kyverno-json v0.0.3-alpha.2
 	github.com/spf13/cobra v1.8.1

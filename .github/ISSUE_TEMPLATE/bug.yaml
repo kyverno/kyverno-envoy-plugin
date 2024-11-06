@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-issue-forms.json
+
+name: Bug Report
+description: Report a bug
+title: '[Bug] '
+labels:
+- bug
+- triage
+body:
+  - type: markdown
+    attributes:
+      value: Please tell us about the bug.
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version are you running?
+      options:
+      - v0.0.1
+    validations:
+      required: true
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Description
+      description: Describe what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: bug-reproduce-steps
+    attributes:
+      label: Steps to reproduce
+      description: What are the exact steps needed to reproduce the bug you experienced?
+      value: |-
+        1. 
+    validations:
+      required: true
+  - type: textarea
+    id: bug-expectations
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: bug-screenshots
+    attributes:
+      label: Screenshots
+      description: >-
+        If you have any screenshots that would help, please paste them below.
+        GitHub allows you to copy-and-paste directly from the clipboard into the text area.
+        **Please avoid taking screenshots of either log or terminal output**; paste any textual output in the logs section below.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Please copy and paste any relevant log output. 
+      render: Shell
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting
+      description: By submitting this issue, you agree that you have performed some basic attempts at researching and solving your problem.
+      options:
+        - label: I have searched other issues in this repository and mine is not recorded.
+          required: true

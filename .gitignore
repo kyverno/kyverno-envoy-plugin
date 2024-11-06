@@ -1,5 +1,6 @@
 .cache/
 .certs/
+.temp/
 .tools/
 .venv/
 website/site/

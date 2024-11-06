@@ -11,6 +11,19 @@ nameOverride: ~
 # -- (string) Override the expanded name of the chart
 fullnameOverride: ~
 
+crds:
+
+  # -- Whether to have Helm install the CRDs, if the CRDs are not installed by Helm, they must be added before policies can be created
+  install: true
+
+  # -- Additional CRDs annotations
+  annotations: {}
+    # argocd.argoproj.io/sync-options: Replace=true
+    # strategy.spinnaker.io/replace: 'true'
+
+  # -- Additional CRDs labels
+  labels: {}
+
 rbac:
 
   # -- Create RBAC resources

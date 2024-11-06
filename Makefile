@@ -108,9 +108,7 @@ codegen-helm-docs: ## Generate helm docs
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
 	@echo Generate mkdocs website... >&2
-	@$(PIP) install mkdocs
-	@$(PIP) install --upgrade pip
-	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
+	@$(PIP) install -r requirements.txt
 	@mkdocs build -f ./website/mkdocs.yaml
 
 .PHONY: codegen-helm-crds
@@ -224,10 +222,8 @@ tests: ## Run tests
 
 .PHONY: mkdocs-serve
 mkdocs-serve: ## Generate and serve mkdocs website
-	@echo Generate and serve mkdocs website... >&2
-	@$(PIP) install mkdocs
-	@$(PIP) install --upgrade pip
-	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
+	@echo Generate and servemkdocs website... >&2
+	@$(PIP) install -r requirements.txt
 	@mkdocs serve -f ./website/mkdocs.yaml
 
 ########

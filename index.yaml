@@ -2,6 +2,36 @@ apiVersion: v1
 entries:
   kyverno-authz-server:
   - apiVersion: v2
+    appVersion: v0.0.1-alpha.1
+    created: "2024-11-06T13:30:37.998898799Z"
+    dependencies:
+    - name: kyverno-lib
+      repository: file://../kyverno-lib
+      version: 0.0.0
+    description: Kyverno policies based authorization plugin for Envoy ❤️
+    digest: 30d45d39dbd1a38b05578222574b0206cf90d970fbdc52c5921d1aef66369d0c
+    home: https://kyverno.github.io/kyverno-envoy-plugin
+    icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
+    keywords:
+    - kubernetes
+    - kyverno
+    - authz
+    - policy
+    - envoy
+    - istio
+    - security
+    kubeVersion: '>=1.25.0-0'
+    maintainers:
+    - name: Kyverno
+      url: https://kyverno.io/
+    name: kyverno-authz-server
+    sources:
+    - https://github.com/kyverno/kyverno-envoy-plugin
+    type: application
+    urls:
+    - https://kyverno.github.io/kyverno-envoy-plugin/kyverno-authz-server-v0.0.1-alpha.4.tgz
+    version: v0.0.1-alpha.4
+  - apiVersion: v2
     appVersion: latest
     created: "2024-11-06T13:19:53.45641093Z"
     dependencies:
@@ -63,6 +93,32 @@ entries:
     version: v0.0.1-alpha.1
   kyverno-lib:
   - apiVersion: v2
+    appVersion: v0.0.1-alpha.1
+    created: "2024-11-06T13:30:37.999160139Z"
+    description: Kyverno policies based authorization plugin for Envoy ❤️
+    digest: 6fbe07806082d46934722cd2d99fdfc1c4a767ba5c2c45384db773cdfe856b96
+    home: https://kyverno.github.io/kyverno-envoy-plugin
+    icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
+    keywords:
+    - kubernetes
+    - kyverno
+    - authz
+    - policy
+    - envoy
+    - istio
+    - security
+    kubeVersion: '>=1.25.0-0'
+    maintainers:
+    - name: Kyverno
+      url: https://kyverno.io/
+    name: kyverno-lib
+    sources:
+    - https://github.com/kyverno/kyverno-envoy-plugin
+    type: library
+    urls:
+    - https://kyverno.github.io/kyverno-envoy-plugin/kyverno-lib-v0.0.1-alpha.4.tgz
+    version: v0.0.1-alpha.4
+  - apiVersion: v2
     appVersion: latest
     created: "2024-11-06T13:19:53.456632884Z"
     description: Kyverno policies based authorization plugin for Envoy ❤️
@@ -115,6 +171,36 @@ entries:
     - https://kyverno.github.io/kyverno-envoy-plugin/kyverno-lib-v0.0.1-alpha.1.tgz
     version: v0.0.1-alpha.1
   kyverno-sidecar-injector:
+  - apiVersion: v2
+    appVersion: v0.0.1-alpha.1
+    created: "2024-11-06T13:30:38.000059424Z"
+    dependencies:
+    - name: kyverno-lib
+      repository: file://../kyverno-lib
+      version: 0.0.0
+    description: Kyverno policies based authorization plugin for Envoy ❤️
+    digest: 57be158a737a6c5647fade935d68ea5dc85a1497f0d6349ecc039d6ed3cf0530
+    home: https://kyverno.github.io/kyverno-envoy-plugin
+    icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
+    keywords:
+    - kubernetes
+    - kyverno
+    - authz
+    - policy
+    - envoy
+    - istio
+    - security
+    kubeVersion: '>=1.25.0-0'
+    maintainers:
+    - name: Kyverno
+      url: https://kyverno.io/
+    name: kyverno-sidecar-injector
+    sources:
+    - https://github.com/kyverno/kyverno-envoy-plugin
+    type: application
+    urls:
+    - https://kyverno.github.io/kyverno-envoy-plugin/kyverno-sidecar-injector-v0.0.1-alpha.4.tgz
+    version: v0.0.1-alpha.4
   - apiVersion: v2
     appVersion: latest
     created: "2024-11-06T13:19:53.457500144Z"
@@ -175,4 +261,4 @@ entries:
     urls:
     - https://kyverno.github.io/kyverno-envoy-plugin/kyverno-sidecar-injector-v0.0.1-alpha.1.tgz
     version: v0.0.1-alpha.1
-generated: "2024-11-06T13:19:53.455483938Z"
+generated: "2024-11-06T13:30:37.997950641Z"

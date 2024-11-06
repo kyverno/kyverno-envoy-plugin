@@ -17,6 +17,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
+        description: AuthorizationPolicy defines an authorization policy resource
         properties:
           apiVersion:
             description: |-
@@ -36,11 +37,14 @@ spec:
           metadata:
             type: object
           spec:
+            description: AuthorizationPolicySpec defines the spec of an authorization
+              policy
             properties:
               authorizations:
                 description: Authorizations contain CEL expressions which is used
                   to apply the authorization.
                 items:
+                  description: Authorization defines an authorization policy rule
                   properties:
                     expression:
                       description: |-

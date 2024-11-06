@@ -16,6 +16,11 @@ nav:
   - tutorials/standalone-envoy.md
   - tutorials/istio.md
   - tutorials/mtls-istio.md
+- Reference:
+  - reference/index.md
+  - reference/json-schemas.md
+  - APIs:
+    - v1alpha1: reference/apis/policy.v1alpha1.md
 - Performance: performance.md
 - Community:
   - community/index.md

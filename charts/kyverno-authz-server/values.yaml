@@ -207,7 +207,7 @@ containers:
 service:
 
   # -- Service port.
-  port: 80
+  port: 9081
 
   # -- Service type.
   type: ClusterIP

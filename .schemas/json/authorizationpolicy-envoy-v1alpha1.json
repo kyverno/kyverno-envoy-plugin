@@ -1,4 +1,5 @@
 {
+  "description": "AuthorizationPolicy defines an authorization policy resource",
   "type": "object",
   "required": [
     "spec"
@@ -314,6 +315,7 @@
       ]
     },
     "spec": {
+      "description": "AuthorizationPolicySpec defines the spec of an authorization policy",
       "type": [
         "object",
         "null"
@@ -326,6 +328,7 @@
             "null"
           ],
           "items": {
+            "description": "Authorization defines an authorization policy rule",
             "type": [
               "object",
               "null"

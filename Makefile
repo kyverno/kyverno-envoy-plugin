@@ -39,6 +39,8 @@ CONTROLLER_GEN                     ?= $(TOOLS_DIR)/controller-gen
 CONTROLLER_GEN_VERSION             := latest
 REGISTER_GEN                       ?= $(TOOLS_DIR)/register-gen
 REGISTER_GEN_VERSION               := v0.28.0
+REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
+REFERENCE_DOCS_VERSION             := latest
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -65,6 +67,10 @@ $(CONTROLLER_GEN):
 $(REGISTER_GEN):
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/register-gen@$(REGISTER_GEN_VERSION)
 
+$(REFERENCE_DOCS):
+	@echo Install genref... >&2
+	@GOBIN=$(TOOLS_DIR) go install github.com/kubernetes-sigs/reference-docs/genref@$(REFERENCE_DOCS_VERSION)
+
 .PHONY: install-tools
 install-tools: ## Install tools
 install-tools: $(HELM)
@@ -72,6 +78,7 @@ install-tools: $(KIND)
 install-tools: $(KO)
 install-tools: $(CONTROLLER_GEN)
 install-tools: $(REGISTER_GEN)
+install-tools: $(REFERENCE_DOCS)
 
 .PHONY: clean-tools
 clean-tools: ## Remove installed tools
@@ -100,16 +107,16 @@ codegen-crds: $(REGISTER_GEN)
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
 	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./.hack/boilerplate.go.txt --output-base=.
 
-.PHONY: codegen-helm-docs
-codegen-helm-docs: ## Generate helm docs
-	@echo Generate helm docs... >&2
-	@docker run -v ${PWD}/charts:/work -w /work jnorwood/helm-docs:v1.11.0 -s file
-
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
 	@echo Generate mkdocs website... >&2
 	@$(PIP) install -r requirements.txt
 	@mkdocs build -f ./website/mkdocs.yaml
+
+.PHONY: codegen-helm-docs
+codegen-helm-docs: ## Generate helm docs
+	@echo Generate helm docs... >&2
+	@docker run -v ${PWD}/charts:/work -w /work jnorwood/helm-docs:v1.11.0 -s file
 
 .PHONY: codegen-helm-crds
 codegen-helm-crds: codegen-crds ## Generate helm CRDs
@@ -126,6 +133,14 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
  		> ./charts/kyverno-authz-server/templates/crds.yaml
+
+.PHONY: codegen-api-docs
+codegen-api-docs: ## Generate markdown API docs
+codegen-api-docs: $(REFERENCE_DOCS)
+codegen-api-docs: codegen-crds
+	@echo Generate api docs... >&2
+	@rm -rf ./website/docs/reference/apis
+	@cd ./website/apis && $(REFERENCE_DOCS) -c config.yaml -f markdown -o ../docs/reference/apis
 
 .PHONY: codegen-schemas-openapi
 codegen-schemas-openapi: ## Generate openapi schemas (v2 and v3)
@@ -161,6 +176,7 @@ codegen: codegen-mkdocs
 codegen: codegen-crds
 codegen: codegen-helm-crds
 codegen: codegen-helm-docs
+codegen: codegen-api-docs
 codegen: codegen-schemas-openapi
 codegen: codegen-schemas-json
 

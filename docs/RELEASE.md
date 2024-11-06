@@ -16,6 +16,20 @@ git tag $TAG -m "tag $TAG" -a
 git push origin $TAG
 ```
 
+## Publish chart
+
+Publishing the chart for a release is decoupled from cutting a release.
+
+To publish the chart push a tag to the GitHub repository (beginning with `charts-v`).
+
+```shell
+VERSION="v0.0.1"
+TAG=charts-$VERSION
+
+git tag $TAG -m "tag $TAG" -a
+git push origin $TAG
+```
+
 ## Publish documentation
 
 Publishing the documentation for a release is decoupled from cutting a release.

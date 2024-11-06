@@ -1,5 +1,7 @@
+.cache/
 .certs/
 .tools/
+.venv/
 website/site/
 /kyverno-envoy-plugin
 /charts/*/charts

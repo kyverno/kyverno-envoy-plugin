@@ -187,7 +187,7 @@ apk add curl
 
 Now we can send request to the sample application and verify the result.
 
-For convenience, we’ll want to store Alice’s and Bob’s tokens in environment variables.
+For convenience, we will store Alice’s and Bob’s tokens in environment variables.
 
 Here Bob is assigned the admin role and Alice is assigned the guest role.
 

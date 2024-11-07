@@ -35,17 +35,26 @@ func (*lib) ProgramOptions() []cel.ProgramOption {
 	return []cel.ProgramOption{}
 }
 
-var TokenType = types.NewObjectType("jwt.Token")
-
-type Token struct {
-	Header *structpb.Struct
-	Claims *structpb.Struct
-	Valid  bool
+func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
+	// get env type adapter
+	adapter := env.CELTypeAdapter()
+	// build our function overloads
+	libraryDecls := map[string][]cel.FunctionOpt{
+		"jwt.Decode": {
+			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(decode(adapter))),
+		},
+	}
+	// create env options corresponding to our function overloads
+	options := []cel.EnvOption{}
+	for name, overloads := range libraryDecls {
+		options = append(options, cel.Function(name, overloads...))
+	}
+	// extend environment with our function overloads
+	return env.Extend(options...)
 }
 
-func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
-	adapter := env.CELTypeAdapter()
-	decode := func(token ref.Val, key ref.Val) ref.Val {
+func decode(adapter types.Adapter) func(token ref.Val, key ref.Val) ref.Val {
+	return func(token ref.Val, key ref.Val) ref.Val {
 		t, ok := token.(types.String)
 		if !ok {
 			return types.MaybeNoSuchOverloadErr(token)
@@ -77,17 +86,4 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 			},
 		)
 	}
-	// build our function overloads
-	libraryDecls := map[string][]cel.FunctionOpt{
-		"jwt.Decode": {
-			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(decode)),
-		},
-	}
-	// create env options corresponding to our function overloads
-	options := []cel.EnvOption{}
-	for name, overloads := range libraryDecls {
-		options = append(options, cel.Function(name, overloads...))
-	}
-	// extend environment with our function overloads
-	return env.Extend(options...)
 }

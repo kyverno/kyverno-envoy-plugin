@@ -135,7 +135,7 @@ spec:
   failurePolicy: Fail
   variables:
   - name: force_authorized
-    expression: object.attributes.request.http.?headers["x-force-authorized"].orValue("")
+    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
   authorizations:

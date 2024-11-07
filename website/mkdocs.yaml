@@ -6,8 +6,12 @@ nav:
   - quick-start/index.md
   - quick-start/install.md
   - quick-start/next-steps.md
+- Policies:
+  - pols/index.md
+  - pols/failure-policy.md
+  - pols/variables.md
+  - pols/authorization-rules.md
 - Documentation:
-  - intro.md
   - quick-start.md
   - Writing policies:
     - policies/policies.md

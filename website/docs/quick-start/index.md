@@ -22,7 +22,7 @@ In addition to the Envoy sidecar, your application pods will include a Kyverno A
 
 Performing policy evaluations locally with Envoy is advantageous, as it eliminates the need for an additional network hop for authorization checks, thus enhancing both performance and availability.
 
-!!! info 
+!!!info
 
     The Kyverno Envoy Plugin is frequently deployed in Kubernetes environments as a sidecar container or as a separate pod. Additionally, it can be used in other environments as a standalone process running alongside Envoy.
 

@@ -1,4 +1,4 @@
-# Installation
+# Authz server
 
 ## Setup
 
@@ -186,3 +186,9 @@ The following request will return `200` (allowed by our policy):
 ```bash
 curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
 ```
+
+## Wrap Up
+
+Congratulations on completing the quick start guide!
+
+This tutorial demonstrated how to configure Istio’s EnvoyFilter to utilize the Kyverno Authz Server as an external authorization service.

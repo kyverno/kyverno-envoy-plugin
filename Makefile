@@ -318,7 +318,7 @@ install-cert-manager: $(HELM)
 install-cluster-issuer: ## Install cert-manager cluster issuer
 install-cluster-issuer:
 	@echo Install cert-manager cluster issuer... >&2
-	@kubectl apply -f manifests/cert-manager/cluster-issuer.yaml
+	@kubectl apply -f .manifests/cert-manager/cluster-issuer.yaml
 
 #########
 # ISTIO #

@@ -12,28 +12,36 @@ type service struct {
 	provider policy.Provider
 }
 
-func (s *service) Check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
-	response, err := s.check(ctx, req)
+func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+	// execute check
+	response, err := s.check(ctx, r)
+	// log error if any
 	if err != nil {
 		fmt.Println(err)
 	}
+	// return response and error
 	return response, err
 }
 
-func (s *service) check(ctx context.Context, req *authv3.CheckRequest) (*authv3.CheckResponse, error) {
-	// fetch policies
+func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+	// fetch compiled policies
 	policies, err := s.provider.CompiledPolicies(ctx)
 	if err != nil {
 		return nil, err
 	}
+	// iterate over policies
 	for _, policy := range policies {
-		result, err := policy(req)
+		// execute policy
+		response, err := policy(r)
+		// return error if any
 		if err != nil {
 			return nil, err
 		}
-		if result != nil {
-			return result, nil
+		// if the reponse returned by the policy evaluation was not nil, return
+		if response != nil {
+			return response, nil
 		}
 	}
+	// we didn't have a response
 	return nil, nil
 }

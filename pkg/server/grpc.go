@@ -28,5 +28,6 @@ func RunGrpc(ctx context.Context, server *grpc.Server, listener net.Listener) er
 		server.GracefulStop()
 	})
 	fmt.Printf("GRPC Server starting at %s...\n", listener.Addr())
+	// serve
 	return server.Serve(listener)
 }

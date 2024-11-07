@@ -120,7 +120,7 @@ Notice that in this resource, we define the Kyverno Authz Server `extensionProvi
 [...]
 ```
 
-## Creating a Kyverno AuthorizationPolicy
+## Create a Kyverno AuthorizationPolicy
 
 In summary the policy below does the following:
 

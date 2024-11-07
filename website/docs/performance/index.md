@@ -1,6 +1,7 @@
 # Performance
 
-This page offers guidance and best practices for benchmarking the performance of the kyverno-envoy-plugin, helping users understand the associated overhead. It outlines an example setup for conducting benchmarks, various benchmarking scenarios, and key metrics to capture for assessing the impact of the kyverno-envoy-plugin.
+This page offers guidance and best practices for benchmarking the performance of the Kyverno Authz Server, helping users understand the associated overhead.
+It outlines an example setup for conducting benchmarks, various benchmarking scenarios, and key metrics to capture for assessing the impact of the Kyverno Authz Server.
 
 ## Benchmark Setup
 
@@ -12,9 +13,11 @@ The first component is a simple Go application that provides information of book
 
 ### Envoy
 
-The second component is the Envoy proxy, which runs alongside the example application. The Envoy configuration defines an external authorization filter `envoy.ext_authz` for a gRPC authorization server. The config uses Envoy's in-built gRPC client to make external gRPC calls.
+The second component is the Envoy proxy, which runs alongside the example application. The Envoy configuration defines an external authorization filter `envoy.ext_authz` for a gRPC authorization server.
 
-```
+The config uses Envoy's in-built gRPC client to make external gRPC calls.
+
+```yaml
 static_resources:
   listeners:
   - address:
@@ -89,56 +92,23 @@ layered_runtime:
           global_downstream_max_connections: 50000
 ```
 
-### Kyverno-envoy-plugin
+### Kyverno Authz Server
 
-The third component is the `kyverno-envoy-plugin` itself, which is configured to load and enforce Kyverno policies on incoming requests. 
-
-```yaml
-containers:
-- name: kyverno-envoy-plugin
-  image: sanskardevops/plugin:0.0.34
-  imagePullPolicy: IfNotPresent
-  ports:
-    - containerPort: 8181
-    - containerPort: 9000
-  volumeMounts:
-    - readOnly: true
-      mountPath: /policies
-      name: policy-files
-  args:
-    - "serve"
-    - "--policy=/policies/policy.yaml"
-    - "--address=:9000"
-    - "--healthaddress=:8181"
-  livenessProbe:
-    httpGet:
-      path: /health
-      scheme: HTTP
-      port: 8181
-    initialDelaySeconds: 5
-    periodSeconds: 5
-  readinessProbe:
-    httpGet:
-      path: /health
-      scheme: HTTP
-      port: 8181
-    initialDelaySeconds: 5
-    periodSeconds: 5  
-```
+The third component is the Kyverno Authz Server itself, which is configured to load and enforce Kyverno policies on incoming requests. 
 
 ## Benchmark Scenarios
 
-The following scenarios should be tested to compare the performance of the `kyverno-envoy-plugin` under different conditions:
+The following scenarios should be tested to compare the performance of the Kyverno Authz Server under different conditions:
 
-1. **App Only**: Requests are sent directly to the application, without Envoy or the `kyverno-envoy-plugin`.
-2. **App and Envoy**: Envoy is included in the request path, but the `kyverno-envoy-plugin` is not (i.e., Envoy External Authorization API is disabled).
-3. **App, Envoy, and Kyverno (RBAC policy)**: Envoy External Authorization API is enabled, and a sample real-world RBAC policy is loaded into the `kyverno-envoy-plugin`.
+1. **App Only**: Requests are sent directly to the application, without Envoy or the Kyverno Authz Server.
+2. **App and Envoy**: Envoy is included in the request path, but the Kyverno Authz Server is not (i.e., Envoy External Authorization API is disabled).
+3. **App, Envoy, and Kyverno**: Envoy External Authorization API is enabled, and a sample real-world policy is loaded into the Kyverno Authz Server.
 
 ## Load Testing with k6
 
 To perform load testing, we'll use the k6 tool. Follow these steps:
 
-1. **Install k6**: Install k6 on your machine by following the instructions on the official website: https://k6.io/docs/getting-started/installation/
+1. **Install k6**: Install [k6](https://k6.io/docs/getting-started/installation) on your machine by following the instructions on the official website.
 
 2. **Write the k6 script**:  Below is the example k6 script. 
 
@@ -182,7 +152,7 @@ export default function () {
 
 3. **Run the k6 test**: Run the load test with the following command:
 
-```shell
+```bash
 $ k6 run -f - <<EOF
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
@@ -212,28 +182,31 @@ export default function () {
 }
 EOF
 ```
+
 4. **Analyze the results**: Generate an json report with detailed insight by running:
 
-```console
+```bash
 k6 run --out json=report.json k6-script.js
 ```
-5. ***Repeat for different scenarios**: 
+5. **Repeat for different scenarios**:
 
-- # App only 
+- **App only**
+
     In this case , request are sent directly to the sample application ie no Envoy and Kyverno-plugin in the request path .
     For this run this command to apply the sample applicaition and then test with k6
 
-    ```shell
+    ```bash
     $ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/tests/performance-test/manifest/app.yaml
     ```
-    Results of the k6 when only application is applied
-    ```bash
 
-          /\      |‾‾| /‾‾/   /‾‾/   
-     /\  /  \     |  |/  /   /  /    
-    /  \/    \    |     (   /   ‾‾\  
-   /          \   |  |\  \ |  (‾)  | 
-  / __________ \  |__| \__\ \_____/ .io
+    Results of the k6 when only application is applied
+
+    ```bash
+            /\      |‾‾| /‾‾/   /‾‾/   
+       /\  /  \     |  |/  /   /  /    
+      /  \/    \    |     (   /   ‾‾\  
+     /          \   |  |\  \ |  (‾)  | 
+    / __________ \  |__| \__\ \_____/ .io
 
      execution: local
         script: k6-script.js
@@ -267,26 +240,27 @@ k6 run --out json=report.json k6-script.js
      vus_max........................: 100     min=100     max=100
 
 
-running (2m00.6s), 000/100 VUs, 9048 complete and 0 interrupted iterations
-default ✓ [======================================] 000/100 VUs  2m0s
+    running (2m00.6s), 000/100 VUs, 9048 complete and 0 interrupted iterations
+    default ✓ [======================================] 000/100 VUs  2m0s
     ``` 
 
-- # App and Envoy
-    In this case, Kyverno-envoy-plugin is not included in the path but Envoy is but Envoy External Authorization API disabled 
+- **App and Envoy**
+
+    In this case, the Kyverno Authz Server is not included in the path but Envoy is but Envoy External Authorization API disabled 
     For this run this command to apply the sample application with envoy.
 
-    ```shell
+    ```bash
     $ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/tests/performance-test/manifest/app-envoy.yaml
     ```
 
     Results of k6 after applying sample-application with envoy.
-    ```bash
 
-          /\      |‾‾| /‾‾/   /‾‾/   
-     /\  /  \     |  |/  /   /  /    
-    /  \/    \    |     (   /   ‾‾\  
-   /          \   |  |\  \ |  (‾)  | 
-  / __________ \  |__| \__\ \_____/ .io
+    ```bash
+            /\      |‾‾| /‾‾/   /‾‾/   
+       /\  /  \     |  |/  /   /  /    
+      /  \/    \    |     (   /   ‾‾\  
+     /          \   |  |\  \ |  (‾)  | 
+    / __________ \  |__| \__\ \_____/ .io
 
      execution: local
         script: k6-script.js
@@ -320,26 +294,28 @@ default ✓ [======================================] 000/100 VUs  2m0s
      vus_max........................: 100     min=100     max=100
 
 
-running (2m00.7s), 000/100 VUs, 9031 complete and 0 interrupted iterations
-default ✓ [======================================] 000/100 VUs  2m0s
+    running (2m00.7s), 000/100 VUs, 9031 complete and 0 interrupted iterations
+    default ✓ [======================================] 000/100 VUs  2m0s
     ```
 
-- # App, Envoy and Kyverno-envoy-plugin 
-    In this case, performance measurements are observed with Envoy External Authorization API enabled and a sample real-world RBAC policy loaded into kyverno-envoy-plugin .
-    For this apply this command to apply sample-application, envoy and kyverno-envoy-plugin
+- **App, Envoy and Kyverno Authz Server**
 
-    ```shell
+    In this case, performance measurements are observed with Envoy External Authorization API enabled and a sample real-world policy loaded into the Kyverno Authz Server.
+
+    For this apply this command to apply sample-application, envoy and Kyverno Authz Server:
+
+    ```bash
     $ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/tests/performance-test/manifest/app-envoy-plugin.yaml
     ```
 
-    Results of k6 after applying sample-application, Envoy and kyverno-envoy-plugin . 
-    ```console
+    Results of k6 after applying sample-application, Envoy and the Kyverno Authz Server.
 
-          /\      |‾‾| /‾‾/   /‾‾/   
-     /\  /  \     |  |/  /   /  /    
-    /  \/    \    |     (   /   ‾‾\  
-   /          \   |  |\  \ |  (‾)  | 
-  / __________ \  |__| \__\ \_____/ .io
+    ```bash
+            /\      |‾‾| /‾‾/   /‾‾/   
+       /\  /  \     |  |/  /   /  /    
+      /  \/    \    |     (   /   ‾‾\  
+     /          \   |  |\  \ |  (‾)  | 
+    / __________ \  |__| \__\ \_____/ .io
 
      execution: local
         script: k6-script.js
@@ -373,88 +349,88 @@ default ✓ [======================================] 000/100 VUs  2m0s
      vus_max........................: 100     min=100     max=100
 
 
-running (2m00.2s), 000/100 VUs, 8655 complete and 0 interrupted iterations
-default ✓ [======================================] 000/100 VUs  2m0s
+    running (2m00.2s), 000/100 VUs, 8655 complete and 0 interrupted iterations
+    default ✓ [======================================] 000/100 VUs  2m0s
     ```
+
 ## Measuring Performance
 
-The following metrics should be measured to evaluate the performance impact of the `kyverno-envoy-plugin`:
+The following metrics should be measured to evaluate the performance impact of the Kyverno Authz Server:
 
 - **End-to-end latency**
-  The end-to-end latency represents the time taken for a request to complete, from the client sending the request to receiving the response. Based on the k6 results, the average end-to-end latency for the different scenarios is as follows:
 
-  - App Only: `avg=1.01ms` (from `group_duration` or `http_req_duration`)
-  - App and Envoy: `avg=2.38ms` (from `http_req_duration`)
-  - App, Envoy, and Kyverno-envoy-plugin: `avg=46.37ms` (from `http_req_duration`)
+    The end-to-end latency represents the time taken for a request to complete, from the client sending the request to receiving the response. Based on the k6 results, the average end-to-end latency for the different scenarios is as follows:
+
+    - App Only: `avg=1.01ms` (from `group_duration` or `http_req_duration`)
+    - App and Envoy: `avg=2.38ms` (from `http_req_duration`)
+    - App, Envoy, and Kyverno Authz Server: `avg=46.37ms` (from `http_req_duration`)
 
 - **Kyverno evaluation latency**
-  The Kyverno evaluation latency represents the time taken by the kyverno-envoy-plugin to evaluate the request against the configured policies. While the k6 results do not directly provide this metric, an estimate can be inferred by analyzing the differences in latency between the "App and Envoy" scenario and the "App, Envoy, and Kyverno-envoy-plugin" scenario.
 
-  The difference in average latency between these two scenarios is:
-  `46.37ms` - `2.38ms` = `43.99ms`
+    The Kyverno evaluation latency represents the time taken by the Kyverno Authz Server to evaluate the request against the configured policies. While the k6 results do not directly provide this metric, an estimate can be inferred by analyzing the differences in latency between the "App and Envoy" scenario and the "App, Envoy, and Kyverno Authz Server" scenario.
 
-  This difference can be attributed to the Kyverno evaluation latency and the gRPC server handler latency combined. Assuming the gRPC server handler latency is relatively small compared to the Kyverno evaluation latency, the estimated range for the Kyverno evaluation latency is around 40ms to 45ms.
+    The difference in average latency between these two scenarios is:
+    `46.37ms` - `2.38ms` = `43.99ms`
+
+    This difference can be attributed to the Kyverno evaluation latency and the gRPC server handler latency combined. Assuming the gRPC server handler latency is relatively small compared to the Kyverno evaluation latency, the estimated range for the Kyverno evaluation latency is around 40ms to 45ms.
 
 - **Resource utilization**
-  Refers to CPU and memory usage of the Kyverno-Envoy-Plugin container , `kubectl top` utility can be laveraged to measure the resource utilization.
 
-  Get the resource utilization of the kyverno-envoy-plugin container using the following command:
+    Refers to CPU and memory usage of the Kyverno Authz Server container , `kubectl top` utility can be laveraged to measure the resource utilization.
 
-  ```shell
-  $ kubectl top pod -n demo --containers
-  ```
+    Get the resource utilization of the Kyverno Authz Server container using the following command:
 
-  To monitor resource utilization overtime use the following command:
+    ```bash
+    $ kubectl top pod -n demo --containers
+    ```
 
-  ```shell
-  $ watch -n 1 "kubectl top pod -n demo --containers"
-  ```
+    To monitor resource utilization overtime use the following command:
 
-  Now run the k6 script in different terminal window and observe the resource utilization of the kyverno-envoy-plugin container.
+    ```bash
+    $ watch -n 1 "kubectl top pod -n demo --containers"
+    ```
 
-  Initial resource utilization of the kyverno-envoy-plugin container:
+    Now run the k6 script in different terminal window and observe the resource utilization of the Kyverno Authz Server container.
 
-  ```console
-  POD                        NAME                   CPU(cores)   MEMORY(bytes)
-  testapp-5955cd6f8b-dbvgd   envoy                  4m           70Mi
-  testapp-5955cd6f8b-dbvgd   kyverno-envoy-plugin   1m           51Mi
-  testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
-  ```
+    Initial resource utilization of the Kyverno Authz Server container:
 
-  Resource utilization of the kyverno-envoy-plugin container after 100 requests:
+    ```bash
+    POD                        NAME                   CPU(cores)   MEMORY(bytes)
+    testapp-5955cd6f8b-dbvgd   envoy                  4m           70Mi
+    testapp-5955cd6f8b-dbvgd   server                 1m           51Mi
+    testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
+    ```
 
-  ```console
-  POD                        NAME                   CPU(cores)   MEMORY(bytes)
-  testapp-5955cd6f8b-dbvgd   envoy                  110m         70Mi
-  testapp-5955cd6f8b-dbvgd   kyverno-envoy-plugin   895m         60Mi
-  testapp-5955cd6f8b-dbvgd   test-application       17m          15Mi
+    Resource utilization of the Kyverno Authz Server container after 100 requests:
 
-  ```
+    ```bash
+    POD                        NAME                   CPU(cores)   MEMORY(bytes)
+    testapp-5955cd6f8b-dbvgd   envoy                  110m         70Mi
+    testapp-5955cd6f8b-dbvgd   server                 895m         60Mi
+    testapp-5955cd6f8b-dbvgd   test-application       17m          15Mi
+    ```
 
-  Observations:
+    Observations:
 
-  - The CPU utilization of the kyverno-envoy-plugin container increased significantly from 1m to 895m after receiving 100   requests during the load test.
-  - The memory utilization also increased, but to a lesser extent, from 51Mi to 60Mi.
+    - The CPU utilization of the Kyverno Authz Server container increased significantly from 1m to 895m after receiving 100 requests during the load test.
+    - The memory utilization also increased, but to a lesser extent, from 51Mi to 60Mi.
 
-  Resource utilization of the kyverno-envoy-plugin container after load completion:
+    Resource utilization of the Kyverno Authz Server container after load completion:
 
-  ```console
-  POD                        NAME                   CPU(cores)   MEMORY(bytes)
-  testapp-5955cd6f8b-dbvgd   envoy                  4m           70Mi
-  testapp-5955cd6f8b-dbvgd   kyverno-envoy-plugin   1m           51Mi
-  testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
-  ```
+    ```bash
+    POD                        NAME                   CPU(cores)   MEMORY(bytes)
+    testapp-5955cd6f8b-dbvgd   envoy                  4m           70Mi
+    testapp-5955cd6f8b-dbvgd   server                 1m           51Mi
+    testapp-5955cd6f8b-dbvgd   test-application       1m           11Mi
+    ```
 
-  Observations:
-  - After the load test completed and the request volume returned to normal levels, the CPU and memory utilization of the kyverno-envoy-plugin container returned to their initial values. This indicates that the kyverno-envoy-plugin can efficiently handle the increased load during the test and release the additional resources when the load subsides.
+Observations:
 
-  Correlation with k6 results:
-  - The k6 script simulated a load test scenario with 100 virtual users, ramping up over 30 seconds, staying at 100 users for 1 minute, and then ramping down over 30 seconds.
-  - During the load test, when the request volume was at its peak (100 virtual users), the kyverno-envoy-plugin container experienced a significant increase in CPU utilization, reaching 895m.
-  - This CPU utilization spike aligns with the increased processing demand on the kyverno-envoy-plugin to evaluate the incoming requests against the configured Kyverno policies.
-  - The memory utilization increase during the load test was relatively modest, suggesting that the policy evaluation did not significantly impact the memory requirements of the kyverno-envoy-plugin.
+- After the load test completed and the request volume returned to normal levels, the CPU and memory utilization of the Kyverno Authz Server container returned to their initial values. This indicates that the Kyverno Authz Server can efficiently handle the increased load during the test and release the additional resources when the load subsides.
 
+Correlation with k6 results:
 
-
- 
-
+- The k6 script simulated a load test scenario with 100 virtual users, ramping up over 30 seconds, staying at 100 users for 1 minute, and then ramping down over 30 seconds.
+- During the load test, when the request volume was at its peak (100 virtual users), the Kyverno Authz Server container experienced a significant increase in CPU utilization, reaching 895m.
+- This CPU utilization spike aligns with the increased processing demand on the Kyverno Authz Server to evaluate the incoming requests against the configured Kyverno policies.
+- The memory utilization increase during the load test was relatively modest, suggesting that the policy evaluation did not significantly impact the memory requirements of the Kyverno Authz Server.

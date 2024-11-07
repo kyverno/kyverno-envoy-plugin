@@ -71,7 +71,7 @@ spec:
   - expression: >
       variables.allowed
         ? envoy.Allowed().Response()
-        : envoy.Null()
+        : null
     # deny the request with 403 status code
   - expression: >
       envoy.Denied(403).Response()

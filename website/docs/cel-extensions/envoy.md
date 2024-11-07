@@ -80,22 +80,6 @@ envoy.Response(envoy.Allowed())
 envoy.Response(envoy.Denied(401))
 ```
 
-### envoy.Null
-
-This function creates a null `<CheckResponse>` (useful when an authorisation rule doesn't make a decision).
-
-#### Signature and overloads
-
-```
-envoy.Null() -> <CheckResponse>
-```
-
-#### Example
-
-```
-envoy.Null()
-```
-
 ### envoy.Header
 
 This function creates an `<HeaderValueOption>` object.

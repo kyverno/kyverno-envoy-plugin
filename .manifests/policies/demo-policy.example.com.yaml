@@ -11,17 +11,30 @@ spec:
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
   authorizations:
+    # if force_unauthenticated -> 401
   - expression: >
-      variables.force_authorized && !variables.force_unauthenticated
-      ? envoy
-          .Allowed()
-          .WithHeader("x-validated-by", "my-security-checkpoint")
-          .WithoutHeader("x-force-authorized")
-          .WithResponseHeader("x-add-custom-response-header", "added")
-          .Response()
-          .WithMetadata(variables.metadata)
-      : envoy
-          .Denied(variables.force_unauthenticated ? 401 : 403)
-          .WithBody(variables.force_unauthenticated ? "Authentication Failed" : "Unauthorized Request")
-          .Response()
-          .WithMetadata(variables.metadata)
+      variables.force_unauthenticated
+        ? envoy
+            .Denied(401)
+            .WithBody("Authentication Failed")
+            .Response()
+            .WithMetadata(variables.metadata)
+        : null
+    # if force_authorized -> 200
+  - expression: >
+      variables.force_authorized
+        ? envoy
+            .Allowed()
+            .WithHeader("x-validated-by", "my-security-checkpoint")
+            .WithoutHeader("x-force-authorized")
+            .WithResponseHeader("x-add-custom-response-header", "added")
+            .Response()
+            .WithMetadata(variables.metadata)
+        : null
+    # else -> 403
+  - expression: >
+      envoy
+        .Denied(403)
+        .WithBody("Unauthorized Request")
+        .Response()
+        .WithMetadata(variables.metadata)

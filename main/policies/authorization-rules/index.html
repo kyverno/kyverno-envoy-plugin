@@ -34,7 +34,7 @@
 <span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
 <span class=w>      </span><span class=no>variables.allowed</span>
 <span class=w>        </span><span class=no>? envoy.Allowed().Response()</span>
-<span class=w>        </span><span class=no>: envoy.Null()</span>
+<span class=w>        </span><span class=no>: null</span>
 <span class=w>    </span><span class=c1># deny the request with 403 status code</span>
 <span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
 <span class=w>      </span><span class=no>envoy.Denied(403).Response()</span>

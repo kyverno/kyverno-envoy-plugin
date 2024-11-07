@@ -139,58 +139,26 @@ spec:
   variables:
   - name: authorization
     expression: object.attributes.request.http.headers[?"authorization"].orValue("").split(" ")
-  # - name: token
-  #   expression: >
-  #     size(variables.authorization) == 2 && variables.authorization[0] == "bearer"
-  #       ? jwt.Decode(variables.authorization[1], "secret")
-  #       : null
+  - name: token
+    expression: >
+      size(variables.authorization) == 2 && variables.authorization[0].lowerAscii() == "bearer"
+        ? jwt.Decode(variables.authorization[1], "secret")
+        : null
   authorizations:
+    # request not authenticated -> 401
   - expression: >
-      size(variables.authorization) == 2 && variables.authorization[0] == "Bearer"
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+      variables.token == null || !variables.token.Valid
+        ? envoy.Denied(401).Response()
+        : null
+    # request authenticated but not admin role -> 403
+  - expression: >
+      variables.token.Claims.?role.orValue("") != "admin"
+        ? envoy.Denied(403).Response()
+        : null
+    # request authenticated and admin role -> 200
+  - expression: >
+      envoy.Allowed().Response()
 EOF
-
-
-apiVersion: json.kyverno.io/v1alpha1
-kind: ValidatingPolicy
-metadata:
-    name: checkrequest
-spec:
-    rules:
-    - name: deny-guest-request-at-post
-        assert:
-        any:
-        - message: "POST method calls at path /book are not allowed to guests users"
-            check:
-            request:
-                http:
-                    method: POST
-                    headers:
-                        authorization:
-                            (split(@, ' ')[1]):
-                                (jwt_decode(@ , 'secret').payload.role): admin
-                    path: /book                             
-        - message: "GET method call is allowed to both guest and admin users"
-            check:
-            request:
-                http:
-                    method: GET
-                    headers:
-                        authorization:
-                            (split(@, ' ')[1]):
-                                (jwt_decode(@ , 'secret').payload.role): admin
-                    path: /book 
-        - message: "GET method call is allowed to both guest and admin users"
-            check:
-            request:
-                http:
-                    method: GET
-                    headers:
-                        authorization:
-                            (split(@, ' ')[1]):
-                                (jwt_decode(@ , 'secret').payload.role): guest
-                    path: /book 
 ```
 
 ## Testing

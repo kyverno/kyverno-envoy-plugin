@@ -93,17 +93,28 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 			})
 		}
 		for _, rule := range authorizations {
+			// evaluate the rule
 			out, _, err := rule.Eval(data)
+			// check error
 			if err != nil {
 				return nil, err
 			}
+			// evaluation result is nil, continue
+			if _, ok := out.(types.Null); ok {
+				continue
+			}
+			// try to convert to a check response
 			response, err := utils.ConvertToNative[*authv3.CheckResponse](out)
+			// check error
 			if err != nil {
 				return nil, err
 			}
-			if response != nil {
-				return response, nil
+			// evaluation result is nil, continue
+			if response == nil {
+				continue
 			}
+			// no error and evaluation result is not nil, return
+			return response, nil
 		}
 		return nil, nil
 	}

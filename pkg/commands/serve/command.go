@@ -2,13 +2,18 @@ package serve
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func Command() *cobra.Command {
@@ -23,7 +28,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var httpErr, grpcErr error
+				var httpErr, grpcErr, mgrErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -38,11 +43,39 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
+					// create a controller manager
+					scheme := runtime.NewScheme()
+					if err := v1alpha1.Install(scheme); err != nil {
+						return err
+					}
+					mgr, err := ctrl.NewManager(config, ctrl.Options{
+						Scheme: scheme,
+					})
+					if err != nil {
+						return fmt.Errorf("failed to construct manager: %w", err)
+					}
+					// create compiler
+					compiler := policy.NewCompiler()
+					// create provider
+					provider, err := policy.NewKubeProvider(mgr, compiler)
+					if err != nil {
+						return err
+					}
 					// create a cancellable context
 					ctx, cancel := context.WithCancel(ctx)
+					// start manager
+					group.StartWithContext(ctx, func(ctx context.Context) {
+						// cancel context at the end
+						defer cancel()
+						mgrErr = mgr.Start(ctx)
+					})
+					if !mgr.GetCache().WaitForCacheSync(ctx) {
+						defer cancel()
+						return fmt.Errorf("failed to wait for cache sync")
+					}
 					// create http and grpc servers
 					http := authz.NewHttpServer(httpAddress)
-					grpc := authz.NewGrpcServer(grpcNetwork, grpcAddress, config)
+					grpc := authz.NewGrpcServer(grpcNetwork, grpcAddress, provider)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
@@ -56,7 +89,7 @@ func Command() *cobra.Command {
 					})
 					return nil
 				}(ctx)
-				return multierr.Combine(err, httpErr, grpcErr)
+				return multierr.Combine(err, httpErr, grpcErr, mgrErr)
 			})
 		},
 	}

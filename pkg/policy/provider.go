@@ -7,9 +7,7 @@ import (
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -18,23 +16,10 @@ type Provider interface {
 	CompiledPolicies(context.Context) ([]PolicyFunc, error)
 }
 
-func NewKubeProvider(ctx context.Context, config *rest.Config, compiler Compiler) (Provider, error) {
-	scheme := runtime.NewScheme()
-	if err := v1alpha1.Install(scheme); err != nil {
-		return nil, err
-	}
-	mgr, err := ctrl.NewManager(config, ctrl.Options{
-		Scheme: scheme,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to construct manager: %w", err)
-	}
+func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
 	r := newPolicyReconciler(mgr.GetClient(), compiler)
-	if err = ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
+	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
 		return nil, fmt.Errorf("failed to construct manager: %w", err)
-	}
-	if err := mgr.Start(ctx); err != nil {
-		return nil, err
 	}
 	return r, nil
 }
@@ -69,6 +54,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	compiled, err := r.compiler.Compile(policy)
 	if err != nil {
+		fmt.Println(err)
 		// TODO: not sure we should retry it
 		return ctrl.Result{}, err
 	}

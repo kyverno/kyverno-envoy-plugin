@@ -8,20 +8,12 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"google.golang.org/grpc"
-	"k8s.io/client-go/rest"
 )
 
-func NewGrpcServer(network, addr string, config *rest.Config) server.ServerFunc {
+func NewGrpcServer(network, addr string, provider policy.Provider) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()
-		// create compiler
-		compiler := policy.NewCompiler()
-		// create provider
-		provider, err := policy.NewKubeProvider(ctx, config, compiler)
-		if err != nil {
-			return err
-		}
 		// setup our authorization service
 		svc := &service{
 			provider: provider,

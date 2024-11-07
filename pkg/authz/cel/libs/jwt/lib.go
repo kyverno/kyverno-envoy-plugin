@@ -33,7 +33,7 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	// build our function overloads
 	libraryDecls := map[string][]cel.FunctionOpt{
 		"jwt.Decode": {
-			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(decode)),
+			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, types.DynType, cel.BinaryBinding(decode)),
 		},
 	}
 	// create env options corresponding to our function overloads
@@ -54,11 +54,15 @@ func decode(token ref.Val, key ref.Val) ref.Val {
 	if !ok {
 		return types.MaybeNoSuchOverloadErr(key)
 	}
-	out, err := jwt.Parse(string(t), func(*jwt.Token) (any, error) {
+	parsed, err := jwt.Parse(string(t), func(*jwt.Token) (any, error) {
 		return []byte(k), nil
 	})
 	if err != nil {
-		return types.WrapErr(err)
+		return types.DefaultTypeAdapter.NativeToValue(nil)
 	}
-	return Token{Token: out}
+	return types.DefaultTypeAdapter.NativeToValue(map[string]any{
+		"header": parsed.Header,
+		"claims": parsed.Claims.(jwt.MapClaims),
+		"valid":  parsed.Valid,
+	})
 }

@@ -17,6 +17,18 @@
          <lastmod>2024-11-07</lastmod>
     </url>
     <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/cel-extensions/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/cel-extensions/envoy/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/cel-extensions/jwt/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/</loc>
          <lastmod>2024-11-07</lastmod>
     </url>

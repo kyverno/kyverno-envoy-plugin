@@ -104,6 +104,8 @@ spec:
   action: CUSTOM
   provider:
     name: kyverno-authz-server.local
+  rules:
+  - {} # empty rules, it will apply to all requests
 EOF
 ```
 

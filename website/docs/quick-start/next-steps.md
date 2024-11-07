@@ -9,6 +9,6 @@ We covered the main components of the Kyverno Envoy Plugin.
 To continue exploring and learn more about the Kyverno Envoy Plugin:
 
 - [Start writing your own policies](../policies/index.md)
-- [Browse the tutorials section](../tutorials)
+- [Browse the tutorials section](../tutorials/index.md)
 - [Consult the Reference documentation](../reference/index.md)
 - [Engage with our Community and start contributing](../community/index.md)

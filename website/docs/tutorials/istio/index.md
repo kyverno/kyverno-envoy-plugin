@@ -1,10 +1,10 @@
-# Authz server
+# Istio 
+
+[Istio](https://istio.io/latest/) is an open source service mesh for managing the different microservices that make up a cloud-native application. Istio provides a mechanism to use a service as an external authorizer with the [AuthorizationPolicy API](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/).
+
+This tutorial shows how Istio’s AuthorizationPolicy can be configured to delegate authorization decisions to the Kyverno Authz Server.
 
 ## Setup
-
-In this quick start guide we will deploy the Kyverno Authz Server inside a cluster.
-
-Then you will interface [Istio](https://istio.io/latest/), an open source service mesh with the Kyverno Authz Server to delegate the request authorisation based on policies installed in the cluster.
 
 ### Prerequisites
 
@@ -120,13 +120,14 @@ Notice that in this resource, we define the Kyverno Authz Server `extensionProvi
 [...]
 ```
 
-### Deploy a Kyverno AuthorizationPolicy
+## Creating a Kyverno AuthorizationPolicy
 
-A Kyverno `AuthorizationPolicy` defines the rules used by the Kyverno authz server to make a decision based on a given Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest).
+In summary the policy below does the following:
 
-It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming `CheckRequest` and is expected to produce a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) in return.
+- Checks that the JWT token is valid
+- Checks that the action is allowed based on the token payload `role` and the request path
 
-```bash
+```yaml
 # deploy kyverno authorization policy
 kubectl apply -f - <<EOF
 apiVersion: envoy.kyverno.io/v1alpha1
@@ -136,20 +137,29 @@ metadata:
 spec:
   failurePolicy: Fail
   variables:
-  - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
+  - name: authorization
+    expression: object.attributes.request.http.headers[?"authorization"].orValue("").split(" ")
+  - name: token
+    expression: >
+      size(variables.authorization) == 2 && variables.authorization[0].lowerAscii() == "bearer"
+        ? jwt.Decode(variables.authorization[1], "secret")
+        : null
   authorizations:
+    # request not authenticated -> 401
   - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+      variables.token == null || !variables.token.Valid
+        ? envoy.Denied(401).Response()
+        : null
+    # request authenticated but not admin role -> 403
+  - expression: >
+      variables.token.Claims.?role.orValue("") != "admin"
+        ? envoy.Denied(403).Response()
+        : null
+    # request authenticated and admin role -> 200
+  - expression: >
+      envoy.Allowed().Response()
 EOF
 ```
-
-This simple policy will allow requests if they contain the header `x-force-authorized` with the value `enabled` or `true`.
-If the header is not present or has a different value, the request will be denied.
 
 ## Testing
 
@@ -177,20 +187,37 @@ apk add curl
 
 Now we can send request to the sample application and verify the result.
 
-The following request will return `403` (denied by our policy):
+For convenience, we will store Alice’s and Bob’s tokens in environment variables.
+
+Here Bob is assigned the admin role and Alice is assigned the guest role.
+
+```bash 
+export ALICE_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk"
+export BOB_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6ImFkbWluIiwic3ViIjoiWVd4cFkyVT0ifQ.veMeVDYlulTdieeX-jxFZ_tCmqQ_K8rwx2OktUHv5Z0"
+```
+
+Calling without a JWT token will return `401`:
 
 ```bash
 curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get
 ```
 
-The following request will return `200` (allowed by our policy):
+Calling with Alice’s JWT token will return `403`:
 
 ```bash
-curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "authorization: Bearer $ALICE_TOKEN"
+```
+
+Calling with Bob’s JWT token will return `200`:
+
+```bash
+curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "authorization: Bearer $BOB_TOKEN"
 ```
 
 ## Wrap Up
 
-Congratulations on completing the quick start guide!
+Congratulations on completing the tutorial!
 
 This tutorial demonstrated how to configure Istio’s EnvoyFilter to utilize the Kyverno Authz Server as an external authorization service.
+
+Additionally, the tutorial provided an example policy to decode a JWT token and make a decision based on it.

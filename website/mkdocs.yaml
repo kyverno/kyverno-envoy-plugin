@@ -19,8 +19,9 @@ nav:
   - Performance:
     - performance/index.md
 - Tutorials:
+  - tutorials/index.md
+  - tutorials/istio/index.md
   - tutorials/standalone-envoy.md
-  - tutorials/istio.md
   - tutorials/mtls-istio.md
 - Reference:
   - reference/index.md

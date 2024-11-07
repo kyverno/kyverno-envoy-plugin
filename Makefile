@@ -353,10 +353,7 @@ install-kyverno-sidecar-injector: $(HELM)
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart
 install-kyverno-authz-server: kind-load-image
-install-kyverno-authz-server: codegen-crds
 install-kyverno-authz-server: $(HELM)
-	@echo Install CRDs... >&2
-	@kubectl apply -f $(CRDS_PATH)
 	@echo Build kyverno-authz-server dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2

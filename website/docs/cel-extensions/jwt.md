@@ -22,7 +22,7 @@ kind: AuthorizationPolicy
 metadata:
   name: demo
 spec:
-  failurePolicy: Ignore
+  failurePolicy: Fail
   variables:
   - name: token
     expression: >

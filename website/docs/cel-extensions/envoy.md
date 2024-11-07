@@ -4,15 +4,33 @@ The `envoy` library adds some types and function to simplify the creation of Env
 
 ## Types
 
-| CEL Type | Proto | Docs |
-|---|---|---|
-| `<CheckRequest>` | `envoy.service.auth.v3.CheckRequest` | [Docs](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) |
-| `<CheckResponse>` | `envoy.service.auth.v3.CheckResponse` | [Docs](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) |
-| `<OkHttpResponse>` | `envoy.service.auth.v3.OkHttpResponse` | [Docs](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-okhttpresponse) |
-| `<DeniedHttpResponse>` | `envoy.service.auth.v3.DeniedHttpResponse` | [Docs](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-deniedhttpresponse) |
-| `<Metadata>` | `google.protobuf.Struct` | [Docs](https://protobuf.dev/reference/protobuf/google.protobuf/#struct) |
-| `<HeaderValueOption>` | `envoy.config.core.v3.HeaderValueOption` | [Docs](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto#envoy-v3-api-msg-config-core-v3-headervalueoption) |
-| `<QueryParameter>` | `envoy.config.core.v3.QueryParameter` | [Docs](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto#envoy-v3-api-msg-config-core-v3-queryparameter) |
+### `<CheckRequest>`
+
+*CEL Type / Proto:* [`envoy.service.auth.v3.CheckRequest`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest)
+
+### `<CheckResponse>`
+
+*CEL Type / Proto:* [`envoy.service.auth.v3.CheckResponse`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse)
+
+### `<OkHttpResponse>`
+
+*CEL Type / Proto:* [`envoy.service.auth.v3.OkHttpResponse`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-okhttpresponse)
+
+### `<DeniedHttpResponse>`
+
+*CEL Type / Proto:* [`envoy.service.auth.v3.DeniedHttpResponse`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-deniedhttpresponse)
+
+### `<Metadata>`
+
+*CEL Type / Proto:* [`google.protobuf.Struct`](https://protobuf.dev/reference/protobuf/google.protobuf/#struct)
+
+### `<HeaderValueOption>`
+
+*CEL Type / Proto:* [`envoy.config.core.v3.HeaderValueOption`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto#envoy-v3-api-msg-config-core-v3-headervalueoption)
+
+### `<QueryParameter>`
+
+*CEL Type / Proto:* [`envoy.config.core.v3.QueryParameter`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto#envoy-v3-api-msg-config-core-v3-queryparameter)
 
 ## Functions
 

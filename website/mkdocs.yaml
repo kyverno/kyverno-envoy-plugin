@@ -4,28 +4,20 @@ nav:
 - Home: index.md
 - Quick start:
   - quick-start/index.md
-  - quick-start/install.md
+  - quick-start/authz-server.md
+  - quick-start/sidecar-injector.md
   - quick-start/next-steps.md
 - Policies:
-  - pols/index.md
-  - pols/failure-policy.md
-  - pols/variables.md
-  - pols/authorization-rules.md
+  - policies/index.md
+  - policies/failure-policy.md
+  - policies/variables.md
+  - policies/authorization-rules.md
   - CEL extensions:
     - cel-extensions/index.md
     - cel-extensions/envoy.md
     - cel-extensions/jwt.md
   - Performance:
     - performance/index.md
-- Documentation:
-  - quick-start.md
-  - Writing policies:
-    - policies/policies.md
-    - policies/asserts.md  
-    - policies/authz-policy.md
-  - JMESPath:
-    - Overview: jp.md
-    - Functions: jp/functions.md     
 - Tutorials:
   - tutorials/standalone-envoy.md
   - tutorials/istio.md

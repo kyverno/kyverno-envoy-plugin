@@ -20,9 +20,9 @@
 
 {{- define "kyverno-authz-server.service-account.name" -}}
 {{- if .Values.rbac.create -}}
-    {{- default (include "kyverno-authz-server.name" .) .Values.rbac.serviceAccount.name -}}
+  {{- default (include "kyverno-authz-server.name" .) .Values.rbac.serviceAccount.name -}}
 {{- else -}}
-    {{- required "A service account name is required when `rbac.create` is set to `false`" .Values.rbac.serviceAccount.name -}}
+  {{- required "A service account name is required when `rbac.create` is set to `false`" .Values.rbac.serviceAccount.name -}}
 {{- end -}}
 {{- end -}}
 

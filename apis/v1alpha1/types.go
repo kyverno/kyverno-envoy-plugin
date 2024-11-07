@@ -5,15 +5,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 
+// AuthorizationPolicy defines an authorization policy resource
 type AuthorizationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              AuthorizationPolicySpec `json:"spec"`
 }
 
+// AuthorizationPolicySpec defines the spec of an authorization policy
 type AuthorizationPolicySpec struct {
 	// FailurePolicy defines how to handle failures for the policy. Failures can
 	// occur from CEL expression parse errors, type check errors, runtime errors and invalid
@@ -52,6 +57,7 @@ func (s *AuthorizationPolicySpec) GetFailurePolicy() admissionregistrationv1.Fai
 	return *s.FailurePolicy
 }
 
+// Authorization defines an authorization policy rule
 type Authorization struct {
 	// Expression represents the expression which will be evaluated by CEL.
 	// ref: https://github.com/google/cel-spec
@@ -66,6 +72,7 @@ type Authorization struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// AuthorizationPolicyList defines a list of authorization policies
 type AuthorizationPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`

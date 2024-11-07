@@ -78,7 +78,7 @@ spec:
       containers:
         {{- with .Values.containers.server }}
         - name: server
-          image: {{ include "kyverno-authz-server.image" .image }}
+          image: {{ include "kyverno-authz-server.image" (mustMerge .image (dict "tag" (default $.Chart.Version $.Chart.AppVersion))) }}
           imagePullPolicy: {{ .image.pullPolicy }}
           {{- with .resources }}
           resources:

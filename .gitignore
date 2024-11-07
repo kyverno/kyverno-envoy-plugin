@@ -1,5 +1,8 @@
-.certs/
-.tools/
-website/site/
-/kyverno-envoy-plugin
+/.cache/
+/.certs/
+/.temp/
+/.tools/
+/.venv/
 /charts/*/charts
+/kyverno-envoy-plugin
+/website/site/

@@ -2,20 +2,36 @@ INHERIT: ./mkdocs.base.yaml
 
 nav:
 - Home: index.md
-- Documentation:
-  - intro.md
-  - quick-start.md
-  - Writing policies:
-    - policies/policies.md
-    - policies/asserts.md  
-    - policies/authz-policy.md
-  - JMESPath:
-    - Overview: jp.md
-    - Functions: jp/functions.md     
+- Quick start:
+  - quick-start/index.md
+  - quick-start/authz-server.md
+  - quick-start/sidecar-injector.md
+  - quick-start/next-steps.md
+- Policies:
+  - policies/index.md
+  - policies/failure-policy.md
+  - policies/variables.md
+  - policies/authorization-rules.md
+  - CEL extensions:
+    - cel-extensions/index.md
+    - cel-extensions/envoy.md
+    - cel-extensions/jwt.md
+  - Performance:
+    - performance/index.md
 - Tutorials:
+  - tutorials/index.md
+  - tutorials/istio/index.md
   - tutorials/standalone-envoy.md
-  - tutorials/istio.md
   - tutorials/mtls-istio.md
-- Performance: performance.md
-
-    
+- Reference:
+  - reference/index.md
+  - reference/json-schemas.md
+  - APIs:
+    - v1alpha1: reference/apis/policy.v1alpha1.md
+- Community:
+  - community/index.md
+  - Contributing: community/contribute.md
+  - Reporting a bug: community/reporting-a-bug.md
+  - Reporting a docs issue: community/reporting-a-docs-issue.md
+  - Requesting a change: community/requesting-a-change.md
+  - Making a pull request: community/making-a-pull-request.md

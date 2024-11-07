@@ -5,10 +5,6 @@
          <lastmod>2024-11-07</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/intro/</loc>
-         <lastmod>2024-11-07</lastmod>
-    </url>
-    <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/jp/</loc>
          <lastmod>2024-11-07</lastmod>
     </url>
@@ -58,6 +54,22 @@
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/policies/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/pols/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/pols/authorization-rules/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/pols/failure-policy/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/pols/variables/</loc>
          <lastmod>2024-11-07</lastmod>
     </url>
     <url>

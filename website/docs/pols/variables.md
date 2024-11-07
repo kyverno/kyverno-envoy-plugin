@@ -3,7 +3,7 @@
 A Kyverno `AuthorizationPolicy` can define `variables` that will be made available to all authorization rules.
 
 Variables can be used in composition of other expressions.
-Each variable is defined as a named CEL expression.
+Each variable is defined as a named [CEL](https://github.com/google/cel-spec) expression.
 The will be available under `variables` in other expressions of the policy.
 
 The expression of a variable can refer to other variables defined earlier in the list but not those after. Thus, variables must be sorted by the order of first appearance and acyclic.

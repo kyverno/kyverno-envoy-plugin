@@ -89,7 +89,7 @@
          <lastmod>2024-11-07</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/istio/</loc>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/</loc>
          <lastmod>2024-11-07</lastmod>
     </url>
     <url>
@@ -98,6 +98,10 @@
     </url>
     <url>
          <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/standalone-envoy/</loc>
+         <lastmod>2024-11-07</lastmod>
+    </url>
+    <url>
+         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/istio/</loc>
          <lastmod>2024-11-07</lastmod>
     </url>
 </urlset>

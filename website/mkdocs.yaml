@@ -11,6 +11,10 @@ nav:
   - pols/failure-policy.md
   - pols/variables.md
   - pols/authorization-rules.md
+  - CEL extensions:
+    - cel-extensions/index.md
+    - cel-extensions/envoy.md
+    - cel-extensions/jwt.md
 - Documentation:
   - quick-start.md
   - Writing policies:

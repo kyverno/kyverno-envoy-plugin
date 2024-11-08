@@ -114,6 +114,22 @@ envoy.Header(<string> key, <string> value) -> <HeaderValueOption>
 envoy.Header("foo", "bar")
 ```
 
+### envoy.QueryParam
+
+This function creates a `<QueryParameter>` object.
+
+#### Signature and overloads
+
+```
+envoy.QueryParam(<string> key, <string> value) -> <QueryParameter>
+```
+
+#### Example
+
+```
+envoy.QueryParam("foo", "bar")
+```
+
 ### WithBody
 
 This function sets the body of a `<DeniedHttpResponse>` object.
@@ -214,14 +230,17 @@ This function adds a `<QueryParameter>` to be added when the request is sent ups
 ```
 <OkHttpResponse>.WithQueryParam(<QueryParameter> param) -> <OkHttpResponse>
 ```
+```
+<OkHttpResponse>.WithQueryParam(<string> key, <string> value) -> <OkHttpResponse>
+```
 
 #### Example
 
 ```
-envoy.Allowed().WithQueryParam(envoy.config.core.v3.QueryParameter{
-    key: "foo",
-    bar: "bar"
-})
+envoy.Allowed().WithQueryParam(envoy.QueryParam("foo", "bar"))
+```
+```
+envoy.Allowed().WithQueryParam("foo", "bar")
 ```
 
 ### WithoutQueryParam

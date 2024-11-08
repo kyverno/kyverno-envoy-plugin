@@ -80,7 +80,7 @@ func (c *impl) ok_with_response_header_string_string(values ...ref.Val) ref.Val 
 	}
 }
 
-func (c *impl) ok_with_query_param(ok ref.Val, param ref.Val) ref.Val {
+func (c *impl) ok_with_queryparam_param(ok ref.Val, param ref.Val) ref.Val {
 	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
 		return types.WrapErr(err)
 	} else if param, err := utils.ConvertToNative[*corev3.QueryParameter](param); err != nil {
@@ -91,7 +91,20 @@ func (c *impl) ok_with_query_param(ok ref.Val, param ref.Val) ref.Val {
 	}
 }
 
-func (c *impl) ok_without_query_param(ok ref.Val, param ref.Val) ref.Val {
+func (c *impl) ok_with_queryparam_string_string(values ...ref.Val) ref.Val {
+	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](values[0]); err != nil {
+		return types.WrapErr(err)
+	} else if key, err := utils.ConvertToNative[string](values[1]); err != nil {
+		return types.WrapErr(err)
+	} else if value, err := utils.ConvertToNative[string](values[2]); err != nil {
+		return types.WrapErr(err)
+	} else {
+		ok.QueryParametersToSet = append(ok.QueryParametersToSet, &corev3.QueryParameter{Key: key, Value: value})
+		return c.NativeToValue(ok)
+	}
+}
+
+func (c *impl) ok_without_queryparam_string(ok ref.Val, param ref.Val) ref.Val {
 	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
 		return types.WrapErr(err)
 	} else if param, err := utils.ConvertToNative[string](param); err != nil {
@@ -157,6 +170,16 @@ func (c *impl) header_key_value(key ref.Val, value ref.Val) ref.Val {
 
 func (c *impl) header_keep_empty_value(header ref.Val) ref.Val {
 	return c.header_keep_empty_value_bool(header, types.True)
+}
+
+func (c *impl) queryparam_key_value(key ref.Val, value ref.Val) ref.Val {
+	if key, err := utils.ConvertToNative[string](key); err != nil {
+		return types.WrapErr(err)
+	} else if value, err := utils.ConvertToNative[string](value); err != nil {
+		return types.WrapErr(err)
+	} else {
+		return c.NativeToValue(&corev3.QueryParameter{Key: key, Value: value})
+	}
 }
 
 func (c *impl) header_keep_empty_value_bool(header ref.Val, flag ref.Val) ref.Val {

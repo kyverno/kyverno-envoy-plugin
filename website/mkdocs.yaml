@@ -12,22 +12,18 @@ nav:
   - policies/failure-policy.md
   - policies/variables.md
   - policies/authorization-rules.md
-  - CEL extensions:
-    - cel-extensions/index.md
-    - cel-extensions/envoy.md
-    - cel-extensions/jwt.md
-  - Performance:
-    - performance/index.md
-- Tutorials:
-  - tutorials/index.md
-  - tutorials/istio/index.md
-  - tutorials/standalone-envoy.md
-  - tutorials/mtls-istio.md
 - Reference:
   - reference/index.md
   - reference/json-schemas.md
   - APIs:
     - v1alpha1: reference/apis/policy.v1alpha1.md
+  - CEL extensions:
+    - cel-extensions/index.md
+    - cel-extensions/envoy.md
+    - cel-extensions/jwt.md
+- Tutorials:
+  - tutorials/index.md
+  - tutorials/istio/index.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md
@@ -35,3 +31,5 @@ nav:
   - Reporting a docs issue: community/reporting-a-docs-issue.md
   - Requesting a change: community/requesting-a-change.md
   - Making a pull request: community/making-a-pull-request.md
+# - Performance:
+#   - performance/index.md

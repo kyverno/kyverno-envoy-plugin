@@ -46,7 +46,9 @@ In this simple rule:
     Creates a `CheckResponse` to deny the request with status code `403`
 
 However, we can do a lot more with Envoy's `CheckResponse`.
-Envoy can add or remove headers, query parameters, and even change the response body. (TODO)
+Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body. (TODO)
+
+![dynamic metadata](../schemas/dynamic-metadata.png)
 
 ### Multiple rules
 

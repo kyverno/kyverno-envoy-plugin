@@ -207,17 +207,17 @@
 							class="md-button md-button--primary">
 							Get started
 						</a>
-						<a href="#everything-you-would-expect" class="md-button md-button--secondary">
+						<a href="#istio-use-case" class="md-button md-button--secondary">
 							Learn more
 						</a>
 					</div>
 					<div class="tx-hero__image">
 						<img src="static/logo.png" alt="" draggable="false"
-							style="border-radius: 0.5rem; border: 1px solid #333; filter: drop-shadow(0 0 0.75rem #555);">
+							style="border-radius: 0.5rem; border: 1px solid #333; filter: drop-shadow(0 0 0.75rem #555);" />
 					</div>
 				</div>
 				<div class="mdx-hero__more" style="text-align: center;">
-					<a href="#everything-you-would-expect">
+					<a href="#istio-use-case">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 							style="height: 1.5rem; fill: currentColor;">
 							<path d="M11 4h2v12l5.5-5.5 1.42 1.42L12 19.84l-7.92-7.92L5.5 10.5 11 16V4Z"></path>
@@ -227,130 +227,20 @@
 			</div>
 		</div>
 	</section>
-	<section id="everything-you-would-expect" class="md-container tx-container" data-md-color-scheme="slate"
-		style="min-height: 100vh;">
+	<section id="istio-use-case" class="tx-container" style="min-height: 100vh;">
 		<div class="md-content md-grid" data-md-component="content">
-			<div class="md-content__inner">
+			<div class="md-content__inner md-typeset">
 				<header class="md-typeset">
 					<h1>
-						Everything you would expect
-						<a href="#everything-you-would-expect" class="headerlink" title="Permanent link"> ¶ </a>
+						Overview (Istio)
+						<a href="#istio-use-case" class="headerlink" title="Permanent link"> ¶ </a>
 					</h1>
 				</header>
-				<div class="mdx-expect">
-					<ul class="mdx-expect__list">
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/gear.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Easy to install</h2>
-								<p>
-									Install locally using a package manager like brew or nix, or simply download the
-									binary from one of our
-									<a href="https://github.com/kyverno/chainsaw/releases">releases</a>.
-									If you want to run using a Docker image, we have that too.
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/pen.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Easy to use</h2>
-								<p>
-									Write tests in minutes, not hours. All it takes is a YAML file to define the steps
-									of a
-									test. Chainsaw will do the rest, no need to learn a programing language or write a
-									single line of code!
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/flag-checkered.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Comprehensive reporting</h2>
-								<p>
-									Understand and diagnose failures easily, thanks to a comprehensive output showing
-									precisely what failed and why.
-									Generate JUnit compatible reports to integrate with other test reporting tools.
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/paint-roller.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Resource templating</h2>
-								<p>
-									Kubernetes is all about resouces and tests need to work with resources.
-									Chainsaw has built-in support for bindings, operation outputs and resource
-									templating to
-									describe complex test scenarios.
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/circle-plus.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Positive testing</h2>
-								<p>
-									Create, update, delete resources and assert your controller reconciles the desired
-									and observed states in the expected way.
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/circle-minus.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Negative testing</h2>
-								<p>
-									Try submitting invalid resources, invalid changes, or other disallowed actions and
-									make sure they are rejected.
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/arrows-to-dot.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Stay focused</h2>
-								<p>
-									Focus on the software you are building, write test scenarios using YAML and let
-									Chainsaw
-									tell you what passes or not. Integrate in your CI pipeline to prevent regressions
-									and
-									release with better confidence.
-								</p>
-							</div>
-						</li>
-						<li class="mdx-expect__item md-typeset">
-							<div class="mdx-expect__icon">
-								{% include ".icons/fontawesome/solid/boxes-stacked.svg" %}
-							</div>
-							<div class="mdx-expect__description">
-								<h2>Multi cluster</h2>
-								<p>
-									Native support for tests involving multiple clusters, either static or dynamically
-									created ones, make Chainsaw an excellent tool for testing highly complex
-									environments
-									and architectures.
-								</p>
-							</div>
-						</li>
-					</ul>
+				<div style="display: flex; justify-content: center; margin-top: 2rem;">
+					<img src="schemas/overview.svg" alt="" draggable="false"
+						style="border-radius: 0.5rem; border: 1px solid #333; filter: drop-shadow(0 0 0.75rem #555);" />
 				</div>
 			</div>
-		</div>
 	</section>
 </div>
 {% endblock %}

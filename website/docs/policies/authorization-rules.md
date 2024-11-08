@@ -6,7 +6,7 @@ Every authorization rule must contain a [CEL](https://github.com/google/cel-spec
 
 Creating the Envoy [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) can be a tedious task, you need to remember the different types names and format.
 
-The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of `CheckResponse` easier. (TODO)
+The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of `CheckResponse` easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
 
 ## Authorization rules
 
@@ -46,7 +46,7 @@ In this simple rule:
     Creates a `CheckResponse` to deny the request with status code `403`
 
 However, we can do a lot more with Envoy's `CheckResponse`.
-Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body. (TODO)
+Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body.
 
 ![dynamic metadata](../schemas/dynamic-metadata.png)
 
@@ -81,7 +81,7 @@ spec:
 
 ### The hard way
 
-Below is the same policy, creating the `CheckResponses` manually:
+Below is the same policy, creating the `CheckResponses` manually.
 
 ```yaml
 apiVersion: envoy.kyverno.io/v1alpha1
@@ -124,29 +124,43 @@ This second policy showcases a more advanced example.
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: AuthorizationPolicy
 metadata:
-  name: demo
+  name: demo-policy.example.com
 spec:
-  failurePolicy: Fail
   variables:
   - name: force_authorized
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   - name: force_unauthenticated
     expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
+  - name: metadata
+    expression: '{"my-new-metadata": "my-new-value"}'
   authorizations:
+    # if force_unauthenticated -> 401
   - expression: >
-      variables.force_authorized && !variables.force_unauthenticated
-      ? envoy
-          .Allowed()
-          .WithHeader("x-validated-by", "my-security-checkpoint")
-          .WithoutHeader("x-force-authorized")
-          .WithResponseHeader("x-add-custom-response-header", "added")
-          .Response()
-          .WithMetadata({"my-new-metadata": "my-new-value"})
-      : envoy
-          .Denied(variables.force_unauthenticated ? 401 : 403)
-          .WithBody(variables.force_unauthenticated ? "Authentication Failed" : "Unauthorized Request")
-          .Response()
-EOF
+      variables.force_unauthenticated
+        ? envoy
+            .Denied(401)
+            .WithBody("Authentication Failed")
+            .Response()
+            .WithMetadata(variables.metadata)
+        : null
+    # if force_authorized -> 200
+  - expression: >
+      variables.force_authorized
+        ? envoy
+            .Allowed()
+            .WithHeader("x-validated-by", "my-security-checkpoint")
+            .WithoutHeader("x-force-authorized")
+            .WithResponseHeader("x-add-custom-response-header", "added")
+            .Response()
+            .WithMetadata(variables.metadata)
+        : null
+    # else -> 403
+  - expression: >
+      envoy
+        .Denied(403)
+        .WithBody("Unauthorized Request")
+        .Response()
+        .WithMetadata(variables.metadata)
 ```
 
 Notice this policy uses helper functions:
@@ -170,3 +184,7 @@ Notice this policy uses helper functions:
 - `WithMetadata`
 
     To add dynamic metadata in the envoy filter chain (this is useful when you want to pass data to another filter in the chain or you want to print it in the application logs)
+
+!!!info
+
+    The full documentation of the CEL Envoy library is available [here](../cel-extensions/envoy.md).

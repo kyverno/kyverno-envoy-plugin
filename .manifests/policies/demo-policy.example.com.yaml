@@ -38,4 +38,3 @@ spec:
         .Denied(403)
         .WithBody("Unauthorized Request")
         .Response()
-        .WithMetadata(variables.metadata)

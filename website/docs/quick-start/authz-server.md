@@ -8,39 +8,20 @@ Then you will interface [Istio](https://istio.io/latest/), an open source servic
 
 ### Prerequisites
 
-- A Kubernetes cluster with Istio installed
+- A Kubernetes cluster
 - [Helm](https://helm.sh/) to install the Kyverno Authz Server
 - [istioctl](https://istio.io/latest/docs/setup/getting-started/#download) to configure the mesh
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) to interact with the cluster
 
 ### Setup a cluster (optional)
 
-If you don't have a cluster at hand, you can create a local one with [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) and istall Istio with Helm.
+If you don't have a cluster at hand, you can create a local one with [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation).
 
 ```bash
 KIND_IMAGE=kindest/node:v1.31.1
 
 # create cluster
 kind create cluster --image $KIND_IMAGE --wait 1m
-
-# install istio
-helm install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
-helm install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod
-```
-
-### Deploy the Kyverno Authz Server
-
-The first step is to deploy the Kyverno Authz Server.
-
-```bash
-# create the kyverno namespace
-kubectl create ns kyverno
-
-# label the namespace to inject the envoy proxy
-kubectl label namespace kyverno istio-injection=enabled
-
-# deploy the kyverno authz server
-helm install kyverno-authz-server --namespace kyverno --wait --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server
 ```
 
 ### Configure the mesh
@@ -63,7 +44,7 @@ spec:
 EOF
 ```
 
-Notice that in the configuration, we define an `extensionProviders` section that points to the Kyverno Authz Server installation:
+Notice that in the configuration, we define an `extensionProviders` section that points to the Kyverno Authz Server we will install in the next step:
 
 ```yaml
 [...]
@@ -73,6 +54,21 @@ Notice that in the configuration, we define an `extensionProviders` section that
         service: kyverno-authz-server.kyverno.svc.cluster.local
         port: '9081'
 [...]
+```
+
+### Deploy the Kyverno Authz Server
+
+The first step is to deploy the Kyverno Authz Server.
+
+```bash
+# create the kyverno namespace
+kubectl create ns kyverno
+
+# label the namespace to inject the envoy proxy
+kubectl label namespace kyverno istio-injection=enabled
+
+# deploy the kyverno authz server
+helm install kyverno-authz-server --namespace kyverno --wait --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server
 ```
 
 ### Deploy a sample application

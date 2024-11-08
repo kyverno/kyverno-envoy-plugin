@@ -1,4 +1,4 @@
-package inject
+package sidecarinjector
 
 import (
 	"context"
@@ -15,7 +15,7 @@ func Command() *cobra.Command {
 	var sidecarImage string
 	command := &cobra.Command{
 		Use:   "sidecar-injector",
-		Short: "Responsible for injecting sidecars into pod containers",
+		Short: "Start the Kubernetes mutating webhook injecting Kyverno Authz Server sidecars into pod containers",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {

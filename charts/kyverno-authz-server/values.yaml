@@ -214,6 +214,7 @@ containers:
     # -- Container args.
     args:
       - serve
+      - authz-server
       - --http-address=:9080
       - --grpc-address=:9081
 

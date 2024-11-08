@@ -1,99 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/cel-extensions/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/cel-extensions/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/cel-extensions/envoy/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/cel-extensions/envoy/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/cel-extensions/jwt/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/cel-extensions/jwt/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/community/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/contribute/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/community/contribute/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/making-a-pull-request/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/community/making-a-pull-request/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/reporting-a-bug/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/community/reporting-a-bug/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/reporting-a-docs-issue/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/community/reporting-a-docs-issue/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/community/requesting-a-change/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/community/requesting-a-change/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/performance/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/performance/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/policies/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/authorization-rules/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/policies/authorization-rules/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/failure-policy/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/policies/failure-policy/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/policies/variables/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/policies/variables/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/quick-start/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/quick-start/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/quick-start/authz-server/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/quick-start/authz-server/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/quick-start/next-steps/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/quick-start/next-steps/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/quick-start/sidecar-injector/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/quick-start/sidecar-injector/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/reference/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/reference/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/reference/json-schemas/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/reference/json-schemas/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/reference/apis/policy.v1alpha1/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/reference/apis/policy.v1alpha1/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/tutorials/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
     <url>
-         <loc>https://github.io/kyverno/kyverno-envoy-plugin/main/tutorials/istio/</loc>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/tutorials/istio/</loc>
          <lastmod>2024-11-08</lastmod>
     </url>
 </urlset>

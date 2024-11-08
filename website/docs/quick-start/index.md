@@ -10,6 +10,8 @@ It allows you to enforce Kyverno policies on incoming and outgoing traffic in a 
 
 This functionality allows authorization decisions to be offloaded to an external service, which can access the request context. The request context includes details such as the origin and destination of the network activity, as well as specifics of the network request (e.g., HTTP request). This information enables the external service to make a well-informed decision regarding the authorization of the incoming request processed by Envoy.
 
+![overview](../schemas/overview.png)
+
 ## What is the Kyverno Envoy Plugin?
 
 The [Kyverno Envoy Plugin](https://github.com/kyverno/kyverno-envoy-plugin) is gRPC server that implements [Envoy External Authorization API](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html).
@@ -19,6 +21,8 @@ This allows you to enforce Kyverno policies on incoming and outgoing traffic in 
 ## How does this work?
 
 In addition to the Envoy sidecar, your application pods will include a Kyverno Authz Server component, either as a sidecar or as a separate pod. When Envoy receives an API request intended for your microservice, it consults the Kyverno Authz Server to determine whether the request should be permitted or not.
+
+![filters chain](../schemas/filters-chain.png)
 
 Performing policy evaluations locally with Envoy is advantageous, as it eliminates the need for an additional network hop for authorization checks, thus enhancing both performance and availability.
 

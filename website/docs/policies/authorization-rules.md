@@ -165,23 +165,35 @@ spec:
 
 Notice this policy uses helper functions:
 
-- `WithHeader`
+- [envoy.Allowed](../cel-extensions/envoy.md#envoyallowed)
+
+    To create an OK http response
+
+- [envoy.Denied](../cel-extensions/envoy.md#envoydenied)
+
+    To create a DENIED http response
+
+- [Response](../cel-extensions/envoy.md#response)
+
+    To create a check response from an http response
+
+- [WithHeader](../cel-extensions/envoy.md#withheader)
 
     To add a request header
 
-- `WithoutHeader`
+- [WithoutHeader](../cel-extensions/envoy.md#withoutheader)
 
     To remove a request header
 
-- `WithResponseHeader`
+- [WithResponseHeader](../cel-extensions/envoy.md#withresponseheader)
 
     To add a response header
 
-- `WithBody`
+- [WithBody](../cel-extensions/envoy.md#withbody)
 
     To modify the response body
 
-- `WithMetadata`
+- [WithMetadata](../cel-extensions/envoy.md#withmetadata)
 
     To add dynamic metadata in the envoy filter chain (this is useful when you want to pass data to another filter in the chain or you want to print it in the application logs)
 

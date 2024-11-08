@@ -59,6 +59,9 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 		"envoy.Header": {
 			cel.Overload("header_key_value", []*cel.Type{types.StringType, types.StringType}, HeaderValueOption, cel.BinaryBinding(impl.header_key_value)),
 		},
+		"envoy.QueryParam": {
+			cel.Overload("queryparam_key_value", []*cel.Type{types.StringType, types.StringType}, QueryParameter, cel.BinaryBinding(impl.queryparam_key_value)),
+		},
 		"WithBody": {
 			cel.MemberOverload("denied_with_body", []*cel.Type{DeniedHttpResponse, types.StringType}, DeniedHttpResponse, cel.BinaryBinding(impl.denied_with_body)),
 		},
@@ -76,10 +79,11 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 			cel.MemberOverload("ok_with_response_header_string_string", []*cel.Type{OkHttpResponse, types.StringType, types.StringType}, OkHttpResponse, cel.FunctionBinding(impl.ok_with_response_header_string_string)),
 		},
 		"WithQueryParam": {
-			cel.MemberOverload("ok_with_query_param", []*cel.Type{OkHttpResponse, QueryParameter}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_query_param)),
+			cel.MemberOverload("ok_with_queryparam_param", []*cel.Type{OkHttpResponse, QueryParameter}, OkHttpResponse, cel.BinaryBinding(impl.ok_with_queryparam_param)),
+			cel.MemberOverload("ok_with_queryparam_string_string", []*cel.Type{OkHttpResponse, types.StringType, types.StringType}, OkHttpResponse, cel.FunctionBinding(impl.ok_with_queryparam_string_string)),
 		},
 		"WithoutQueryParam": {
-			cel.MemberOverload("ok_without_query_param", []*cel.Type{OkHttpResponse, types.StringType}, OkHttpResponse, cel.BinaryBinding(impl.ok_without_query_param)),
+			cel.MemberOverload("ok_without_queryparam_string", []*cel.Type{OkHttpResponse, types.StringType}, OkHttpResponse, cel.BinaryBinding(impl.ok_without_queryparam_string)),
 		},
 		"KeepEmptyValue": {
 			cel.MemberOverload("header_keep_empty_value", []*cel.Type{HeaderValueOption}, HeaderValueOption, cel.UnaryBinding(impl.header_keep_empty_value)),

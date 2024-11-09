@@ -19,7 +19,6 @@ spec:
             .Denied(401)
             .WithBody("Authentication Failed")
             .Response()
-            .WithMetadata(variables.metadata)
         : null
     # if force_authorized -> 200
   - expression: >

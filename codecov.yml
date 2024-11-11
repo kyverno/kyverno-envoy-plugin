@@ -1,0 +1,3 @@
+ignore:
+- 'apis/**/zz_*.go'
+- '**/*_test.go'

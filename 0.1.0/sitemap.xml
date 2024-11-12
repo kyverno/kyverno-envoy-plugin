@@ -2,98 +2,98 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/cel-extensions/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/cel-extensions/envoy/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/cel-extensions/jwt/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/community/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/community/contribute/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/community/making-a-pull-request/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/community/reporting-a-bug/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/community/reporting-a-docs-issue/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/community/requesting-a-change/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/performance/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/policies/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/policies/authorization-rules/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/policies/failure-policy/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/policies/variables/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/quick-start/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/quick-start/authz-server/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/quick-start/next-steps/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/quick-start/sidecar-injector/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/reference/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/reference/json-schemas/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/reference/apis/policy.v1alpha1/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/tutorials/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
     <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/0.1.0/tutorials/istio/</loc>
-         <lastmod>2024-11-11</lastmod>
+         <lastmod>2024-11-12</lastmod>
     </url>
 </urlset>

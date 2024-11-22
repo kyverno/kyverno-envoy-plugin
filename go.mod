@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/envoyproxy/go-control-plane v0.13.1
-	github.com/google/cel-go v0.20.1
+	github.com/google/cel-go v0.22.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/multierr v1.11.0
@@ -16,6 +16,8 @@ require (
 	k8s.io/client-go v0.31.2
 	sigs.k8s.io/controller-runtime v0.19.2
 )
+
+require cel.dev/expr v0.18.0 // indirect
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect

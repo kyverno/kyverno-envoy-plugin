@@ -7,6 +7,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
@@ -74,8 +75,8 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to wait for cache sync")
 					}
 					// create http and grpc servers
-					http := authz.NewHttpServer(httpAddress)
-					grpc := authz.NewGrpcServer(grpcNetwork, grpcAddress, provider)
+					http := probes.NewServer(httpAddress)
+					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end

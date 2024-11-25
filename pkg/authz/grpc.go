@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func NewGrpcServer(network, addr string, provider policy.Provider) server.ServerFunc {
+func NewServer(network, addr string, provider policy.Provider) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()

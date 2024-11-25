@@ -6,8 +6,10 @@ import (
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/validation"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -20,6 +22,14 @@ func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
 	r := newPolicyReconciler(mgr.GetClient(), compiler)
 	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
 		return nil, fmt.Errorf("failed to construct manager: %w", err)
+	}
+	compileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
+		_, err := compiler.Compile(policy)
+		fmt.Println("validating policy", policy.Name, err)
+		return err
+	}
+	if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(validation.NewValidator(compileFunc)).Complete(); err != nil {
+		return nil, fmt.Errorf("failed to create webhook: %w", err)
 	}
 	return r, nil
 }
@@ -52,11 +62,11 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	compiled, err := r.compiler.Compile(policy)
-	if err != nil {
-		fmt.Println(err)
-		// TODO: not sure we should retry it
-		return ctrl.Result{}, err
+	compiled, errs := r.compiler.Compile(&policy)
+	if len(errs) > 0 {
+		fmt.Println(errs)
+		// No need to retry it
+		return ctrl.Result{}, nil
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server/handlers"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/sidecar"
@@ -20,9 +21,9 @@ func NewSidecarInjectorServer(addr, sidecarImage, certFile, keyFile string) serv
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
-		mux.Handle("/livez", handlers.Healthy(handlers.True))
+		mux.Handle("/livez", handlers.Healthy(probes.True))
 		// register ready check
-		mux.Handle("/readyz", handlers.Ready(handlers.True))
+		mux.Handle("/readyz", handlers.Ready(probes.True))
 		// register mutation webhook
 		mux.Handle("/mutate", handlers.AdmissionReview(func(ctx context.Context, r *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
 			var pod corev1.Pod

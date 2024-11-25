@@ -346,10 +346,9 @@ install-istio: $(HELM)
 # HELM #
 ########
 
-.PHONY: install-kyverno-sidecar-injector
-install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
-install-kyverno-sidecar-injector: kind-load-image
-install-kyverno-sidecar-injector: $(HELM)
+.PHONY: deploy-kyverno-sidecar-injector
+deploy-kyverno-sidecar-injector: ## Deploy kyverno-sidecar-injector chart
+deploy-kyverno-sidecar-injector: $(HELM)
 	@echo Build kyverno-sidecar-injector dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-sidecar-injector
 	@echo Install kyverno-sidecar-injector chart... >&2
@@ -360,6 +359,13 @@ install-kyverno-sidecar-injector: $(HELM)
 		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
 		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
 		--set certificates.certManager.issuerRef.group=cert-manager.io
+
+.PHONY: install-kyverno-sidecar-injector
+install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
+install-kyverno-sidecar-injector: kind-load-image
+install-kyverno-authz-server: install-cluster-issuer
+install-kyverno-sidecar-injector: $(HELM)
+	@$(MAKE) deploy-kyverno-sidecar-injector
 
 .PHONY: deploy-kyverno-authz-server
 deploy-kyverno-authz-server: ## Deploy kyverno-authz-server chart

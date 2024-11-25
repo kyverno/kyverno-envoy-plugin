@@ -18,7 +18,7 @@ import (
 )
 
 func Command() *cobra.Command {
-	var httpAddress string
+	var probesAddress string
 	var grpcAddress string
 	var grpcNetwork string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
@@ -75,7 +75,7 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to wait for cache sync")
 					}
 					// create http and grpc servers
-					http := probes.NewServer(httpAddress)
+					http := probes.NewServer(probesAddress)
 					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
@@ -94,7 +94,7 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().StringVar(&httpAddress, "http-address", ":9080", "Address to listen on for health checks")
+	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))

@@ -1,0 +1,17 @@
+{{- if .Values.certificates.certManager -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "validation-webhook.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
+  labels:
+    {{- include "validation-webhook.labels" . | nindent 4 }}
+spec:
+  secretName: {{ template "validation-webhook.name" . }}
+  dnsNames:
+    - {{ printf "%s.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
+  {{- with .Values.certificates.certManager.issuerRef }}
+  issuerRef:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
 	"github.com/spf13/cobra"
@@ -19,7 +19,7 @@ import (
 )
 
 func Command() *cobra.Command {
-	var httpAddress string
+	var probesAddress string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	command := &cobra.Command{
 		Use:   "validation-webhook",
@@ -78,7 +78,7 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to wait for cache sync")
 					}
 					// create http and grpc servers
-					http := authz.NewHttpServer(httpAddress)
+					http := probes.NewServer(probesAddress)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
@@ -91,7 +91,7 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().StringVar(&httpAddress, "http-address", ":9080", "Address to listen on for health checks")
+	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

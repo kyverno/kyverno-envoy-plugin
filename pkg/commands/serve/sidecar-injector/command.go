@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/mutation"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// create server
-				http := webhook.NewServer(address, sidecarImage, certFile, keyFile)
+				http := mutation.NewSidecarInjectorServer(address, sidecarImage, certFile, keyFile)
 				// run server
 				return http.Run(ctx)
 			})

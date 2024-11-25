@@ -6,10 +6,13 @@ import (
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -52,12 +55,16 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
 					// create compiler
-					// compiler := policy.NewCompiler()
-					// create provider
-					// provider, err := policy.NewKubeProvider(mgr, compiler)
-					// if err != nil {
-					// 	return err
-					// }
+					compiler := policy.NewCompiler()
+					// register validation webhook
+					compileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
+						_, err := compiler.Compile(policy)
+						fmt.Println("validating policy", policy.Name, err)
+						return err
+					}
+					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(validation.NewValidator(compileFunc)).Complete(); err != nil {
+						return fmt.Errorf("failed to create webhook: %w", err)
+					}
 					// create a cancellable context
 					ctx, cancel := context.WithCancel(ctx)
 					// start manager

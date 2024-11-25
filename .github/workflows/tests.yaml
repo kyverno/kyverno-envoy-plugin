@@ -110,13 +110,19 @@ jobs:
         with:
           node_image: kindest/node:v1.29.2
           cluster_name: kind
-      - name: Setup test environment
+      - name: Load image archive
+        run: |
+          set -e
+          make kind-load-archive
+      - name: Setup cert-manager
         run: |
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
-          make docker-load-image
-          make install-cert-manager
-          make install-cluster-issuer
-          make install-kyverno-sidecar-injector
+          make install-cert-manager install-cluster-issuer
+      - name: Install chart
+        run: |
+          set -e
+          export HELM=${{ steps.helm.outputs.helm-path }}
+          make deploy-kyverno-sidecar-injector
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e-test

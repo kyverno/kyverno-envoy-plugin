@@ -52,11 +52,11 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	compiled, err := r.compiler.Compile(policy)
-	if err != nil {
-		fmt.Println(err)
-		// TODO: not sure we should retry it
-		return ctrl.Result{}, err
+	compiled, errs := r.compiler.Compile(&policy)
+	if len(errs) > 0 {
+		fmt.Println(errs)
+		// No need to retry it
+		return ctrl.Result{}, nil
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()

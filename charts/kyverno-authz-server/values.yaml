@@ -38,6 +38,20 @@ rbac:
     annotations: {}
       # example.com/annotation: value
 
+certificates:
+
+  # -- Static data to set in certificate secret
+  static: {}
+    # crt: ...
+    # key: ...
+
+  # -- Infos for creating certificate with cert manager
+  certManager: {}
+    # issuerRef:
+    #   name: selfsigned-issuer
+    #   kind: ClusterIssuer
+    #   group: cert-manager.io
+
 deployment:
 
   # -- (int) Desired number of pods
@@ -215,7 +229,7 @@ containers:
     args:
       - serve
       - authz-server
-      - --http-address=:9080
+      - --probes-address=:9080
       - --grpc-address=:9081
 
 service:
@@ -232,5 +246,25 @@ service:
 
   # -- Service annotations.
   annotations: {}
+
+webhook:
+
+  # -- Webhook annotations
+  annotations: {}
+    # example.com/annotation: value
+
+  # -- Webhook failure policy
+  failurePolicy: Fail
+
+  # -- Webhook object selector
+  objectSelector: ~
+
+  # -- Webhook namespace selector
+  namespaceSelector:
+    matchExpressions:
+      - key: kyverno-injection
+        operator: In
+        values:
+        - enabled
 
 pdb:

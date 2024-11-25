@@ -171,7 +171,7 @@ apk add curl
 
 ### Call into the sample application
 
-Now we can send request to the sample application and verify the result.
+Now we can send requests to the sample application and verify the result.
 
 The following request will return `403` (denied by our policy):
 

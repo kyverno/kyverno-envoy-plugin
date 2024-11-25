@@ -1,8 +1,6 @@
 package policy
 
 import (
-	"errors"
-
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -12,6 +10,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/cel/lazy"
 )
 
@@ -23,7 +22,7 @@ const (
 type PolicyFunc func(*authv3.CheckRequest) (*authv3.CheckResponse, error)
 
 type Compiler interface {
-	Compile(v1alpha1.AuthorizationPolicy) (PolicyFunc, error)
+	Compile(*v1alpha1.AuthorizationPolicy) (PolicyFunc, field.ErrorList)
 }
 
 func NewCompiler() Compiler {
@@ -32,12 +31,13 @@ func NewCompiler() Compiler {
 
 type compiler struct{}
 
-func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, error) {
+func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, field.ErrorList) {
+	var allErrs field.ErrorList
 	variables := map[string]cel.Program{}
 	var authorizations []cel.Program
 	base, err := engine.NewEnv()
 	if err != nil {
-		return nil, err
+		return nil, append(allErrs, field.InternalError(nil, err))
 	}
 	provider := engine.NewVariablesProvider(base.CELTypeProvider())
 	env, err := base.Extend(
@@ -46,33 +46,42 @@ func (c *compiler) Compile(policy v1alpha1.AuthorizationPolicy) (PolicyFunc, err
 		cel.CustomTypeProvider(provider),
 	)
 	if err != nil {
-		return nil, err
+		return nil, append(allErrs, field.InternalError(nil, err))
 	}
-	for _, variable := range policy.Spec.Variables {
-		ast, issues := env.Compile(variable.Expression)
-		if err := issues.Err(); err != nil {
-			return nil, err
+	path := field.NewPath("spec")
+	{
+		path := path.Child("variables")
+		for i, variable := range policy.Spec.Variables {
+			path := path.Index(i)
+			ast, issues := env.Compile(variable.Expression)
+			if err := issues.Err(); err != nil {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), variable.Expression, err.Error()))
+			}
+			provider.RegisterField(variable.Name, ast.OutputType())
+			prog, err := env.Program(ast)
+			if err != nil {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), variable.Expression, err.Error()))
+			}
+			variables[variable.Name] = prog
 		}
-		provider.RegisterField(variable.Name, ast.OutputType())
-		prog, err := env.Program(ast)
-		if err != nil {
-			return nil, err
-		}
-		variables[variable.Name] = prog
 	}
-	for _, rule := range policy.Spec.Authorizations {
-		ast, issues := env.Compile(rule.Expression)
-		if err := issues.Err(); err != nil {
-			return nil, err
+	{
+		path := path.Child("authorizations")
+		for i, rule := range policy.Spec.Authorizations {
+			path := path.Index(i)
+			ast, issues := env.Compile(rule.Expression)
+			if err := issues.Err(); err != nil {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), rule.Expression, err.Error()))
+			}
+			if !ast.OutputType().IsExactType(envoy.CheckResponse) {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), rule.Expression, "rule output is expected to be of type envoy.service.auth.v3.CheckResponse"))
+			}
+			prog, err := env.Program(ast)
+			if err != nil {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), rule.Expression, err.Error()))
+			}
+			authorizations = append(authorizations, prog)
 		}
-		if !ast.OutputType().IsExactType(envoy.CheckResponse) {
-			return nil, errors.New("rule output is expected to be of type envoy.service.auth.v3.CheckResponse")
-		}
-		prog, err := env.Program(ast)
-		if err != nil {
-			return nil, err
-		}
-		authorizations = append(authorizations, prog)
 	}
 	eval := func(r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 		vars := lazy.NewMapValue(engine.VariablesType)

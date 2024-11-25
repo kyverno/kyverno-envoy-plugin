@@ -36,6 +36,8 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | rbac.create | bool | `true` | Create RBAC resources |
 | rbac.serviceAccount.name | string | `nil` | The ServiceAccount name |
 | rbac.serviceAccount.annotations | object | `{}` | Annotations for the ServiceAccount |
+| certificates.static | object | `{}` | Static data to set in certificate secret |
+| certificates.certManager | object | `{}` | Infos for creating certificate with cert manager |
 | deployment.replicas | int | `nil` | Desired number of pods |
 | deployment.revisionHistoryLimit | int | `10` | The number of revisions to keep |
 | deployment.annotations | object | `{}` | Deployment annotations. |
@@ -64,11 +66,15 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | containers.server.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"}]` | Container ports. |
-| containers.server.args | list | `["serve","authz-server","--http-address=:9080","--grpc-address=:9081"]` | Container args. |
+| containers.server.args | list | `["serve","authz-server","--probes-address=:9080","--grpc-address=:9081"]` | Container args. |
 | service.port | int | `9081` | Service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
 | service.annotations | object | `{}` | Service annotations. |
+| webhook.annotations | object | `{}` | Webhook annotations |
+| webhook.failurePolicy | string | `"Fail"` | Webhook failure policy |
+| webhook.objectSelector | string | `nil` | Webhook object selector |
+| webhook.namespaceSelector | object | `{"matchExpressions":[{"key":"kyverno-injection","operator":"In","values":["enabled"]}]}` | Webhook namespace selector |
 | pdb | string | `nil` |  |
 
 ## Source Code

@@ -1,4 +1,4 @@
-package webhook
+package mutation
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func NewServer(addr, sidecarImage, certFile, keyFile string) server.ServerFunc {
+func NewSidecarInjectorServer(addr, sidecarImage, certFile, keyFile string) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()

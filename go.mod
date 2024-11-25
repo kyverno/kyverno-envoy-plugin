@@ -10,7 +10,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38
-	google.golang.org/grpc v1.67.1
+	google.golang.org/grpc v1.68.0
 	k8s.io/apimachinery v0.31.3
 	k8s.io/apiserver v0.31.2
 	k8s.io/client-go v0.31.3
@@ -65,7 +65,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/text v0.19.0 // indirect

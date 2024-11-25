@@ -1,4 +1,4 @@
-package authz
+package probes
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server/handlers"
 )
 
-func NewHttpServer(addr string) server.ServerFunc {
+func NewServer(addr string) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
-		mux.Handle("/livez", handlers.Healthy(handlers.True))
+		mux.Handle("/livez", handlers.Healthy(True))
 		// register ready check
-		mux.Handle("/readyz", handlers.Ready(handlers.True))
+		mux.Handle("/readyz", handlers.Ready(True))
 		// create server
 		s := &http.Server{
 			Addr:    addr,

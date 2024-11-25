@@ -123,7 +123,7 @@ jobs:
         run: |
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
-          make install-kyverno-sidecar-injector
+          make deploy-kyverno-sidecar-injector
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e/sidecar-injector
 

@@ -21,9 +21,9 @@ func NewSidecarInjectorServer(addr, sidecarImage, certFile, keyFile string) serv
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
-		mux.Handle("/livez", handlers.Healthy(probes.True))
+		mux.Handle("GET /livez", handlers.Healthy(probes.True))
 		// register ready check
-		mux.Handle("/readyz", handlers.Ready(probes.True))
+		mux.Handle("GET /readyz", handlers.Ready(probes.True))
 		// register mutation webhook
 		mux.Handle("/mutate", handlers.AdmissionReview(func(ctx context.Context, r *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
 			var pod corev1.Pod

@@ -182,6 +182,7 @@ codegen: codegen-schemas-json
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date
+verify-codegen: go-mod-tidy
 verify-codegen: codegen
 	@echo Checking codegen is up to date... >&2
 	@git --no-pager diff -- .
@@ -203,9 +204,11 @@ vet: ## Run go vet
 	@echo Go vet... >&2
 	@go vet ./...
 
-#########
-# BUILD #
-#########
+.PHONY: go-mod-tidy
+go-mod-tidy: ## Run go mod tidy
+go-mod-tidy:
+	@echo Run go mod tidy... >&2
+	@go mod tidy
 
 .PHONY: build
 build: ## Build
@@ -284,9 +287,16 @@ kind-create-cluster: $(KIND)
 
 .PHONY: kind-load-image
 kind-load-image: ## Build image and load it in kind cluster
+kind-load-image: ko-build
 kind-load-image: $(KIND)
 	@echo Load image in kind... >&2
 	@$(KIND) load docker-image $(KO_REGISTRY)/$(PACKAGE):$(GIT_SHA)
+
+.PHONY: kind-load-archive
+kind-load-archive: ## Load image archive in kind cluster
+kind-load-archive: $(KIND)
+	@echo Load image archive in kind... >&2
+	@$(KIND) load image-archive image.tar
 
 ################
 # CERTIFICATES #
@@ -316,6 +326,7 @@ install-cert-manager: $(HELM)
 
 .PHONY: install-cluster-issuer
 install-cluster-issuer: ## Install cert-manager cluster issuer
+install-cluster-issuer: install-cert-manager
 install-cluster-issuer:
 	@echo Install cert-manager cluster issuer... >&2
 	@kubectl apply -f .manifests/cert-manager/cluster-issuer.yaml
@@ -350,17 +361,26 @@ install-kyverno-sidecar-injector: $(HELM)
 		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
 		--set certificates.certManager.issuerRef.group=cert-manager.io
 
-.PHONY: install-kyverno-authz-server
-install-kyverno-authz-server: ## Install kyverno-authz-server chart
-install-kyverno-authz-server: kind-load-image
-install-kyverno-authz-server: $(HELM)
+.PHONY: deploy-kyverno-authz-server
+deploy-kyverno-authz-server: ## Deploy kyverno-authz-server chart
+deploy-kyverno-authz-server: $(HELM)
 	@echo Build kyverno-authz-server dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2
 	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
 		--set containers.server.image.registry=$(KO_REGISTRY) \
 		--set containers.server.image.repository=$(PACKAGE) \
-		--set containers.server.image.tag=$(GIT_SHA)
+		--set containers.server.image.tag=$(GIT_SHA) \
+		--set certificates.certManager.issuerRef.group=cert-manager.io \
+		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
+		--set certificates.certManager.issuerRef.name=selfsigned-issuer
+
+.PHONY: install-kyverno-authz-server
+install-kyverno-authz-server: ## Install kyverno-authz-server chart
+install-kyverno-authz-server: kind-load-image
+install-kyverno-authz-server: install-cluster-issuer
+install-kyverno-authz-server: $(HELM)
+	@$(MAKE) deploy-kyverno-authz-server
 
 ########
 # HELP #

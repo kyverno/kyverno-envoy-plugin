@@ -90,6 +90,11 @@ func (in *AuthorizationPolicySpec) DeepCopyInto(out *AuthorizationPolicySpec) {
 		*out = new(v1.FailurePolicyType)
 		**out = **in
 	}
+	if in.MatchConditions != nil {
+		in, out := &in.MatchConditions, &out.MatchConditions
+		*out = make([]v1.MatchCondition, len(*in))
+		copy(*out, *in)
+	}
 	if in.Variables != nil {
 		in, out := &in.Variables, &out.Variables
 		*out = make([]v1.Variable, len(*in))

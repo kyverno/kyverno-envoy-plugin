@@ -1,0 +1,15 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: compilation-failure
+spec:
+  steps: 
+  - try:
+    - create:
+        file: ./policy.yaml
+        expect:
+        - check:
+            ($error): |-
+              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: AuthorizationPolicy.envoy.kyverno.io "compilation-failure" is invalid: spec.matchConditions[0].expression: Invalid value: "'flop' + 2\n": ERROR: <input>:1:8: found no matching overload for '_+_' applied to '(string, int)'
+               | 'flop' + 2
+               | .......^

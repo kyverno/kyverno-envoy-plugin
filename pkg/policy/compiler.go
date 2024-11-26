@@ -33,8 +33,6 @@ type compiler struct{}
 
 func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, field.ErrorList) {
 	var allErrs field.ErrorList
-	variables := map[string]cel.Program{}
-	var authorizations []cel.Program
 	base, err := engine.NewEnv()
 	if err != nil {
 		return nil, append(allErrs, field.InternalError(nil, err))
@@ -49,6 +47,26 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, fi
 		return nil, append(allErrs, field.InternalError(nil, err))
 	}
 	path := field.NewPath("spec")
+	matchConditions := make([]cel.Program, 0, len(policy.Spec.MatchConditions))
+	{
+		path := path.Child("matchConditions")
+		for i, matchCondition := range policy.Spec.MatchConditions {
+			path := path.Index(i)
+			ast, issues := env.Compile(matchCondition.Expression)
+			if err := issues.Err(); err != nil {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), matchCondition.Expression, err.Error()))
+			}
+			if !ast.OutputType().IsExactType(types.BoolType) {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), matchCondition.Expression, "matchCondition output is expected to be of type bool"))
+			}
+			prog, err := env.Program(ast)
+			if err != nil {
+				return nil, append(allErrs, field.Invalid(path.Child("expression"), matchCondition.Expression, err.Error()))
+			}
+			matchConditions = append(matchConditions, prog)
+		}
+	}
+	variables := map[string]cel.Program{}
 	{
 		path := path.Child("variables")
 		for i, variable := range policy.Spec.Variables {
@@ -65,6 +83,7 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, fi
 			variables[variable.Name] = prog
 		}
 	}
+	var authorizations []cel.Program
 	{
 		path := path.Child("authorizations")
 		for i, rule := range policy.Spec.Authorizations {
@@ -88,6 +107,24 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, fi
 		data := map[string]any{
 			ObjectKey:    r,
 			VariablesKey: vars,
+		}
+		for _, matchCondition := range matchConditions {
+			// evaluate the condition
+			out, _, err := matchCondition.Eval(data)
+			// check error
+			if err != nil {
+				return nil, err
+			}
+			// try to convert to a bool
+			result, err := utils.ConvertToNative[bool](out)
+			// check error
+			if err != nil {
+				return nil, err
+			}
+			// if condition is false, skip
+			if !result {
+				return nil, nil
+			}
 		}
 		for name, variable := range variables {
 			vars.Append(name, func(*lazy.MapValue) ref.Val {

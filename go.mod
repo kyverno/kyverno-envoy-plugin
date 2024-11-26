@@ -6,7 +6,7 @@ require (
 	github.com/envoyproxy/go-control-plane v0.13.1
 	github.com/google/cel-go v0.20.1
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/multierr v1.11.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38

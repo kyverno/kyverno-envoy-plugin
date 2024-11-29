@@ -1,4 +1,4 @@
-# Istio 
+# Istio
 
 [Istio](https://istio.io/latest/) is an open source service mesh for managing the different microservices that make up a cloud-native application. Istio provides a mechanism to use a service as an external authorizer with the [AuthorizationPolicy API](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/).
 

@@ -50,6 +50,13 @@ func (r *policyReconciler) addPolicy(pol policy) {
 	}
 }
 
+func (r *policyReconciler) deletePolicy(name types.NamespacedName) {
+	deletecmp := func(p policy) bool {
+		return name == p.name
+	}
+	r.policies = slices.DeleteFunc(r.policies, deletecmp)
+}
+
 func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconciler {
 	return &policyReconciler{
 		client:   client,
@@ -65,9 +72,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
-		r.policies = slices.DeleteFunc(r.policies, func(p policy) bool {
-			return req.NamespacedName == p.name
-		})
+		r.deletePolicy(req.NamespacedName)
 		return ctrl.Result{}, nil
 	}
 	if err != nil {

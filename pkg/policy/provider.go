@@ -3,6 +3,8 @@ package policy
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
@@ -28,7 +30,24 @@ type policyReconciler struct {
 	client   client.Client
 	compiler Compiler
 	lock     *sync.RWMutex
-	policies map[types.NamespacedName]PolicyFunc
+	policies []policy
+}
+
+type policy struct {
+	name       types.NamespacedName
+	policyFunc PolicyFunc
+}
+
+func (r *policyReconciler) addPolicy(pol policy) {
+	cmp := func(current, target policy) int {
+		return strings.Compare(current.name.String(), target.name.String())
+	}
+
+	if i, found := slices.BinarySearchFunc(r.policies, pol, cmp); found {
+		r.policies[i] = pol
+	} else {
+		slices.Insert(r.policies, i, pol)
+	}
 }
 
 func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconciler {
@@ -36,23 +55,25 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 		client:   client,
 		compiler: compiler,
 		lock:     &sync.RWMutex{},
-		policies: map[types.NamespacedName]PolicyFunc{},
+		policies: make([]policy, 0),
 	}
 }
 
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var policy v1alpha1.AuthorizationPolicy
-	err := r.client.Get(ctx, req.NamespacedName, &policy)
+	var pol v1alpha1.AuthorizationPolicy
+	err := r.client.Get(ctx, req.NamespacedName, &pol)
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
-		delete(r.policies, req.NamespacedName)
+		slices.DeleteFunc(r.policies, func(p policy) bool {
+			return req.NamespacedName == p.name
+		})
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	compiled, errs := r.compiler.Compile(&policy)
+	compiled, errs := r.compiler.Compile(&pol)
 	if len(errs) > 0 {
 		fmt.Println(errs)
 		// No need to retry it
@@ -60,7 +81,10 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.policies[req.NamespacedName] = compiled
+	r.addPolicy(policy{
+		name:       req.NamespacedName,
+		policyFunc: compiled,
+	})
 	return ctrl.Result{}, nil
 }
 
@@ -69,7 +93,7 @@ func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]PolicyFunc, 
 	defer r.lock.RUnlock()
 	out := make([]PolicyFunc, 0, len(r.policies))
 	for _, policy := range r.policies {
-		out = append(out, policy)
+		out = append(out, policy.policyFunc)
 	}
 	return out, nil
 }

@@ -1,0 +1,12 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: policy-ordering
+spec:
+  steps: 
+  - try:
+    - create:
+        file: ./policy-a.yaml
+  - try:
+    - create:
+        file: ./policy-b.yaml

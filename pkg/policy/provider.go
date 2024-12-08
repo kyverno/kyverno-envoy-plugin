@@ -46,7 +46,7 @@ func (r *policyReconciler) addPolicy(pol policy) {
 	if i, found := slices.BinarySearchFunc(r.policies, pol, cmp); found {
 		r.policies[i] = pol
 	} else {
-		slices.Insert(r.policies, i, pol)
+		r.policies = slices.Insert(r.policies, i, pol)
 	}
 }
 
@@ -65,7 +65,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
-		slices.DeleteFunc(r.policies, func(p policy) bool {
+		r.policies = slices.DeleteFunc(r.policies, func(p policy) bool {
 			return req.NamespacedName == p.name
 		})
 		return ctrl.Result{}, nil

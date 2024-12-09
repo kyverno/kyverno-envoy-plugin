@@ -27,34 +27,11 @@ func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
 }
 
 type policyReconciler struct {
-	client   client.Client
-	compiler Compiler
-	lock     *sync.RWMutex
-	policies []policy
-}
-
-type policy struct {
-	name       types.NamespacedName
-	policyFunc PolicyFunc
-}
-
-func (r *policyReconciler) addPolicy(pol policy) {
-	cmp := func(current, target policy) int {
-		return strings.Compare(current.name.String(), target.name.String())
-	}
-
-	if i, found := slices.BinarySearchFunc(r.policies, pol, cmp); found {
-		r.policies[i] = pol
-	} else {
-		r.policies = slices.Insert(r.policies, i, pol)
-	}
-}
-
-func (r *policyReconciler) deletePolicy(name types.NamespacedName) {
-	deletecmp := func(p policy) bool {
-		return name == p.name
-	}
-	r.policies = slices.DeleteFunc(r.policies, deletecmp)
+	client       client.Client
+	compiler     Compiler
+	lock         *sync.RWMutex
+	policies     map[types.NamespacedName]PolicyFunc
+	sortPolicies func() []PolicyFunc
 }
 
 func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconciler {
@@ -62,23 +39,45 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 		client:   client,
 		compiler: compiler,
 		lock:     &sync.RWMutex{},
-		policies: make([]policy, 0),
+		policies: map[types.NamespacedName]PolicyFunc{},
 	}
 }
 
+func (r *policyReconciler) setSortPoliciesFunc() func() []PolicyFunc {
+	return sync.OnceValue(func() []PolicyFunc {
+		keys := make([]types.NamespacedName, 0, len(r.policies))
+		for k := range r.policies {
+			keys = append(keys, k)
+		}
+
+		cmp := func(a, b types.NamespacedName) int {
+			return strings.Compare(a.String(), b.String())
+		}
+		slices.SortFunc(keys, cmp)
+
+		out := make([]PolicyFunc, 0, len(r.policies))
+		for _, key := range keys {
+			out = append(out, r.policies[key])
+		}
+
+		return out
+	})
+}
+
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var pol v1alpha1.AuthorizationPolicy
-	err := r.client.Get(ctx, req.NamespacedName, &pol)
+	var policy v1alpha1.AuthorizationPolicy
+	err := r.client.Get(ctx, req.NamespacedName, &policy)
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
-		r.deletePolicy(req.NamespacedName)
+		delete(r.policies, req.NamespacedName)
+		r.sortPolicies = r.setSortPoliciesFunc() // Reset the sorted func on every reconcile so the policies get resorted in next call
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	compiled, errs := r.compiler.Compile(&pol)
+	compiled, errs := r.compiler.Compile(&policy)
 	if len(errs) > 0 {
 		fmt.Println(errs)
 		// No need to retry it
@@ -86,10 +85,8 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.addPolicy(policy{
-		name:       req.NamespacedName,
-		policyFunc: compiled,
-	})
+	r.policies[req.NamespacedName] = compiled
+	r.sortPolicies = r.setSortPoliciesFunc() // Reset the sorted func on every reconcile so the policies get resorted in next call
 	return ctrl.Result{}, nil
 }
 
@@ -97,8 +94,8 @@ func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]PolicyFunc, 
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 	out := make([]PolicyFunc, 0, len(r.policies))
-	for _, policy := range r.policies {
-		out = append(out, policy.policyFunc)
+	if r.sortPolicies != nil {
+		out = r.sortPolicies()
 	}
 	return out, nil
 }

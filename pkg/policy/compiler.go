@@ -32,6 +32,11 @@ func NewCompiler() Compiler {
 type compiler struct{}
 
 func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, field.ErrorList) {
+	type authorizationPrograms struct {
+		Match    cel.Program
+		Response cel.Program
+	}
+
 	var allErrs field.ErrorList
 	base, err := engine.NewEnv()
 	if err != nil {
@@ -51,17 +56,17 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, fi
 	{
 		path := path.Child("matchConditions")
 		for i, matchCondition := range policy.Spec.MatchConditions {
-			path := path.Index(i)
+			path := path.Index(i).Child("expression")
 			ast, issues := env.Compile(matchCondition.Expression)
 			if err := issues.Err(); err != nil {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), matchCondition.Expression, err.Error()))
+				return nil, append(allErrs, field.Invalid(path, matchCondition.Expression, err.Error()))
 			}
 			if !ast.OutputType().IsExactType(types.BoolType) {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), matchCondition.Expression, "matchCondition output is expected to be of type bool"))
+				return nil, append(allErrs, field.Invalid(path, matchCondition.Expression, "matchCondition output is expected to be of type bool"))
 			}
 			prog, err := env.Program(ast)
 			if err != nil {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), matchCondition.Expression, err.Error()))
+				return nil, append(allErrs, field.Invalid(path, matchCondition.Expression, err.Error()))
 			}
 			matchConditions = append(matchConditions, prog)
 		}
@@ -70,36 +75,59 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, fi
 	{
 		path := path.Child("variables")
 		for i, variable := range policy.Spec.Variables {
-			path := path.Index(i)
+			path := path.Index(i).Child("expression")
 			ast, issues := env.Compile(variable.Expression)
 			if err := issues.Err(); err != nil {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), variable.Expression, err.Error()))
+				return nil, append(allErrs, field.Invalid(path, variable.Expression, err.Error()))
 			}
 			provider.RegisterField(variable.Name, ast.OutputType())
 			prog, err := env.Program(ast)
 			if err != nil {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), variable.Expression, err.Error()))
+				return nil, append(allErrs, field.Invalid(path, variable.Expression, err.Error()))
 			}
 			variables[variable.Name] = prog
 		}
 	}
-	var authorizations []cel.Program
+	var authorizations []authorizationPrograms
 	{
 		path := path.Child("authorizations")
 		for i, rule := range policy.Spec.Authorizations {
 			path := path.Index(i)
-			ast, issues := env.Compile(rule.Expression)
-			if err := issues.Err(); err != nil {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), rule.Expression, err.Error()))
+			program := authorizationPrograms{}
+
+			if rule.Match != "" {
+				path := path.Child("match")
+				ast, issues := env.Compile(rule.Match)
+				if err := issues.Err(); err != nil {
+					return nil, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
+				}
+				if !ast.OutputType().IsExactType(types.BoolType) {
+					return nil, append(allErrs, field.Invalid(path, rule.Match, "rule match output is expected to be of type bool"))
+				}
+				prog, err := env.Program(ast)
+				if err != nil {
+					return nil, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
+				}
+				program.Match = prog
 			}
-			if !ast.OutputType().IsExactType(envoy.CheckResponse) {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), rule.Expression, "rule output is expected to be of type envoy.service.auth.v3.CheckResponse"))
+
+			{
+				path := path.Child("response")
+				ast, issues := env.Compile(rule.Response)
+				if err := issues.Err(); err != nil {
+					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
+				}
+				if !ast.OutputType().IsExactType(envoy.CheckResponse) {
+					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.service.auth.v3.CheckResponse"))
+				}
+				prog, err := env.Program(ast)
+				if err != nil {
+					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
+				}
+				program.Response = prog
 			}
-			prog, err := env.Program(ast)
-			if err != nil {
-				return nil, append(allErrs, field.Invalid(path.Child("expression"), rule.Expression, err.Error()))
-			}
-			authorizations = append(authorizations, prog)
+
+			authorizations = append(authorizations, program)
 		}
 	}
 	eval := func(r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
@@ -139,8 +167,25 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (PolicyFunc, fi
 			})
 		}
 		for _, rule := range authorizations {
+			if rule.Match != nil {
+				// evaluate rule match condition
+				out, _, err := rule.Match.Eval(data)
+				if err != nil {
+					return nil, err
+				}
+				// try to convert to a match result
+				matched, err := utils.ConvertToNative[bool](out)
+				if err != nil {
+					return nil, err
+				}
+				// if condition is false, continue
+				if !matched {
+					continue
+				}
+			}
+
 			// evaluate the rule
-			out, _, err := rule.Eval(data)
+			out, _, err := rule.Response.Eval(data)
 			// check error
 			if err != nil {
 				return nil, err

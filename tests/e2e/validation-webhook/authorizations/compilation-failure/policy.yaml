@@ -5,5 +5,5 @@ metadata:
   name: compilation-failure
 spec:
   authorizations:
-  - expression: >
+  - response: >
       envoy.Allowed() + 1

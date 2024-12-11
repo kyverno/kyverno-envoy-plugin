@@ -1,11 +1,13 @@
-package cel
+package envoy_test
 
 import (
 	"reflect"
 	"testing"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
+	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/interpreter"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +21,7 @@ envoy
 	.WithMetadata({"my-new-metadata": "my-new-value"})
 	.WithMessage("hello")
 `
-	env, err := NewEnv()
+	env, err := cel.NewEnv(envoy.Lib())
 	assert.NoError(t, err)
 	ast, issues := env.Compile(source)
 	assert.Nil(t, issues)

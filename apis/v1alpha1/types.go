@@ -76,7 +76,10 @@ func (s *AuthorizationPolicySpec) GetFailurePolicy() admissionregistrationv1.Fai
 
 // Authorization defines an authorization policy rule
 type Authorization struct {
-	// Expression represents the expression which will be evaluated by CEL.
+	// Match represents the match condition which will be evaluated by CEL. Must evaluate to bool.
+	// +optional
+	Match string `json:"match,omitempty"`
+	// Response represents the response expression which will be evaluated by CEL.
 	// ref: https://github.com/google/cel-spec
 	// CEL expressions have access to CEL variables as well as some other useful variables:
 	//
@@ -84,7 +87,7 @@ type Authorization struct {
 	//
 	// CEL expressions are expected to return an envoy CheckResponse (https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
 	// +required
-	Expression string `json:"expression"`
+	Response string `json:"response"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

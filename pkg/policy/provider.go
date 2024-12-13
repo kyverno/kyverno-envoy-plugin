@@ -1,6 +1,7 @@
 package policy
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -42,12 +43,9 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 	}
 }
 
-func setSortPoliciesFunc(policies map[string]PolicyFunc) func() []PolicyFunc {
+func setSortPoliciesFunc[K cmp.Ordered](policies map[K]PolicyFunc) func() []PolicyFunc {
 	return sync.OnceValue(func() []PolicyFunc {
-		keys := maps.Keys(policies)
-
-		slices.Sort(keys)
-
+		keys := slices.Sorted(slices.Values(maps.Keys(policies)))
 		out := make([]PolicyFunc, 0, len(policies))
 		for _, key := range keys {
 			out = append(out, policies[key])

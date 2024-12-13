@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -30,7 +29,7 @@ type policyReconciler struct {
 	client       client.Client
 	compiler     Compiler
 	lock         *sync.RWMutex
-	policies     map[types.NamespacedName]PolicyFunc
+	policies     map[string]PolicyFunc
 	sortPolicies func() []PolicyFunc
 }
 
@@ -39,27 +38,20 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 		client:   client,
 		compiler: compiler,
 		lock:     &sync.RWMutex{},
-		policies: map[types.NamespacedName]PolicyFunc{},
+		policies: map[string]PolicyFunc{},
 	}
 }
 
-func (r *policyReconciler) setSortPoliciesFunc() func() []PolicyFunc {
+func setSortPoliciesFunc(policies map[string]PolicyFunc) func() []PolicyFunc {
 	return sync.OnceValue(func() []PolicyFunc {
-		keys := make([]types.NamespacedName, 0, len(r.policies))
-		for k := range r.policies {
-			keys = append(keys, k)
-		}
+		keys := maps.Keys(policies)
 
-		cmp := func(a, b types.NamespacedName) int {
-			return strings.Compare(a.String(), b.String())
-		}
-		slices.SortFunc(keys, cmp)
+		slices.Sort(keys)
 
-		out := make([]PolicyFunc, 0, len(r.policies))
+		out := make([]PolicyFunc, 0, len(policies))
 		for _, key := range keys {
-			out = append(out, r.policies[key])
+			out = append(out, policies[key])
 		}
-
 		return out
 	})
 }
@@ -70,8 +62,8 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
-		delete(r.policies, req.NamespacedName)
-		r.sortPolicies = r.setSortPoliciesFunc() // Reset the sorted func on every reconcile so the policies get resorted in next call
+		delete(r.policies, req.NamespacedName.String())
+		r.sortPolicies = setSortPoliciesFunc(r.policies) // Reset the sorted func on every reconcile so the policies get resorted in next call
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
@@ -85,8 +77,8 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.policies[req.NamespacedName] = compiled
-	r.sortPolicies = r.setSortPoliciesFunc() // Reset the sorted func on every reconcile so the policies get resorted in next call
+	r.policies[req.NamespacedName.String()] = compiled
+	r.sortPolicies = setSortPoliciesFunc(r.policies) // Reset the sorted func on every reconcile so the policies get resorted in next call
 	return ctrl.Result{}, nil
 }
 

@@ -48,7 +48,9 @@ func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
 		return nil
 	}
 	out := make([]V, 0, len(in))
-	for _, key := range slices.Sorted(slices.Values(maps.Keys(in))) {
+	keys := maps.Keys(in)
+	slices.Sort(keys)
+	for _, key := range keys {
 		out = append(out, in[key])
 	}
 	return out

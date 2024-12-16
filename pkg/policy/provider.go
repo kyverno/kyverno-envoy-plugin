@@ -29,7 +29,7 @@ func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
 type policyReconciler struct {
 	client       client.Client
 	compiler     Compiler
-	lock         *sync.RWMutex
+	lock         *sync.Mutex
 	policies     map[string]PolicyFunc
 	sortPolicies func() []PolicyFunc
 }
@@ -38,7 +38,7 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 	return &policyReconciler{
 		client:   client,
 		compiler: compiler,
-		lock:     &sync.RWMutex{},
+		lock:     &sync.Mutex{},
 		policies: map[string]PolicyFunc{},
 	}
 }
@@ -59,8 +59,8 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
 		r.sortPolicies = sync.OnceValue(func() []PolicyFunc {
-			r.lock.RLock()
-			defer r.lock.RUnlock()
+			r.lock.Lock()
+			defer r.lock.Unlock()
 			return mapToSortedSlice(r.policies)
 		})
 	}

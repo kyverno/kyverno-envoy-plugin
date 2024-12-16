@@ -43,15 +43,15 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 	}
 }
 
-func setSortPoliciesFunc[K cmp.Ordered](policies map[K]PolicyFunc) func() []PolicyFunc {
-	return sync.OnceValue(func() []PolicyFunc {
-		keys := slices.Sorted(slices.Values(maps.Keys(policies)))
-		out := make([]PolicyFunc, 0, len(policies))
-		for _, key := range keys {
-			out = append(out, policies[key])
-		}
-		return out
-	})
+func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
+	if in == nil {
+		return nil
+	}
+	out := make([]V, 0, len(in))
+	for _, key := range slices.Sorted(slices.Values(maps.Keys(in))) {
+		out = append(out, in[key])
+	}
+	return out
 }
 
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -61,7 +61,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		r.lock.Lock()
 		defer r.lock.Unlock()
 		delete(r.policies, req.NamespacedName.String())
-		r.sortPolicies = setSortPoliciesFunc(r.policies) // Reset the sorted func on every reconcile so the policies get resorted in next call
+		// r.sortPolicies = mapToSortedSlice(r.policies) // Reset the sorted func on every reconcile so the policies get resorted in next call
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
@@ -76,16 +76,10 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.policies[req.NamespacedName.String()] = compiled
-	r.sortPolicies = setSortPoliciesFunc(r.policies) // Reset the sorted func on every reconcile so the policies get resorted in next call
+	// r.sortPolicies = mapToSortedSlice(r.policies) // Reset the sorted func on every reconcile so the policies get resorted in next call
 	return ctrl.Result{}, nil
 }
 
 func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]PolicyFunc, error) {
-	r.lock.RLock()
-	defer r.lock.RUnlock()
-	out := make([]PolicyFunc, 0, len(r.policies))
-	if r.sortPolicies != nil {
-		out = r.sortPolicies()
-	}
-	return out, nil
+	return r.sortPolicies(), nil
 }

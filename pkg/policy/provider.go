@@ -56,21 +56,20 @@ func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
 
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var policy v1alpha1.AuthorizationPolicy
-
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
-	defer func() {
+	resetSortPolicies := func() {
 		r.sortPolicies = sync.OnceValue(func() []PolicyFunc {
 			r.lock.RLock()
 			defer r.lock.RUnlock()
 			return mapToSortedSlice(r.policies)
 		})
-	}()
-
+	}
 	err := r.client.Get(ctx, req.NamespacedName, &policy)
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
 		delete(r.policies, req.NamespacedName.String())
+		resetSortPolicies()
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
@@ -85,10 +84,10 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.policies[req.NamespacedName.String()] = compiled
+	resetSortPolicies()
 	return ctrl.Result{}, nil
 }
 
 func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]PolicyFunc, error) {
-slices.Clone(r.sortPolicies())
-	return out, nil
+	return slices.Clone(r.sortPolicies()), nil
 }

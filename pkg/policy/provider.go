@@ -68,8 +68,8 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if errors.IsNotFound(err) {
 		r.lock.Lock()
 		defer r.lock.Unlock()
+		defer resetSortPolicies()
 		delete(r.policies, req.NamespacedName.String())
-		resetSortPolicies()
 		return ctrl.Result{}, nil
 	}
 	if err != nil {

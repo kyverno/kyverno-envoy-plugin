@@ -89,8 +89,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]PolicyFunc, error) {
-	policies := r.sortPolicies()
-	out := make([]PolicyFunc, len(policies))
-	copy(out, policies)
+slices.Clone(r.sortPolicies())
 	return out, nil
 }

@@ -41,7 +41,7 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 		lock:     &sync.Mutex{},
 		policies: map[string]PolicyFunc{},
 		sortPolicies: func() []PolicyFunc {
-			return []PolicyFunc{}
+			return nil
 		},
 	}
 }

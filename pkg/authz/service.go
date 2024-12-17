@@ -29,19 +29,43 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 	if err != nil {
 		return nil, err
 	}
+	// TODO: eliminate allocations
+	allow := make([]policy.AllowFunc, 0, len(policies))
+	deny := make([]policy.DenyFunc, 0, len(policies))
 	// iterate over policies
 	for _, policy := range policies {
-		// execute policy
-		response, err := policy(r)
+		// collect allow/deny
+		a, d := policy.For(r)
+		allow = append(allow, a)
+		deny = append(deny, d)
+	}
+	// check deny first
+	for _, deny := range deny {
+		// execute rule
+		response, err := deny()
 		// return error if any
 		if err != nil {
 			return nil, err
 		}
-		// if the reponse returned by the policy evaluation was not nil, return
+		// if the reponse returned by the rule evaluation was not nil, return
+		if response != nil {
+			return response, nil
+		}
+	}
+	// check allow
+	for _, allow := range allow {
+		// execute rule
+		response, err := allow()
+		// return error if any
+		if err != nil {
+			return nil, err
+		}
+		// if the reponse returned by the rule evaluation was not nil, return
 		if response != nil {
 			return response, nil
 		}
 	}
 	// we didn't have a response
+	// TODO: default response
 	return nil, nil
 }

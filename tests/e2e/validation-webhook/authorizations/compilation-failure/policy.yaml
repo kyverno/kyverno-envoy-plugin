@@ -1,9 +1,0 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/.schemas/json/authorizationpolicy-envoy-v1alpha1.json
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: compilation-failure
-spec:
-  authorizations:
-  - response: >
-      envoy.Allowed() + 1

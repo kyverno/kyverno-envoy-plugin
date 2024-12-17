@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/envoyproxy/go-control-plane v0.13.1
-	github.com/google/cel-go v0.20.1
+	github.com/google/cel-go v0.22.1
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/multierr v1.11.0
@@ -17,7 +17,10 @@ require (
 	sigs.k8s.io/controller-runtime v0.19.3
 )
 
-require gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
+require (
+	cel.dev/expr v0.18.0 // indirect
+	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
+)
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -70,7 +73,7 @@ require (
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38 // indirect
-	google.golang.org/protobuf v1.35.2
+	google.golang.org/protobuf v1.36.0
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

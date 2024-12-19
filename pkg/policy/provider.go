@@ -15,7 +15,7 @@ import (
 )
 
 type Provider interface {
-	CompiledPolicies(context.Context) ([]PolicyFunc, error)
+	CompiledPolicies(context.Context) ([]CompiledPolicy, error)
 }
 
 func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
@@ -30,8 +30,8 @@ type policyReconciler struct {
 	client       client.Client
 	compiler     Compiler
 	lock         *sync.Mutex
-	policies     map[string]PolicyFunc
-	sortPolicies func() []PolicyFunc
+	policies     map[string]CompiledPolicy
+	sortPolicies func() []CompiledPolicy
 }
 
 func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconciler {
@@ -39,8 +39,8 @@ func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconci
 		client:   client,
 		compiler: compiler,
 		lock:     &sync.Mutex{},
-		policies: map[string]PolicyFunc{},
-		sortPolicies: func() []PolicyFunc {
+		policies: map[string]CompiledPolicy{},
+		sortPolicies: func() []CompiledPolicy {
 			return nil
 		},
 	}
@@ -63,7 +63,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	var policy v1alpha1.AuthorizationPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
-		r.sortPolicies = sync.OnceValue(func() []PolicyFunc {
+		r.sortPolicies = sync.OnceValue(func() []CompiledPolicy {
 			r.lock.Lock()
 			defer r.lock.Unlock()
 			return mapToSortedSlice(r.policies)
@@ -93,6 +93,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	return ctrl.Result{}, nil
 }
 
-func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]PolicyFunc, error) {
+func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]CompiledPolicy, error) {
 	return slices.Clone(r.sortPolicies()), nil
 }

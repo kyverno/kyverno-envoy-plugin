@@ -28,17 +28,19 @@ var pol = &v1alpha1.AuthorizationPolicy{
 				Expression: `{"my-new-metadata": "my-new-value"}`,
 			},
 		},
-		Authorizations: []v1alpha1.Authorization{
+		Deny: []v1alpha1.Authorization{
 			{
 				Match:    "variables.force_unauthenticated",
 				Response: `envoy.Denied(401).WithBody("Authentication Failed").Response()`,
 			},
 			{
-				Match:    "variables.force_authorized",
-				Response: `envoy.Allowed().WithHeader("x-validated-by", "my-security-checkpoint").WithoutHeader("x-force-authorized").WithResponseHeader("x-add-custom-response-header", "added").Response().WithMetadata(variables.metadata)`,
-			},
-			{
+				Match:    "!variables.force_authorized",
 				Response: `envoy.Denied(403).WithBody("Unauthorized Request").Response()`,
+			},
+		},
+		Allow: []v1alpha1.Authorization{
+			{
+				Response: `envoy.Allowed().WithHeader("x-validated-by", "my-security-checkpoint").WithoutHeader("x-force-authorized").WithResponseHeader("x-add-custom-response-header", "added").Response().WithMetadata(variables.metadata)`,
 			},
 		},
 	},
@@ -47,7 +49,7 @@ var pol = &v1alpha1.AuthorizationPolicy{
 func TestCompiler(t *testing.T) {
 	compiler := policy.NewCompiler()
 
-	function, errList := compiler.Compile(pol)
+	compiled, errList := compiler.Compile(pol)
 	assert.NoError(t, errList.ToAggregate())
 
 	type testCase struct {
@@ -108,8 +110,13 @@ func TestCompiler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		resp, err := function(test.request)
+		allow, deny := compiled.For(test.request)
+		resp, err := deny()
 		assert.NoError(t, err)
+		if resp == nil {
+			resp, err = allow()
+			assert.NoError(t, err)
+		}
 		assert.NotNil(t, resp)
 
 		ok := assert.IsType(t, test.responseType, resp.HttpResponse)

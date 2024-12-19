@@ -4,15 +4,10 @@ kind: AuthorizationPolicy
 metadata:
   name: valid
 spec:
-  deny:
+  allow:
   - match: >
       false
     response: >
-      envoy
-        .Denied(403)
-        .WithBody("Unauthorized Request")
-        .Response()
-  - response: >
       envoy
         .Allowed()
         .Response()

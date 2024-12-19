@@ -9,7 +9,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	engine "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
+	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -118,22 +118,20 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 			if err != nil {
 				return nil, err
 			}
-			// evaluation result is nil, continue
-			if _, ok := out.(types.Null); ok {
-				continue
-			}
 			// try to convert to a check response
-			response, err := utils.ConvertToNative[*authv3.CheckResponse](out)
+			response, err := utils.ConvertToNative[envoy.OkResponse](out)
 			// check error
 			if err != nil {
 				return nil, err
 			}
-			// evaluation result is nil, continue
-			if response == nil {
-				continue
-			}
 			// no error and evaluation result is not nil, return
-			return response, nil
+			return &authv3.CheckResponse{
+				Status: response.Status,
+				HttpResponse: &authv3.CheckResponse_OkResponse{
+					OkResponse: response.OkHttpResponse,
+				},
+				DynamicMetadata: response.DynamicMetadata,
+			}, nil
 		}
 		return nil, nil
 	}
@@ -167,34 +165,33 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 			if err != nil {
 				return nil, err
 			}
-			// evaluation result is nil, continue
-			if _, ok := out.(types.Null); ok {
-				continue
-			}
 			// try to convert to a check response
-			response, err := utils.ConvertToNative[*authv3.CheckResponse](out)
+			response, err := utils.ConvertToNative[envoy.DeniedResponse](out)
 			// check error
 			if err != nil {
 				return nil, err
 			}
-			// evaluation result is nil, continue
-			if response == nil {
-				continue
-			}
 			// no error and evaluation result is not nil, return
-			return response, nil
+			return &authv3.CheckResponse{
+				Status: response.Status,
+				HttpResponse: &authv3.CheckResponse_DeniedResponse{
+					DeniedResponse: response.DeniedHttpResponse,
+				},
+				DynamicMetadata: response.DynamicMetadata,
+			}, nil
 		}
 		return nil, nil
 	}
-	// TODO: failure policy
-	// return func(r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
-	// 	response, err := eval(r)
-	// 	if err != nil && policy.Spec.GetFailurePolicy() == admissionregistrationv1.Fail {
-	// 		return nil, err
-	// 	}
-	// 	return response, nil
-	// }, nil
-	return allow, deny
+	failurePolicy := func(inner func() (*authv3.CheckResponse, error)) func() (*authv3.CheckResponse, error) {
+		return func() (*authv3.CheckResponse, error) {
+			response, err := inner()
+			if err != nil && p.failurePolicy == admissionregistrationv1.Fail {
+				return nil, err
+			}
+			return response, nil
+		}
+	}
+	return failurePolicy(allow), failurePolicy(deny)
 }
 
 type Compiler interface {
@@ -286,8 +283,8 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (CompiledPolicy
 				if err := issues.Err(); err != nil {
 					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
 				}
-				if !ast.OutputType().IsExactType(envoy.CheckResponse) {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.service.auth.v3.CheckResponse"))
+				if !ast.OutputType().IsExactType(envoy.DeniedResponseType) {
+					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.DeniedResponse"))
 				}
 				prog, err := env.Program(ast)
 				if err != nil {
@@ -325,8 +322,8 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (CompiledPolicy
 				if err := issues.Err(); err != nil {
 					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
 				}
-				if !ast.OutputType().IsExactType(envoy.CheckResponse) {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.service.auth.v3.CheckResponse"))
+				if !ast.OutputType().IsExactType(envoy.OkResponseType) {
+					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.OkResponse"))
 				}
 				prog, err := env.Program(ast)
 				if err != nil {

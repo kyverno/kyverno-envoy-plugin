@@ -66,6 +66,5 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 		}
 	}
 	// we didn't have a response
-	// TODO: default response
-	return nil, nil
+	return &authv3.CheckResponse{}, nil
 }

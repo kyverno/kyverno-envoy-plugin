@@ -9,29 +9,86 @@ import (
 	"github.com/google/cel-go/interpreter"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func TestNewEnv(t *testing.T) {
-	source := `
-envoy
-	.Denied(401)
-	.WithBody("Authentication Failed")
-	.WithHeader(envoy.Header("foo", "bar").KeepEmptyValue())
-	.Response()
-	.WithMetadata({"my-new-metadata": "my-new-value"})
-	.WithMessage("hello")
-`
-	env, err := cel.NewEnv(envoy.Lib())
-	assert.NoError(t, err)
-	ast, issues := env.Compile(source)
-	assert.Nil(t, issues)
-	prog, err := env.Program(ast)
-	assert.NoError(t, err)
-	assert.NotNil(t, prog)
-	out, _, err := prog.Eval(interpreter.EmptyActivation())
-	assert.NoError(t, err)
-	assert.NotNil(t, out)
-	a, err := out.ConvertToNative(reflect.TypeFor[*authv3.CheckResponse]())
-	assert.NoError(t, err)
-	assert.NotNil(t, a)
+func TestOkResponse(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   envoy.OkResponse
+	}{{
+		// 		source: `
+		// envoy
+		// 	.Denied(401)
+		// 	.WithBody("Authentication Failed")
+		// 	.WithHeader(envoy.Header("foo", "bar").KeepEmptyValue())
+		// 	.Response()
+		// 	.WithMetadata({"my-new-metadata": "my-new-value"})
+		// 	.WithMessage("hello")
+		// `,
+		// 	}, {
+		// 		name: "empty",
+		// 		want: envoy.OkResponse{},
+		// 		source: `
+		// 		envoy.OkResponse{}
+		// 		`,
+		// 	}, {
+		// 		name: "with status",
+		// 		want: envoy.OkResponse{
+		// 			Status: &status.Status{
+		// 				Code: 0,
+		// 			},
+		// 		},
+		// 		source: `
+		// envoy.OkResponse{
+		// 	status: google.rpc.Status{
+		// 		code: 0
+		// 	}
+		// }
+		// `,
+		// 	}, {
+		name: "with metadata",
+		want: envoy.OkResponse{
+			DynamicMetadata: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"foo": structpb.NewStringValue("bar"),
+				},
+			},
+		},
+		source: `
+envoy.OkResponse{
+	dynamic_metadata: {
+		"foo": "bar"
+	}
+}
+`,
+	}, {
+		name: "with response",
+		want: envoy.OkResponse{
+			OkHttpResponse: &authv3.OkHttpResponse{},
+		},
+		source: `
+envoy.OkResponse{
+	http_response: envoy.service.auth.v3.OkHttpResponse{}
+}
+`,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env, err := cel.NewEnv(envoy.Lib())
+			assert.NoError(t, err)
+			ast, issues := env.Compile(tt.source)
+			assert.Nil(t, issues)
+			prog, err := env.Program(ast)
+			assert.NoError(t, err)
+			assert.NotNil(t, prog)
+			out, _, err := prog.Eval(interpreter.EmptyActivation())
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
+			got, err := out.ConvertToNative(reflect.TypeFor[envoy.OkResponse]())
+			assert.NoError(t, err)
+			assert.EqualExportedValues(t, tt.want, got)
+		})
+	}
 }

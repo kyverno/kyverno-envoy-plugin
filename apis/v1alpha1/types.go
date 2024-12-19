@@ -61,10 +61,15 @@ type AuthorizationPolicySpec struct {
 	// +optional
 	Variables []admissionregistrationv1.Variable `json:"variables,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 
-	// Authorizations contain CEL expressions which is used to apply the authorization.
+	// Deny contain CEL expressions which is used to deny a request.
 	// +listType=atomic
 	// +optional
-	Authorizations []Authorization `json:"authorizations,omitempty"`
+	Deny []Authorization `json:"deny,omitempty"`
+
+	// Allow contain CEL expressions which is used to allow a request.
+	// +listType=atomic
+	// +optional
+	Allow []Authorization `json:"allow,omitempty"`
 }
 
 func (s *AuthorizationPolicySpec) GetFailurePolicy() admissionregistrationv1.FailurePolicyType {

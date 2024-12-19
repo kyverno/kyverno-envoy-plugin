@@ -1,21 +1,28 @@
 package envoy
 
 import (
+	"reflect"
+
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/ext"
+	status "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// envoy types
 var (
+	// envoy auth types
 	CheckRequest       = types.NewObjectType("envoy.service.auth.v3.CheckRequest")
-	CheckResponse      = types.NewObjectType("envoy.service.auth.v3.CheckResponse")
-	OkHttpResponse     = types.NewObjectType("envoy.service.auth.v3.OkHttpResponse")
 	DeniedHttpResponse = types.NewObjectType("envoy.service.auth.v3.DeniedHttpResponse")
-	Metadata           = types.NewObjectType("google.protobuf.Struct")
 	HeaderValueOption  = types.NewObjectType("envoy.config.core.v3.HeaderValueOption")
+	Metadata           = types.NewObjectType("google.protobuf.Struct")
+	OkHttpResponse     = types.NewObjectType("envoy.service.auth.v3.OkHttpResponse")
 	QueryParameter     = types.NewObjectType("envoy.config.core.v3.QueryParameter")
+	// lib types
+	DeniedResponseType = types.NewObjectType("envoy.DeniedResponse")
+	OkResponseType     = types.NewObjectType("envoy.OkResponse")
 )
 
 type lib struct{}
@@ -28,7 +35,14 @@ func Lib() cel.EnvOption {
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		// register envoy protobuf messages
-		cel.Types((*authv3.CheckRequest)(nil), (*authv3.CheckResponse)(nil)),
+		cel.Types(
+			(*authv3.CheckRequest)(nil),
+			(*authv3.DeniedHttpResponse)(nil),
+			(*authv3.OkHttpResponse)(nil),
+			(*status.Status)(nil),
+			(*structpb.Struct)(nil),
+		),
+		ext.NativeTypes(ext.ParseStructTags(true), reflect.TypeFor[DeniedResponse](), reflect.TypeFor[OkResponse]()),
 		// extend environment with function overloads
 		c.extendEnv,
 	}
@@ -50,11 +64,6 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 		},
 		"envoy.Denied": {
 			cel.Overload("denied", []*cel.Type{types.IntType}, DeniedHttpResponse, cel.UnaryBinding(impl.denied)),
-		},
-		"envoy.Response": {
-			cel.Overload("response_code", []*cel.Type{types.IntType}, CheckResponse, cel.UnaryBinding(impl.response_code)),
-			cel.Overload("response_ok", []*cel.Type{OkHttpResponse}, CheckResponse, cel.UnaryBinding(impl.response_ok)),
-			cel.Overload("response_denied", []*cel.Type{DeniedHttpResponse}, CheckResponse, cel.UnaryBinding(impl.response_denied)),
 		},
 		"envoy.Header": {
 			cel.Overload("header_key_value", []*cel.Type{types.StringType, types.StringType}, HeaderValueOption, cel.BinaryBinding(impl.header_key_value)),
@@ -90,14 +99,16 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 			cel.MemberOverload("header_keep_empty_value_bool", []*cel.Type{HeaderValueOption, types.BoolType}, HeaderValueOption, cel.BinaryBinding(impl.header_keep_empty_value_bool)),
 		},
 		"Response": {
-			cel.MemberOverload("ok_response", []*cel.Type{OkHttpResponse}, CheckResponse, cel.UnaryBinding(impl.response_ok)),
-			cel.MemberOverload("denied_response", []*cel.Type{DeniedHttpResponse}, CheckResponse, cel.UnaryBinding(impl.response_denied)),
+			cel.MemberOverload("ok_response", []*cel.Type{OkHttpResponse}, OkResponseType, cel.UnaryBinding(impl.response_ok)),
+			cel.MemberOverload("denied_response", []*cel.Type{DeniedHttpResponse}, DeniedResponseType, cel.UnaryBinding(impl.response_denied)),
 		},
 		"WithMessage": {
-			cel.MemberOverload("response_with_message", []*cel.Type{CheckResponse, types.StringType}, CheckResponse, cel.BinaryBinding(impl.response_with_message)),
+			cel.MemberOverload("response_ok_with_message", []*cel.Type{OkResponseType, types.StringType}, OkResponseType, cel.BinaryBinding(impl.response_ok_with_message)),
+			cel.MemberOverload("response_denied_with_message", []*cel.Type{DeniedResponseType, types.StringType}, DeniedResponseType, cel.BinaryBinding(impl.response_denied_with_message)),
 		},
 		"WithMetadata": {
-			cel.MemberOverload("response_with_metadata", []*cel.Type{CheckResponse, Metadata}, CheckResponse, cel.BinaryBinding(impl.response_with_metadata)),
+			cel.MemberOverload("response_ok_with_metadata", []*cel.Type{OkResponseType, Metadata}, OkResponseType, cel.BinaryBinding(impl.response_ok_with_metadata)),
+			cel.MemberOverload("response_denied_with_metadata", []*cel.Type{DeniedResponseType, Metadata}, DeniedResponseType, cel.BinaryBinding(impl.response_denied_with_metadata)),
 		},
 	}
 	// create env options corresponding to our function overloads

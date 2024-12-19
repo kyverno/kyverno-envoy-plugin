@@ -100,8 +100,13 @@ func (in *AuthorizationPolicySpec) DeepCopyInto(out *AuthorizationPolicySpec) {
 		*out = make([]v1.Variable, len(*in))
 		copy(*out, *in)
 	}
-	if in.Authorizations != nil {
-		in, out := &in.Authorizations, &out.Authorizations
+	if in.Deny != nil {
+		in, out := &in.Deny, &out.Deny
+		*out = make([]Authorization, len(*in))
+		copy(*out, *in)
+	}
+	if in.Allow != nil {
+		in, out := &in.Allow, &out.Allow
 		*out = make([]Authorization, len(*in))
 		copy(*out, *in)
 	}

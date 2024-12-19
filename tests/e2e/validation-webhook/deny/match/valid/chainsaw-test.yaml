@@ -1,0 +1,9 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: valid
+spec:
+  steps: 
+  - try:
+    - create:
+        file: ./policy.yaml

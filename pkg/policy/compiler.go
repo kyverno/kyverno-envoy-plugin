@@ -1,6 +1,7 @@
 package policy
 
 import (
+	"fmt"
 	"sync"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -261,36 +262,9 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (CompiledPolicy
 		path := path.Child("deny")
 		for i, rule := range policy.Spec.Deny {
 			path := path.Index(i)
-			program := authorizationProgram{}
-			if rule.Match != "" {
-				path := path.Child("match")
-				ast, issues := env.Compile(rule.Match)
-				if err := issues.Err(); err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
-				}
-				if !ast.OutputType().IsExactType(types.BoolType) {
-					return nil, append(allErrs, field.Invalid(path, rule.Match, "rule match output is expected to be of type bool"))
-				}
-				prog, err := env.Program(ast)
-				if err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
-				}
-				program.match = prog
-			}
-			{
-				path := path.Child("response")
-				ast, issues := env.Compile(rule.Response)
-				if err := issues.Err(); err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
-				}
-				if !ast.OutputType().IsExactType(envoy.DeniedResponseType) {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.DeniedResponse"))
-				}
-				prog, err := env.Program(ast)
-				if err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
-				}
-				program.response = prog
+			program, errs := compileAuthorization(path, rule, env, envoy.DeniedResponseType)
+			if errs != nil {
+				return nil, append(allErrs, errs...)
 			}
 			denies = append(denies, program)
 		}
@@ -300,36 +274,9 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (CompiledPolicy
 		path := path.Child("allow")
 		for i, rule := range policy.Spec.Allow {
 			path := path.Index(i)
-			program := authorizationProgram{}
-			if rule.Match != "" {
-				path := path.Child("match")
-				ast, issues := env.Compile(rule.Match)
-				if err := issues.Err(); err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
-				}
-				if !ast.OutputType().IsExactType(types.BoolType) {
-					return nil, append(allErrs, field.Invalid(path, rule.Match, "rule match output is expected to be of type bool"))
-				}
-				prog, err := env.Program(ast)
-				if err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
-				}
-				program.match = prog
-			}
-			{
-				path := path.Child("response")
-				ast, issues := env.Compile(rule.Response)
-				if err := issues.Err(); err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
-				}
-				if !ast.OutputType().IsExactType(envoy.OkResponseType) {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, "rule response output is expected to be of type envoy.OkResponse"))
-				}
-				prog, err := env.Program(ast)
-				if err != nil {
-					return nil, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
-				}
-				program.response = prog
+			program, errs := compileAuthorization(path, rule, env, envoy.OkResponseType)
+			if errs != nil {
+				return nil, append(allErrs, errs...)
 			}
 			allows = append(allows, program)
 		}
@@ -341,4 +288,41 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (CompiledPolicy
 		allow:           allows,
 		deny:            denies,
 	}, nil
+}
+
+func compileAuthorization(path *field.Path, rule v1alpha1.Authorization, env *cel.Env, output *types.Type) (authorizationProgram, field.ErrorList) {
+	var allErrs field.ErrorList
+	program := authorizationProgram{}
+	if rule.Match != "" {
+		path := path.Child("match")
+		ast, issues := env.Compile(rule.Match)
+		if err := issues.Err(); err != nil {
+			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
+		}
+		if !ast.OutputType().IsExactType(types.BoolType) {
+			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Match, "rule match output is expected to be of type bool"))
+		}
+		prog, err := env.Program(ast)
+		if err != nil {
+			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
+		}
+		program.match = prog
+	}
+	{
+		path := path.Child("response")
+		ast, issues := env.Compile(rule.Response)
+		if err := issues.Err(); err != nil {
+			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
+		}
+		if !ast.OutputType().IsExactType(output) {
+			msg := fmt.Sprintf("rule response output is expected to be of type %s", output.TypeName())
+			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Response, msg))
+		}
+		prog, err := env.Program(ast)
+		if err != nil {
+			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
+		}
+		program.response = prog
+	}
+	return program, nil
 }

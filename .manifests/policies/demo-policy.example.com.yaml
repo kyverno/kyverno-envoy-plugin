@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/.schemas/json/authorizationpolicy-envoy-v1alpha1.json
+# yaml-language-server: $schema=../../.schemas/json/authorizationpolicy-envoy-v1alpha1.json
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: AuthorizationPolicy
 metadata:
@@ -11,17 +11,26 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
-  authorizations:
+  deny:
     # if force_unauthenticated -> 401
-  - match: variables.force_unauthenticated
+  - match: >
+      variables.force_unauthenticated
     response: >
       envoy
         .Denied(401)
         .WithBody("Authentication Failed")
         .Response()
-    # if force_authorized -> 200
-  - match: variables.force_authorized
+    # if force_unauthenticated -> 403
+  - match: >
+      !variables.force_authorized
     response: >
+      envoy
+        .Denied(403)
+        .WithBody("Unauthorized Request")
+        .Response()
+  allow:
+    # else -> 200
+  - response: >
       envoy
         .Allowed()
         .WithHeader("x-validated-by", "my-security-checkpoint")
@@ -29,10 +38,3 @@ spec:
         .WithResponseHeader("x-add-custom-response-header", "added")
         .Response()
         .WithMetadata(variables.metadata)
-    # else -> 403
-  - match: 'true'
-    response: >
-      envoy
-        .Denied(403)
-        .WithBody("Unauthorized Request")
-        .Response()

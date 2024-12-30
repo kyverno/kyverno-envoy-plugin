@@ -97,30 +97,17 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 		}
 		data := variables()
 		for _, rule := range p.allow {
-			if rule.match != nil {
-				// evaluate rule match condition
-				out, _, err := rule.match.Eval(data)
-				if err != nil {
-					return nil, err
-				}
-				// try to convert to a match result
-				matched, err := utils.ConvertToNative[bool](out)
-				if err != nil {
-					return nil, err
-				}
-				// if condition is false, continue
-				if !matched {
-					continue
-				}
-			}
-			// evaluate the rule
-			out, _, err := rule.response.Eval(data)
+			matched, err := matchRule(rule, data)
 			// check error
 			if err != nil {
 				return nil, err
 			}
-			// try to convert to a check response
-			response, err := utils.ConvertToNative[envoy.OkResponse](out)
+			// if condition is false, continue
+			if !matched {
+				continue
+			}
+			// evaluate the rule
+			response, err := evaluateRule[envoy.OkResponse](rule, data)
 			// check error
 			if err != nil {
 				return nil, err
@@ -144,30 +131,17 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 		}
 		data := variables()
 		for _, rule := range p.deny {
-			if rule.match != nil {
-				// evaluate rule match condition
-				out, _, err := rule.match.Eval(data)
-				if err != nil {
-					return nil, err
-				}
-				// try to convert to a match result
-				matched, err := utils.ConvertToNative[bool](out)
-				if err != nil {
-					return nil, err
-				}
-				// if condition is false, continue
-				if !matched {
-					continue
-				}
-			}
-			// evaluate the rule
-			out, _, err := rule.response.Eval(data)
+			matched, err := matchRule(rule, data)
 			// check error
 			if err != nil {
 				return nil, err
 			}
-			// try to convert to a check response
-			response, err := utils.ConvertToNative[envoy.DeniedResponse](out)
+			// if condition is false, continue
+			if !matched {
+				continue
+			}
+			// evaluate the rule
+			response, err := evaluateRule[envoy.DeniedResponse](rule, data)
 			// check error
 			if err != nil {
 				return nil, err
@@ -193,6 +167,38 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 		}
 	}
 	return failurePolicy(allow), failurePolicy(deny)
+}
+
+func matchRule(rule authorizationProgram, data map[string]any) (bool, error) {
+	// if no match clause, consider a match
+	if rule.match == nil {
+		return true, nil
+	}
+	// evaluate rule match condition
+	out, _, err := rule.match.Eval(data)
+	if err != nil {
+		return false, err
+	}
+	// try to convert to a match result
+	matched, err := utils.ConvertToNative[bool](out)
+	if err != nil {
+		return false, err
+	}
+	return matched, err
+}
+
+func evaluateRule[T any](rule authorizationProgram, data map[string]any) (*T, error) {
+	out, _, err := rule.response.Eval(data)
+	// check error
+	if err != nil {
+		return nil, err
+	}
+	response, err := utils.ConvertToNative[T](out)
+	// check error
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 type Compiler interface {

@@ -1,0 +1,30 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: deny
+spec:
+  namespace: app
+  steps: 
+  - try:
+    - create:
+        file: ./istio-policy.yaml
+    - create:
+        file: ./policy.yaml
+    - create:
+        file: ./shell.yaml
+    - wait:
+        apiVersion: v1
+        kind: Pod
+        timeout: 1m
+        for:
+          condition:
+            name: Ready
+            value: 'true'
+    - script:
+        content: >
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+        check:
+          (wildcard('*http_code=200', $stdout)): true
+    finally:
+    - sleep:
+        duration: 10s

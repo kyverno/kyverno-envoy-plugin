@@ -12,7 +12,7 @@ metadata:
     {{- with .Values.crds.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.17.0
   name: authorizationpolicies.envoy.kyverno.io
 spec:
   group: envoy.kyverno.io

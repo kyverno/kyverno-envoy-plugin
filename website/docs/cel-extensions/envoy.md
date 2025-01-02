@@ -86,38 +86,6 @@ envoy.Denied(<int> code) -> <DeniedHttpResponse>
 envoy.Denied(401)
 ```
 
-### envoy.Response
-
-This function creates a `<CheckResponse>` object.
-
-#### Signature and overloads
-
-```
-envoy.Response(<int> code) -> <CheckResponse>
-```
-```
-envoy.Response(<OkHttpResponse> ok) -> <CheckResponse>
-```
-```
-envoy.Response(<DeniedHttpResponse> denied) -> <CheckResponse>
-```
-
-#### Example
-
-```
-// ok
-envoy.Response(0)
-
-// permission denied
-envoy.Response(7)
-```
-```
-envoy.Response(envoy.Allowed())
-```
-```
-envoy.Response(envoy.Denied(401))
-```
-
 ### envoy.Header
 
 This function creates an `<HeaderValueOption>` object.
@@ -303,15 +271,15 @@ envoy.Header("foo", "bar").KeepEmptyValue(true)
 
 ### Response
 
-This function creates a `<CheckResponse>` object from an `<OkHttpResponse>` or `<DeniedHttpResponse>`.
+This function creates a `<OkResponse>` / `DeniedResponse` object from an `<OkHttpResponse>` / `<DeniedHttpResponse>`.
 
 #### Signature and overloads
 
 ```
-<OkHttpResponse>.Response() -> <CheckResponse>
+<OkHttpResponse>.Response() -> <OkResponse>
 ```
 ```
-<DeniedHttpResponse>.Response() -> <CheckResponse>
+<DeniedHttpResponse>.Response() -> <DeniedResponse>
 ```
 
 #### Example
@@ -325,12 +293,15 @@ envoy.Denied(401).Response()
 
 ### WithMessage
 
-This function sets the `status.message` field of a `<CheckResponse>` object.
+This function sets the `status.message` field of an `<OkResponse>` / `DeniedResponse` object.
 
 #### Signature and overloads
 
 ```
-<CheckResponse>.WithMessage(<string> message) -> <CheckResponse>
+<OkResponse>.WithMessage(<string> message) -> <OkResponse>
+```
+```
+<DeniedResponse>.WithMessage(<string> message) -> <DeniedResponse>
 ```
 
 #### Example
@@ -344,12 +315,15 @@ envoy.Denied(401).Response().WithMessage("hello world!")
 
 ### WithMetadata
 
-This function sets the `dynamic_metadata` field of a `<CheckResponse>` object.
+This function sets the `dynamic_metadata` field of an `<OkResponse>` / `DeniedResponse` object.
 
 #### Signature and overloads
 
 ```
-<CheckResponse>.WithMetadata(<Metadata> metadata) -> <CheckResponse>
+<OkResponse>.WithMetadata(<Metadata> metadata) -> <OkResponse>
+```
+```
+<DeniedResponse>.WithMetadata(<Metadata> metadata) -> <DeniedResponse>
 ```
 
 #### Example

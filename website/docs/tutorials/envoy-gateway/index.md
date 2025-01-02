@@ -51,7 +51,7 @@ With Envoy Gateway installed we can now create a `Gateway`. To do so we will als
 
 Depending on your setup you will potentially need to create an `EnvoyProxy` resource to customize the way Envoy Gateway will create the underlying `Service`. The script below creates one to set the name and type of the service because the kind cluster created in the first step doesn't come with load balancer support.
 
-```bash
+```yaml
 # create a gateway
 kubectl apply -n demo -f - <<EOF
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -85,9 +85,9 @@ spec:
       kind: EnvoyProxy
       name: demo
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
+  - name: http
+    protocol: HTTP
+    port: 80
 EOF
 ```
 
@@ -95,7 +95,7 @@ EOF
 
 Next, we need to link the Gateway to our sample applicate with an `HTTPRoute`.
 
-```bash
+```yaml
 # create an http route to the sample app
 kubectl apply -n demo -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1
@@ -106,16 +106,16 @@ spec:
   parentRefs:
   - name: demo
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - group: ''
-          kind: Service
-          name: httpbin
-          port: 8000
-          weight: 1
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - group: ''
+      kind: Service
+      name: httpbin
+      port: 8000
+      weight: 1
 EOF
 ```
 
@@ -135,7 +135,7 @@ In summary the policy below does the following:
 - Checks that the JWT token is valid
 - Checks that the action is allowed based on the token payload `role` and the request path
 
-```bash
+```yaml
 # deploy kyverno authorization policy
 kubectl apply -f - <<EOF
 apiVersion: envoy.kyverno.io/v1alpha1
@@ -152,19 +152,20 @@ spec:
       size(variables.authorization) == 2 && variables.authorization[0].lowerAscii() == "bearer"
         ? jwt.Decode(variables.authorization[1], "secret")
         : null
-  authorizations:
+  deny:
     # request not authenticated -> 401
-  - expression: >
+  - match: >
       variables.token == null || !variables.token.Valid
-        ? envoy.Denied(401).Response()
-        : null
+    response: >
+      envoy.Denied(401).Response()
     # request authenticated but not admin role -> 403
-  - expression: >
+  - match: >
       variables.token.Claims.?role.orValue("") != "admin"
-        ? envoy.Denied(403).Response()
-        : null
+    response: >
+      envoy.Denied(403).Response()
+  allow:
     # request authenticated and admin role -> 200
-  - expression: >
+  - response: >
       envoy
         .Allowed()
         .WithHeader("x-validated-by", "my-security-checkpoint")
@@ -178,7 +179,7 @@ EOF
 
 A `SecurityPolicy` is the custom Envoy Gateway resource to configure underlying Envoy Proxy to use an external auth server (the Kyverno Authz Server we installed in a prior step).
 
-```bash
+```yaml
 # deploy envoy gateway security policy
 kubectl apply -n demo -f - <<EOF
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -187,9 +188,9 @@ metadata:
   name: demo
 spec:
   targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: demo
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: demo
   extAuth:
     grpc:
       backendRef:
@@ -231,7 +232,7 @@ Also notice that the security policy applies to the `demo` HTTPRoute:
 
 Last thing we need to configure is to grant access to the Kyverno Authz Server service for our SecurityPolicy to take effect.
 
-```bash
+```yaml
 # grant access
 kubectl apply -n kyverno -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1beta1

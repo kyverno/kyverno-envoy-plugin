@@ -192,11 +192,11 @@ jobs:
               }
             }
           }'
-      - name: Run Chainsaw Tests
+      - name: Run Chainsaw Tests (authz-server)
         run:  |
           set -e
           chainsaw test tests/e2e/authz-server
-      - name: Run Chainsaw Tests
+      - name: Run Chainsaw Tests (validation-webhook)
         run:  |
           set -e
           chainsaw test tests/e2e/validation-webhook

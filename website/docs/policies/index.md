@@ -16,17 +16,23 @@ kind: AuthorizationPolicy
 metadata:
   name: demo
 spec:
+  # if something fails the request will be denied
   failurePolicy: Fail
   variables:
+    # `force_authorized` references the 'x-force-authorized' header
+    # from the envoy check request (or '' if not present)
   - name: force_authorized
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
+    # `allowed` will be `true` if `variables.force_authorized` has the
+    # value 'enabled' or 'true'
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+  deny:
+    # make an authorisation decision based on the value of `variables.allowed`
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.Denied(403).Response()
 ```
 
 ## Envoy External Authorization

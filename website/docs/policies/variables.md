@@ -30,10 +30,10 @@ spec:
     # value 'enabled' or 'true'
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
+  deny:
     # make an authorisation decision based on the value of `variables.allowed`
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.Denied(403).Response()
 ```

@@ -68,7 +68,9 @@ kubectl create ns kyverno
 kubectl label namespace kyverno istio-injection=enabled
 
 # deploy the kyverno authz server
-helm install kyverno-authz-server --namespace kyverno --wait --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server
+helm install kyverno-authz-server --namespace kyverno --wait  \
+  --repo https://kyverno.github.io/kyverno-envoy-plugin       \
+  kyverno-authz-server
 ```
 
 ### Deploy a sample application
@@ -83,7 +85,8 @@ kubectl create ns demo
 kubectl label namespace demo istio-injection=enabled
 
 # deploy the httpbin application
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml -n demo
+kubectl apply -n demo -f \
+  https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
 ```
 
 ### Deploy an Istio AuthorizationPolicy
@@ -136,16 +139,15 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+  deny:
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.Denied(403).Response()
 EOF
 ```
 
-This simple policy will allow requests if they contain the header `x-force-authorized` with the value `enabled` or `true`.
-If the header is not present or has a different value, the request will be denied.
+This simple policy will deny requests if they don't contain the header `x-force-authorized` with the value `enabled` or `true`.
 
 ## Testing
 

@@ -26,31 +26,32 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
-  authorizations:
+  deny:
     # if force_unauthenticated -> 401
-  - expression: >
+  - match: >
       variables.force_unauthenticated
-        ? envoy
-            .Denied(401)
-            .WithBody("Authentication Failed")
-            .Response()
-            .WithMetadata(variables.metadata)
-        : null
-    # if force_authorized -> 200
-  - expression: >
-      variables.force_authorized
-        ? envoy
-            .Allowed()
-            .WithHeader("x-validated-by", "my-security-checkpoint")
-            .WithoutHeader("x-force-authorized")
-            .WithResponseHeader("x-add-custom-response-header", "added")
-            .Response()
-            .WithMetadata(variables.metadata)
-        : null
-    # else -> 403
-  - expression: >
+    response: >
+      envoy
+        .Denied(401)
+        .WithBody("Authentication Failed")
+        .Response()
+        .WithMetadata(variables.metadata)
+    # if not force_authorized -> 403
+  - match: >
+      !variables.force_authorized
+    response: >
       envoy
         .Denied(403)
         .WithBody("Unauthorized Request")
         .Response()
+  allow:
+    # else -> 200
+  - response: >
+      envoy
+        .Allowed()
+        .WithHeader("x-validated-by", "my-security-checkpoint")
+        .WithoutHeader("x-force-authorized")
+        .WithResponseHeader("x-add-custom-response-header", "added")
+        .Response()
+        .WithMetadata(variables.metadata)
 ```

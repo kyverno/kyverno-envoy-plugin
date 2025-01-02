@@ -33,6 +33,9 @@ spec:
       !variables.allowed
     response: >
       envoy.Denied(403).Response()
+  allow:
+  - response: >
+      envoy.Allowed().Response()
 ```
 
 ## Envoy External Authorization

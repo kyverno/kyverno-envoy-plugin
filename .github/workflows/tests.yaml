@@ -127,7 +127,6 @@ jobs:
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e/sidecar-injector
 
-
   e2e-authz-server:
     runs-on: ubuntu-latest
     needs: [ prepare-images ]
@@ -161,6 +160,11 @@ jobs:
         run: |
           set -e
           make kind-load-archive
+      - name: Setup istio
+        run: |
+          set -e
+          export HELM=${{ steps.helm.outputs.helm-path }}
+          make install-istio
       - name: Setup cert-manager
         run: |
           set -e
@@ -171,7 +175,28 @@ jobs:
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
           make deploy-kyverno-authz-server
-      - name: Run Chainsaw Tests
-        run: chainsaw test tests/e2e/validation-webhook
-      # - name: Run Chainsaw Tests
-      #   run: chainsaw test tests/e2e/authz-server
+      - name: Install sample app
+        run: |
+          set -e
+          kubectl create ns app
+          kubectl label namespace app istio-injection=enabled
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.24/samples/httpbin/httpbin.yaml -n app
+          kubectl patch deploy httpbin -n app --type=merge -p='{
+            "spec": {
+              "template": {
+                "metadata": {
+                  "labels": {
+                    "ext-authz": "enabled"
+                  }
+                }
+              }
+            }
+          }'
+      - name: Run Chainsaw Tests (authz-server)
+        run:  |
+          set -e
+          chainsaw test tests/e2e/authz-server
+      - name: Run Chainsaw Tests (validation-webhook)
+        run:  |
+          set -e
+          chainsaw test tests/e2e/validation-webhook

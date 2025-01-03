@@ -15,7 +15,7 @@ Kyverno Envoy plugin installation and reference documents are available [here](h
 
 👉 **[Quick Start](https://kyverno.github.io/kyverno-envoy-plugin/latest/quick-start/)**
 
-👉 **[Installation](https://kyverno.github.io/kyverno-envoy-plugin/latest/installation/)**
+👉 **[Installation](https://kyverno.github.io/kyverno-envoy-plugin/latest/quick-start/authz-server/)**
 
 ## RoadMap
 

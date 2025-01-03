@@ -6,7 +6,7 @@
 <span class=w>  </span><span class=nt>failurePolicy</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Fail</span>
 <span class=w>  </span><span class=nt>matchConditions</span><span class=p>:</span>
 <span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">has-header</span>
-<span class=w>    </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">has(object.attributes.request.http.headers[&quot;x-force-deny&quot;])</span>
+<span class=w>    </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">object.attributes.request.http.headers[?&quot;x-force-deny&quot;].hasValue()</span>
 <span class=w>  </span><span class=nt>deny</span><span class=p>:</span>
 <span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
 <span class=w>      </span><span class=no>envoy.Denied(403).Response()</span>

@@ -39,7 +39,7 @@
 <span class=w>        </span><span class=no>status: google.rpc.Status{</span>
 <span class=w>          </span><span class=no>code: 7</span>
 <span class=w>        </span><span class=no>},</span>
-<span class=w>        </span><span class=no>denied_response: envoy.service.auth.v3.DeniedHttpResponse{</span>
+<span class=w>        </span><span class=no>http_response: envoy.service.auth.v3.DeniedHttpResponse{</span>
 <span class=w>          </span><span class=no>status: envoy.type.v3.HttpStatus{</span>
 <span class=w>            </span><span class=no>code: 403</span>
 <span class=w>          </span><span class=no>}</span>
@@ -51,12 +51,12 @@
 <span class=w>        </span><span class=no>status: google.rpc.Status{</span>
 <span class=w>          </span><span class=no>code: 0</span>
 <span class=w>        </span><span class=no>},</span>
-<span class=w>        </span><span class=no>ok_response: envoy.service.auth.v3.OkHttpResponse{}</span>
+<span class=w>        </span><span class=no>http_response: envoy.service.auth.v3.OkHttpResponse{}</span>
 <span class=w>      </span><span class=no>}</span>
 </code></pre></div> <h3 id=advanced-example>Advanced example<a class=headerlink href=#advanced-example title="Permanent link">&para;</a></h3> <p>This second policy showcases a more advanced example.</p> <div class=highlight><pre><span></span><code><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">envoy.kyverno.io/v1alpha1</span>
 <span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">AuthorizationPolicy</span>
 <span class=nt>metadata</span><span class=p>:</span>
-<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo-policy.example.com</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
 <span class=nt>spec</span><span class=p>:</span>
 <span class=w>  </span><span class=nt>variables</span><span class=p>:</span>
 <span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">force_authorized</span>

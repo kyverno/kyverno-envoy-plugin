@@ -17,7 +17,7 @@ In VS code, simply add a comment on top of your YAML resources.
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: AuthorizationPolicy
 metadata:
-  name: demo-policy.example.com
+  name: demo
 spec:
   variables:
   - name: force_authorized

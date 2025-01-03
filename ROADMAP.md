@@ -13,5 +13,10 @@
 - **Match conditions:**
   - Add match conditions support to policies.
 
+## 👀 Version 0.3.0
+
 - **Improve observability:**
   - Add better logs, metrics and traces in the code base.
+
+- **Performance testing:**
+  - Thorough perfomance testing and reporting.

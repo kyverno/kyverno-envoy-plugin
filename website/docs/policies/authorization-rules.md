@@ -90,7 +90,7 @@ spec:
         status: google.rpc.Status{
           code: 7
         },
-        denied_response: envoy.service.auth.v3.DeniedHttpResponse{
+        http_response: envoy.service.auth.v3.DeniedHttpResponse{
           status: envoy.type.v3.HttpStatus{
             code: 403
           }
@@ -102,7 +102,7 @@ spec:
         status: google.rpc.Status{
           code: 0
         },
-        ok_response: envoy.service.auth.v3.OkHttpResponse{}
+        http_response: envoy.service.auth.v3.OkHttpResponse{}
       }
 ```
 
@@ -114,7 +114,7 @@ This second policy showcases a more advanced example.
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: AuthorizationPolicy
 metadata:
-  name: demo-policy.example.com
+  name: demo
 spec:
   variables:
   - name: force_authorized

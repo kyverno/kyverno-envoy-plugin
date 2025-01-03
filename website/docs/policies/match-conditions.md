@@ -19,7 +19,7 @@ spec:
   failurePolicy: Fail
   matchConditions:
   - name: has-header
-    expression: has(object.attributes.request.http.headers["x-force-deny"])
+    expression: object.attributes.request.http.headers[?"x-force-deny"].hasValue()
   deny:
   - response: >
       envoy.Denied(403).Response()

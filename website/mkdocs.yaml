@@ -10,6 +10,7 @@ nav:
 - Policies:
   - policies/index.md
   - policies/failure-policy.md
+  - policies/match-conditions.md
   - policies/variables.md
   - policies/authorization-rules.md
 - Reference:

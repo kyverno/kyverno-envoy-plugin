@@ -55,5 +55,6 @@ CEL is an expression language that’s fast, portable, and safe to execute in pe
 A Kyverno `AuthorizationPolicy` is made of:
 
 - A [failure policy](./failure-policy.md)
+- [Match conditions](./match-conditions.md) if needed
 - Eventually some [variables](./variables.md)
 - The [authorization rules](./authorization-rules.md)

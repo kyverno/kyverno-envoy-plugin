@@ -20,7 +20,8 @@ builds:
 
 kos:
   - build: kyverno-envoy-plugin
-    repository: ghcr.io/kyverno/kyverno-envoy-plugin
+    repositories:
+    - ghcr.io/kyverno/kyverno-envoy-plugin
     tags:
       - '{{ .Tag }}'
       - '{{ if not .Prerelease }}latest{{ end }}' 

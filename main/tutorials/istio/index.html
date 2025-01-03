@@ -3,18 +3,18 @@
 <span class=c1># create cluster</span>
 kind<span class=w> </span>create<span class=w> </span>cluster<span class=w> </span>--image<span class=w> </span><span class=nv>$KIND_IMAGE</span><span class=w> </span>--wait<span class=w> </span>1m
 </code></pre></div> <h3 id=configure-the-mesh>Configure the mesh<a class=headerlink href=#configure-the-mesh title="Permanent link">&para;</a></h3> <p>We need to register the Kyverno Authz Server with Istio.</p> <div class=highlight><pre><span></span><code><span class=c1># configure the mesh</span>
-istioctl<span class=w> </span>install<span class=w> </span>-y<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: install.istio.io/v1alpha1</span>
-<span class=s>kind: IstioOperator</span>
-<span class=s>spec:</span>
-<span class=s>  meshConfig:</span>
-<span class=s>    accessLogFile: /dev/stdout</span>
-<span class=s>    extensionProviders:</span>
-<span class=s>    - name: kyverno-authz-server.local</span>
-<span class=s>      envoyExtAuthzGrpc:</span>
-<span class=s>        service: kyverno-authz-server.kyverno.svc.cluster.local</span>
-<span class=s>        port: &#39;9081&#39;</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">istioctl install -y -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">install.istio.io/v1alpha1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">IstioOperator</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>meshConfig</span><span class=p>:</span>
+<span class=w>    </span><span class=nt>accessLogFile</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">/dev/stdout</span>
+<span class=w>    </span><span class=nt>extensionProviders</span><span class=p>:</span>
+<span class=w>    </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server.local</span>
+<span class=w>      </span><span class=nt>envoyExtAuthzGrpc</span><span class=p>:</span>
+<span class=w>        </span><span class=nt>service</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server.kyverno.svc.cluster.local</span>
+<span class=w>        </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=s>&#39;9081&#39;</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <p>Notice that in the configuration, we define an <code>extensionProviders</code> section that points to the Kyverno Authz Server we will install in the next step:</p> <div class=highlight><pre><span></span><code><span class="p p-Indicator">[</span><span class=nv>...</span><span class="p p-Indicator">]</span>
 <span class=w>    </span><span class=nt>extensionProviders</span><span class=p>:</span>
 <span class=w>    </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server.local</span>
@@ -39,19 +39,19 @@ kubectl<span class=w> </span>label<span class=w> </span>namespace<span class=w> 
 <span class=c1># deploy the httpbin application</span>
 kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml<span class=w> </span>-n<span class=w> </span>demo
 </code></pre></div> <h3 id=deploy-an-istio-authorizationpolicy>Deploy an Istio AuthorizationPolicy<a class=headerlink href=#deploy-an-istio-authorizationpolicy title="Permanent link">&para;</a></h3> <p>An <code>AuthorizationPolicy</code> is the custom Istio resource that defines the services that will be protected by the Kyverno Authz Server.</p> <div class=highlight><pre><span></span><code><span class=c1># deploy istio authorization policy</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: security.istio.io/v1</span>
-<span class=s>kind: AuthorizationPolicy</span>
-<span class=s>metadata:</span>
-<span class=s>  name: kyverno-authz-server</span>
-<span class=s>  namespace: demo</span>
-<span class=s>spec:</span>
-<span class=s>  action: CUSTOM</span>
-<span class=s>  provider:</span>
-<span class=s>    name: kyverno-authz-server.local</span>
-<span class=s>  rules:</span>
-<span class=s>  - {} # empty rules, it will apply to all requests</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">kubectl apply -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">security.istio.io/v1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">AuthorizationPolicy</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server</span>
+<span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>action</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">CUSTOM</span>
+<span class=w>  </span><span class=nt>provider</span><span class=p>:</span>
+<span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server.local</span>
+<span class=w>  </span><span class=nt>rules</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class="p p-Indicator">{}</span><span class=w> </span><span class=c1># empty rules, it will apply to all requests</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <p>Notice that in this resource, we define the Kyverno Authz Server <code>extensionProvider</code> you set in the Istio configuration:</p> <div class=highlight><pre><span></span><code><span class="p p-Indicator">[</span><span class=nv>...</span><span class="p p-Indicator">]</span>
 <span class=w>  </span><span class=nt>provider</span><span class=p>:</span>
 <span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server.local</span>
@@ -72,19 +72,20 @@ kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>
 <span class=w>      </span><span class=no>size(variables.authorization) == 2 &amp;&amp; variables.authorization[0].lowerAscii() == &quot;bearer&quot;</span>
 <span class=w>        </span><span class=no>? jwt.Decode(variables.authorization[1], &quot;secret&quot;)</span>
 <span class=w>        </span><span class=no>: null</span>
-<span class=w>  </span><span class=nt>authorizations</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>deny</span><span class=p>:</span>
 <span class=w>    </span><span class=c1># request not authenticated -&gt; 401</span>
-<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>match</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
 <span class=w>      </span><span class=no>variables.token == null || !variables.token.Valid</span>
-<span class=w>        </span><span class=no>? envoy.Denied(401).Response()</span>
-<span class=w>        </span><span class=no>: null</span>
+<span class=w>    </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>envoy.Denied(401).Response()</span>
 <span class=w>    </span><span class=c1># request authenticated but not admin role -&gt; 403</span>
-<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>match</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
 <span class=w>      </span><span class=no>variables.token.Claims.?role.orValue(&quot;&quot;) != &quot;admin&quot;</span>
-<span class=w>        </span><span class=no>? envoy.Denied(403).Response()</span>
-<span class=w>        </span><span class=no>: null</span>
+<span class=w>    </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>envoy.Denied(403).Response()</span>
+<span class=w>  </span><span class=nt>allow</span><span class=p>:</span>
 <span class=w>    </span><span class=c1># request authenticated and admin role -&gt; 200</span>
-<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
 <span class=w>      </span><span class=no>envoy.Allowed().Response()</span>
 <span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <h2 id=testing>Testing<a class=headerlink href=#testing title="Permanent link">&para;</a></h2> <p>At this we have deployed and configured Istio, the Kyverno Authz Server, a sample application, and the authorization policies.</p> <h3 id=start-an-in-cluster-shell>Start an in-cluster shell<a class=headerlink href=#start-an-in-cluster-shell title="Permanent link">&para;</a></h3> <p>Let's start a pod in the cluster with a shell to call into the sample application.</p> <div class=highlight><pre><span></span><code><span class=c1># run an in-cluster shell</span>

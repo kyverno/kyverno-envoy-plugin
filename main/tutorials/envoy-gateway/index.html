@@ -10,121 +10,122 @@ kubectl<span class=w> </span>create<span class=w> </span>ns<span class=w> </span
 <span class=c1># deploy the httpbin application</span>
 kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>demo<span class=w> </span>-f<span class=w> </span>https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
 </code></pre></div> <h3 id=create-a-gatewayclass-and-a-gateway>Create a GatewayClass and a Gateway<a class=headerlink href=#create-a-gatewayclass-and-a-gateway title="Permanent link">&para;</a></h3> <p>With Envoy Gateway installed we can now create a <code>Gateway</code>. To do so we will also create a dedicated <code>GatewayClass</code>.</p> <p>Depending on your setup you will potentially need to create an <code>EnvoyProxy</code> resource to customize the way Envoy Gateway will create the underlying <code>Service</code>. The script below creates one to set the name and type of the service because the kind cluster created in the first step doesn't come with load balancer support.</p> <div class=highlight><pre><span></span><code><span class=c1># create a gateway</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>demo<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: gateway.envoyproxy.io/v1alpha1</span>
-<span class=s>kind: EnvoyProxy</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  provider:</span>
-<span class=s>    type: Kubernetes</span>
-<span class=s>    kubernetes:</span>
-<span class=s>      envoyService:</span>
-<span class=s>        name: internet   # use a known name for the created service</span>
-<span class=s>        type: ClusterIP  # because a kind cluster has no support for LB</span>
-<span class=s>---</span>
-<span class=s>apiVersion: gateway.networking.k8s.io/v1</span>
-<span class=s>kind: GatewayClass</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  controllerName: gateway.envoyproxy.io/gatewayclass-controller</span>
-<span class=s>---</span>
-<span class=s>apiVersion: gateway.networking.k8s.io/v1</span>
-<span class=s>kind: Gateway</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  gatewayClassName: demo</span>
-<span class=s>  infrastructure:</span>
-<span class=s>    parametersRef:</span>
-<span class=s>      group: gateway.envoyproxy.io</span>
-<span class=s>      kind: EnvoyProxy</span>
-<span class=s>      name: demo</span>
-<span class=s>  listeners:</span>
-<span class=s>    - name: http</span>
-<span class=s>      protocol: HTTP</span>
-<span class=s>      port: 80</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">kubectl apply -n demo -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.envoyproxy.io/v1alpha1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">EnvoyProxy</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>provider</span><span class=p>:</span>
+<span class=w>    </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Kubernetes</span>
+<span class=w>    </span><span class=nt>kubernetes</span><span class=p>:</span>
+<span class=w>      </span><span class=nt>envoyService</span><span class=p>:</span>
+<span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">internet</span><span class=w>   </span><span class=c1># use a known name for the created service</span>
+<span class=w>        </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">ClusterIP</span><span class=w>  </span><span class=c1># because a kind cluster has no support for LB</span>
+<span class=nn>---</span>
+<span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.networking.k8s.io/v1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">GatewayClass</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>controllerName</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.envoyproxy.io/gatewayclass-controller</span>
+<span class=nn>---</span>
+<span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.networking.k8s.io/v1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Gateway</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>gatewayClassName</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=w>  </span><span class=nt>infrastructure</span><span class=p>:</span>
+<span class=w>    </span><span class=nt>parametersRef</span><span class=p>:</span>
+<span class=w>      </span><span class=nt>group</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.envoyproxy.io</span>
+<span class=w>      </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">EnvoyProxy</span>
+<span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=w>  </span><span class=nt>listeners</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">http</span>
+<span class=w>    </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">HTTP</span>
+<span class=w>    </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <h3 id=create-an-httproute-to-the-sample-application>Create an HTTPRoute to the sample application<a class=headerlink href=#create-an-httproute-to-the-sample-application title="Permanent link">&para;</a></h3> <p>Next, we need to link the Gateway to our sample applicate with an <code>HTTPRoute</code>.</p> <div class=highlight><pre><span></span><code><span class=c1># create an http route to the sample app</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>demo<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: gateway.networking.k8s.io/v1</span>
-<span class=s>kind: HTTPRoute</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  parentRefs:</span>
-<span class=s>  - name: demo</span>
-<span class=s>  rules:</span>
-<span class=s>    - matches:</span>
-<span class=s>        - path:</span>
-<span class=s>            type: PathPrefix</span>
-<span class=s>            value: /</span>
-<span class=s>      backendRefs:</span>
-<span class=s>        - group: &#39;&#39;</span>
-<span class=s>          kind: Service</span>
-<span class=s>          name: httpbin</span>
-<span class=s>          port: 8000</span>
-<span class=s>          weight: 1</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">kubectl apply -n demo -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.networking.k8s.io/v1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">HTTPRoute</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>parentRefs</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=w>  </span><span class=nt>rules</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>matches</span><span class=p>:</span>
+<span class=w>    </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>path</span><span class=p>:</span>
+<span class=w>        </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">PathPrefix</span>
+<span class=w>        </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">/</span>
+<span class=w>    </span><span class=nt>backendRefs</span><span class=p>:</span>
+<span class=w>    </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>group</span><span class=p>:</span><span class=w> </span><span class=s>&#39;&#39;</span>
+<span class=w>      </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">httpbin</span>
+<span class=w>      </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">8000</span>
+<span class=w>      </span><span class=nt>weight</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <h3 id=deploy-the-kyverno-authz-server>Deploy the Kyverno Authz Server<a class=headerlink href=#deploy-the-kyverno-authz-server title="Permanent link">&para;</a></h3> <p>Now deploy the Kyverno Authz Server.</p> <div class=highlight><pre><span></span><code><span class=c1># deploy the kyverno authz server</span>
 helm<span class=w> </span>install<span class=w> </span>kyverno-authz-server<span class=w> </span>--namespace<span class=w> </span>kyverno<span class=w> </span>--create-namespace<span class=w> </span>--wait<span class=w> </span>--repo<span class=w> </span>https://kyverno.github.io/kyverno-envoy-plugin<span class=w> </span>kyverno-authz-server
 </code></pre></div> <h2 id=create-a-kyverno-authorizationpolicy>Create a Kyverno AuthorizationPolicy<a class=headerlink href=#create-a-kyverno-authorizationpolicy title="Permanent link">&para;</a></h2> <p>In summary the policy below does the following:</p> <ul> <li>Checks that the JWT token is valid</li> <li>Checks that the action is allowed based on the token payload <code>role</code> and the request path</li> </ul> <div class=highlight><pre><span></span><code><span class=c1># deploy kyverno authorization policy</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: envoy.kyverno.io/v1alpha1</span>
-<span class=s>kind: AuthorizationPolicy</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  failurePolicy: Fail</span>
-<span class=s>  variables:</span>
-<span class=s>  - name: authorization</span>
-<span class=s>    expression: object.attributes.request.http.headers[?&quot;authorization&quot;].orValue(&quot;&quot;).split(&quot; &quot;)</span>
-<span class=s>  - name: token</span>
-<span class=s>    expression: &gt;</span>
-<span class=s>      size(variables.authorization) == 2 &amp;&amp; variables.authorization[0].lowerAscii() == &quot;bearer&quot;</span>
-<span class=s>        ? jwt.Decode(variables.authorization[1], &quot;secret&quot;)</span>
-<span class=s>        : null</span>
-<span class=s>  authorizations:</span>
-<span class=s>    # request not authenticated -&gt; 401</span>
-<span class=s>  - expression: &gt;</span>
-<span class=s>      variables.token == null || !variables.token.Valid</span>
-<span class=s>        ? envoy.Denied(401).Response()</span>
-<span class=s>        : null</span>
-<span class=s>    # request authenticated but not admin role -&gt; 403</span>
-<span class=s>  - expression: &gt;</span>
-<span class=s>      variables.token.Claims.?role.orValue(&quot;&quot;) != &quot;admin&quot;</span>
-<span class=s>        ? envoy.Denied(403).Response()</span>
-<span class=s>        : null</span>
-<span class=s>    # request authenticated and admin role -&gt; 200</span>
-<span class=s>  - expression: &gt;</span>
-<span class=s>      envoy</span>
-<span class=s>        .Allowed()</span>
-<span class=s>        .WithHeader(&quot;x-validated-by&quot;, &quot;my-security-checkpoint&quot;)</span>
-<span class=s>        .WithoutHeader(&quot;x-force-authorized&quot;)</span>
-<span class=s>        .WithResponseHeader(&quot;x-add-custom-response-header&quot;, &quot;added&quot;)</span>
-<span class=s>        .Response()</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">kubectl apply -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">envoy.kyverno.io/v1alpha1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">AuthorizationPolicy</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>failurePolicy</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Fail</span>
+<span class=w>  </span><span class=nt>variables</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">authorization</span>
+<span class=w>    </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">object.attributes.request.http.headers[?&quot;authorization&quot;].orValue(&quot;&quot;).split(&quot; &quot;)</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">token</span>
+<span class=w>    </span><span class=nt>expression</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>size(variables.authorization) == 2 &amp;&amp; variables.authorization[0].lowerAscii() == &quot;bearer&quot;</span>
+<span class=w>        </span><span class=no>? jwt.Decode(variables.authorization[1], &quot;secret&quot;)</span>
+<span class=w>        </span><span class=no>: null</span>
+<span class=w>  </span><span class=nt>deny</span><span class=p>:</span>
+<span class=w>    </span><span class=c1># request not authenticated -&gt; 401</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>match</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>variables.token == null || !variables.token.Valid</span>
+<span class=w>    </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>envoy.Denied(401).Response()</span>
+<span class=w>    </span><span class=c1># request authenticated but not admin role -&gt; 403</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>match</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>variables.token.Claims.?role.orValue(&quot;&quot;) != &quot;admin&quot;</span>
+<span class=w>    </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>envoy.Denied(403).Response()</span>
+<span class=w>  </span><span class=nt>allow</span><span class=p>:</span>
+<span class=w>    </span><span class=c1># request authenticated and admin role -&gt; 200</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>response</span><span class=p>:</span><span class=w> </span><span class="p p-Indicator">&gt;</span>
+<span class=w>      </span><span class=no>envoy</span>
+<span class=w>        </span><span class=no>.Allowed()</span>
+<span class=w>        </span><span class=no>.WithHeader(&quot;x-validated-by&quot;, &quot;my-security-checkpoint&quot;)</span>
+<span class=w>        </span><span class=no>.WithoutHeader(&quot;x-force-authorized&quot;)</span>
+<span class=w>        </span><span class=no>.WithResponseHeader(&quot;x-add-custom-response-header&quot;, &quot;added&quot;)</span>
+<span class=w>        </span><span class=no>.Response()</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <h3 id=deploy-an-envoy-gateway-securitypolicy>Deploy an Envoy Gateway SecurityPolicy<a class=headerlink href=#deploy-an-envoy-gateway-securitypolicy title="Permanent link">&para;</a></h3> <p>A <code>SecurityPolicy</code> is the custom Envoy Gateway resource to configure underlying Envoy Proxy to use an external auth server (the Kyverno Authz Server we installed in a prior step).</p> <div class=highlight><pre><span></span><code><span class=c1># deploy envoy gateway security policy</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>demo<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: gateway.envoyproxy.io/v1alpha1</span>
-<span class=s>kind: SecurityPolicy</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  targetRefs:</span>
-<span class=s>    - group: gateway.networking.k8s.io</span>
-<span class=s>      kind: HTTPRoute</span>
-<span class=s>      name: demo</span>
-<span class=s>  extAuth:</span>
-<span class=s>    grpc:</span>
-<span class=s>      backendRef:</span>
-<span class=s>        group: &#39;&#39;</span>
-<span class=s>        kind: Service</span>
-<span class=s>        name: kyverno-authz-server</span>
-<span class=s>        namespace: kyverno</span>
-<span class=s>        port: 9081</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">kubectl apply -n demo -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.envoyproxy.io/v1alpha1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">SecurityPolicy</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>targetRefs</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>group</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.networking.k8s.io</span>
+<span class=w>    </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">HTTPRoute</span>
+<span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=w>  </span><span class=nt>extAuth</span><span class=p>:</span>
+<span class=w>    </span><span class=nt>grpc</span><span class=p>:</span>
+<span class=w>      </span><span class=nt>backendRef</span><span class=p>:</span>
+<span class=w>        </span><span class=nt>group</span><span class=p>:</span><span class=w> </span><span class=s>&#39;&#39;</span>
+<span class=w>        </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno-authz-server</span>
+<span class=w>        </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">kyverno</span>
+<span class=w>        </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">9081</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <p>Notice that in this resource, we define the Kyverno Authz Server service as the GRPC backend:</p> <div class=highlight><pre><span></span><code><span class="p p-Indicator">[</span><span class=nv>...</span><span class="p p-Indicator">]</span>
 <span class=w>  </span><span class=nt>extAuth</span><span class=p>:</span>
 <span class=w>    </span><span class=nt>grpc</span><span class=p>:</span>
@@ -142,20 +143,20 @@ kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>
 <span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
 <span class="p p-Indicator">[</span><span class=nv>...</span><span class="p p-Indicator">]</span>
 </code></pre></div> <h3 id=grant-access-to-the-kyverno-authz-server-service>Grant access to the Kyverno Authz Server service<a class=headerlink href=#grant-access-to-the-kyverno-authz-server-service title="Permanent link">&para;</a></h3> <p>Last thing we need to configure is to grant access to the Kyverno Authz Server service for our SecurityPolicy to take effect.</p> <div class=highlight><pre><span></span><code><span class=c1># grant access</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>kyverno<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
-<span class=s>apiVersion: gateway.networking.k8s.io/v1beta1</span>
-<span class=s>kind: ReferenceGrant</span>
-<span class=s>metadata:</span>
-<span class=s>  name: demo</span>
-<span class=s>spec:</span>
-<span class=s>  from:</span>
-<span class=s>  - group: gateway.envoyproxy.io</span>
-<span class=s>    kind: SecurityPolicy</span>
-<span class=s>    namespace: demo</span>
-<span class=s>  to:</span>
-<span class=s>  - group: &#39;&#39;</span>
-<span class=s>    kind: Service</span>
-<span class=s>EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">kubectl apply -n kyverno -f - &lt;&lt;EOF</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.networking.k8s.io/v1beta1</span>
+<span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">ReferenceGrant</span>
+<span class=nt>metadata</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=nt>spec</span><span class=p>:</span>
+<span class=w>  </span><span class=nt>from</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>group</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">gateway.envoyproxy.io</span>
+<span class=w>    </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">SecurityPolicy</span>
+<span class=w>    </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class=w>  </span><span class=nt>to</span><span class=p>:</span>
+<span class=w>  </span><span class="p p-Indicator">-</span><span class=w> </span><span class=nt>group</span><span class=p>:</span><span class=w> </span><span class=s>&#39;&#39;</span>
+<span class=w>    </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class="l l-Scalar l-Scalar-Plain">EOF</span>
 </code></pre></div> <h2 id=testing>Testing<a class=headerlink href=#testing title="Permanent link">&para;</a></h2> <p>At this we have deployed and configured Envoy Gateway, the Kyverno Authz Server, a sample application, and the authorization and security policies.</p> <h3 id=start-an-in-cluster-shell>Start an in-cluster shell<a class=headerlink href=#start-an-in-cluster-shell title="Permanent link">&para;</a></h3> <p>Let's start a pod in the cluster with a shell to call into the sample application.</p> <div class=highlight><pre><span></span><code><span class=c1># run an in-cluster shell</span>
 kubectl<span class=w> </span>run<span class=w> </span>-i<span class=w> </span>-t<span class=w> </span>busybox<span class=w> </span>--image<span class=o>=</span>alpine<span class=w> </span>--restart<span class=o>=</span>Never<span class=w> </span>-n<span class=w> </span>demo
 </code></pre></div> <h3 id=install-curl>Install curl<a class=headerlink href=#install-curl title="Permanent link">&para;</a></h3> <p>We will use curl to call into the sample application but it's not installed in our shell, let's install it in the pod.</p> <div class=highlight><pre><span></span><code><span class=c1># install curl</span>

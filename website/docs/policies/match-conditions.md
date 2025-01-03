@@ -34,7 +34,7 @@ In the policy above, the `matchConditions` will be used to deny all requests hav
 
 In the event of an error evaluating a match condition the policy is not evaluated. Whether to reject the request is determined as follows:
 
-1. If any match condition evaluated to `false` (regardless of other errors), the policy is skipped.
+1. If any match condition evaluated to `false` (regardless of other errors), then the policy is skipped.
 1. Otherwise:
     - for `failurePolicy: Fail`, reject the request (without evaluating the policy).
     - for `failurePolicy: Ignore`, proceed with the request but skip the policy.

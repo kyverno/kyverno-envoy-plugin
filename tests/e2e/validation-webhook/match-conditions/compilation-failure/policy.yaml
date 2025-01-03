@@ -24,7 +24,7 @@ spec:
         .Denied(401)
         .WithBody("Authentication Failed")
         .Response()
-    # if force_unauthenticated -> 403
+    # if not force_authorized -> 403
   - match: >
       !variables.force_authorized
     response: >

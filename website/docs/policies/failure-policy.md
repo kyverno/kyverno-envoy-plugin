@@ -30,11 +30,11 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+  deny:
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.Denied(403).Response()
 ```
 
 ## Ignore
@@ -52,9 +52,9 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+  deny:
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.Denied(403).Response()
 ```

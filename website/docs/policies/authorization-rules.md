@@ -1,12 +1,25 @@
 # Authorization rules
 
-An `AuthorizationPolicy` main element is the authorization rules defined in `authorizations`.
+An `AuthorizationPolicy` main concern is to define authorization rules to `deny` or `allow` requests.
 
-Every authorization rule must contain a [CEL](https://github.com/google/cel-spec) `expression`. It is expected to return an Envoy `CheckResponse` describing the decision made by the rule (or nothing if no decision is made).
+Every authorization rule is made of an optional `match` statement and a required `response` statement. Both statements are written in [CEL](https://github.com/google/cel-spec).
 
-Creating the Envoy [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) can be a tedious task, you need to remember the different types names and format.
+If the `match` statement is present and evaluates to `true`, the `response` statement is used to create the response payload returned to the envoy proxy.
+Depending on the rule type, the response is expected to be an envoy.OkResponse or envoy.DeniedResponse.
 
-The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of `CheckResponse` easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
+Creating an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) can be a tedious task, you need to remember the different types names and format.
+
+The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
+
+## Evaluation order
+
+1. All `deny` rules are evaluated first, the first matching rule is used to send the deny response to the envoy proxy.
+1. If no `deny` rule matched, `allow` rules are evaluated and the first matching rule is used to send the response to the envoy proxy.
+1. If no rule matched, the request is allowed by default.
+
+!!!info
+
+    When multiple policies are present, `deny` and `allow` rules are concatenated together in policy name alphabetical order.
 
 ## Authorization rules
 
@@ -25,63 +38,37 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-    # make an authorisation decision based on the value of `variables.allowed`
-    # - allow the request if it is `true`
-    # - deny the request with 403 status code if it is `false`
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : envoy.Denied(403).Response()
+  # make an authorisation decision based on the value of `variables.allowed`
+  # - deny the request with 403 status code if it is `false`
+  # - else allow the request
+  deny:
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.Denied(403).Response()
+  allow:
+  - response: >
+      envoy.Allowed().Response()
 ```
 
 In this simple rule:
 
 - `envoy.Allowed().Response()`
 
-    Creates a `CheckResponse` to allow the request
+    Creates an `OkResponse` to allow the request
 
 - `envoy.Denied(403).Response()`
 
-    Creates a `CheckResponse` to deny the request with status code `403`
+    Creates a `DeniedResponse` to deny the request with status code `403`
 
-However, we can do a lot more with Envoy's `CheckResponse`.
+However, we can do a lot more.
 Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body.
 
 ![dynamic metadata](../schemas/dynamic-metadata.png)
 
-### Multiple rules
-
-In the example above, we combined allow and denied response handling in a single expression.
-However it is possible to use multiple expressions, the first one returning a non null response will be used by the Kyverno Authz Server:
-
-```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: demo
-spec:
-  failurePolicy: Fail
-  variables:
-  - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-    # allow the request if `variables.allowed` is `true`
-    # or delegate the decision to the next rule
-  - expression: >
-      variables.allowed
-        ? envoy.Allowed().Response()
-        : null
-    # deny the request with 403 status code
-  - expression: >
-      envoy.Denied(403).Response()
-```
-
 ### The hard way
 
-Below is the same policy, creating the `CheckResponses` manually.
+Below is the same policy, creating the `envoy.OkResponse` and `envoy.DeniedResponse` manually.
 
 ```yaml
 apiVersion: envoy.kyverno.io/v1alpha1
@@ -95,25 +82,28 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  authorizations:
-  - expression: >
-      variables.allowed
-        ? envoy.service.auth.v3.CheckResponse{
-            status: google.rpc.Status{
-              code: 0
-            },
-            ok_response: envoy.service.auth.v3.OkHttpResponse{}
+  deny:
+  - match: >
+      !variables.allowed
+    response: >
+      envoy.DeniedResponse{
+        status: google.rpc.Status{
+          code: 7
+        },
+        denied_response: envoy.service.auth.v3.DeniedHttpResponse{
+          status: envoy.type.v3.HttpStatus{
+            code: 403
           }
-        : envoy.service.auth.v3.CheckResponse{
-            status: google.rpc.Status{
-              code: 7
-            },
-            denied_response: envoy.service.auth.v3.DeniedHttpResponse{
-              status: envoy.type.v3.HttpStatus{
-                code: 403
-              }
-            }
-          }
+        }
+      }
+  allow:
+  - response: >
+      envoy.OkResponse{
+        status: google.rpc.Status{
+          code: 0
+        },
+        ok_response: envoy.service.auth.v3.OkHttpResponse{}
+      }
 ```
 
 ### Advanced example
@@ -133,32 +123,31 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
-  authorizations:
+  deny:
     # if force_unauthenticated -> 401
-  - expression: >
+  - match: >
       variables.force_unauthenticated
-        ? envoy
-            .Denied(401)
-            .WithBody("Authentication Failed")
-            .Response()
-            .WithMetadata(variables.metadata)
-        : null
-    # if force_authorized -> 200
-  - expression: >
-      variables.force_authorized
-        ? envoy
-            .Allowed()
-            .WithHeader("x-validated-by", "my-security-checkpoint")
-            .WithoutHeader("x-force-authorized")
-            .WithResponseHeader("x-add-custom-response-header", "added")
-            .Response()
-            .WithMetadata(variables.metadata)
-        : null
-    # else -> 403
-  - expression: >
+    response: >
+      envoy
+        .Denied(401)
+        .WithBody("Authentication Failed")
+        .Response()
+    # if not force_authorized -> 403
+  - match: >
+      !variables.force_authorized
+    response: >
       envoy
         .Denied(403)
         .WithBody("Unauthorized Request")
+        .Response()
+  allow:
+    # else -> 200
+  - response: >
+      envoy
+        .Allowed()
+        .WithHeader("x-validated-by", "my-security-checkpoint")
+        .WithoutHeader("x-force-authorized")
+        .WithResponseHeader("x-add-custom-response-header", "added")
         .Response()
         .WithMetadata(variables.metadata)
 ```

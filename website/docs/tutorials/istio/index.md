@@ -28,7 +28,7 @@ kind create cluster --image $KIND_IMAGE --wait 1m
 
 We need to register the Kyverno Authz Server with Istio.
 
-```bash
+```yaml
 # configure the mesh
 istioctl install -y -f - <<EOF
 apiVersion: install.istio.io/v1alpha1
@@ -90,7 +90,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/samples/ht
 
 An `AuthorizationPolicy` is the custom Istio resource that defines the services that will be protected by the Kyverno Authz Server.
 
-```bash
+```yaml
 # deploy istio authorization policy
 kubectl apply -f - <<EOF
 apiVersion: security.istio.io/v1
@@ -140,19 +140,20 @@ spec:
       size(variables.authorization) == 2 && variables.authorization[0].lowerAscii() == "bearer"
         ? jwt.Decode(variables.authorization[1], "secret")
         : null
-  authorizations:
+  deny:
     # request not authenticated -> 401
-  - expression: >
+  - match: >
       variables.token == null || !variables.token.Valid
-        ? envoy.Denied(401).Response()
-        : null
+    response: >
+      envoy.Denied(401).Response()
     # request authenticated but not admin role -> 403
-  - expression: >
+  - match: >
       variables.token.Claims.?role.orValue("") != "admin"
-        ? envoy.Denied(403).Response()
-        : null
+    response: >
+      envoy.Denied(403).Response()
+  allow:
     # request authenticated and admin role -> 200
-  - expression: >
+  - response: >
       envoy.Allowed().Response()
 EOF
 ```

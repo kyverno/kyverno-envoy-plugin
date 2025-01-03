@@ -7,9 +7,9 @@ Every authorization rule is made of an optional `match` statement and a required
 If the `match` statement is present and evaluates to `true`, the `response` statement is used to create the response payload returned to the envoy proxy.
 Depending on the rule type, the response is expected to be an envoy.OkResponse or envoy.DeniedResponse.
 
-Creating the Envoy [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) can be a tedious task, you need to remember the different types names and format.
+Creating an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) can be a tedious task, you need to remember the different types names and format.
 
-The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of `CheckResponse` easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
+The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
 
 ## Evaluation order
 
@@ -55,13 +55,13 @@ In this simple rule:
 
 - `envoy.Allowed().Response()`
 
-    Creates a `CheckResponse` to allow the request
+    Creates an `OkResponse` to allow the request
 
 - `envoy.Denied(403).Response()`
 
-    Creates a `CheckResponse` to deny the request with status code `403`
+    Creates a `DeniedResponse` to deny the request with status code `403`
 
-However, we can do a lot more with Envoy's `CheckResponse`.
+However, we can do a lot more.
 Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body.
 
 ![dynamic metadata](../schemas/dynamic-metadata.png)

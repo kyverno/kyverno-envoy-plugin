@@ -23,5 +23,5 @@ spec:
 
 In the policy above, the `matchConditions` will be used to deny all requests having the `x-force-deny` header.
 
-- If an incoming request doesn't have the `x-force-deny` header the condition will return `false` and the policy won't apply
+- If an incoming request doesn't have the `x-force-deny` header, then the condition will return `false` and the policy won't apply
 - If an incoming request has the `x-force-deny` header, then the condition will return `true` and the `deny` rule will deny the request with status code `403`

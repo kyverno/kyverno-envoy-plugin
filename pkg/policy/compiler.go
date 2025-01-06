@@ -12,6 +12,7 @@ import (
 	engine "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/cel/lazy"
@@ -49,25 +50,28 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 		data := map[string]any{
 			ObjectKey: r,
 		}
+		var errs []error
 		for _, matchCondition := range p.matchConditions {
 			// evaluate the condition
 			out, _, err := matchCondition.Eval(data)
 			// check error
 			if err != nil {
-				return false, err
+				errs = append(errs, err)
+				continue
 			}
 			// try to convert to a bool
 			result, err := utils.ConvertToNative[bool](out)
 			// check error
 			if err != nil {
-				return false, err
+				errs = append(errs, err)
+				continue
 			}
 			// if condition is false, skip
 			if !result {
 				return false, nil
 			}
 		}
-		return true, nil
+		return true, multierr.Combine(errs...)
 	})
 	variables := sync.OnceValue(func() map[string]any {
 		vars := lazy.NewMapValue(engine.VariablesType)

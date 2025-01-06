@@ -81,6 +81,8 @@ spec:
 EOF
 ```
 
+For more certificate management options, refer to [Certificates management](../../install/certificates.md).
+
 ### Deploy the Kyverno Authz Server
 
 Now we can deploy the Kyverno Authz Server.

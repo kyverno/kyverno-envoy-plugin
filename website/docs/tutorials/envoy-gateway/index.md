@@ -30,7 +30,10 @@ First we need to install Envoy Gateway in the cluster.
 
 ```bash
 # install envoy gateway
-helm install envoy-gateway -n envoy-gateway-system --create-namespace --wait --version v1.2.2 oci://docker.io/envoyproxy/gateway-helm
+helm install envoy-gateway \
+  --namespace envoy-gateway-system --create-namespace \
+  --wait \
+  --version v1.2.2 oci://docker.io/envoyproxy/gateway-helm
 ```
 
 ### Deploy a sample application
@@ -42,7 +45,9 @@ Httpbin is a well-known application that can be used to test HTTP requests and h
 kubectl create ns demo
 
 # deploy the httpbin application
-kubectl apply -n demo -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
+kubectl apply \
+  -n demo \
+  -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
 ```
 
 ### Create a GatewayClass and a Gateway
@@ -119,13 +124,44 @@ spec:
 EOF
 ```
 
+### Deploy cert-manager
+
+The Kyverno Authz Server comes with a validation webhook and needs a certificate to let the api server call into it.
+
+Let's deploy `cert-manager` to manage the certificate we need.
+
+```bash
+# install cert-manager
+helm install cert-manager \
+  --namespace cert-manager --create-namespace \
+  --wait \
+  --repo https://charts.jetstack.io cert-manager \
+  --set crds.enabled=true
+
+# create a self-signed cluster issuer
+kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+EOF
+```
+
 ### Deploy the Kyverno Authz Server
 
 Now deploy the Kyverno Authz Server.
 
 ```bash
 # deploy the kyverno authz server
-helm install kyverno-authz-server --namespace kyverno --create-namespace --wait --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server
+helm install kyverno-authz-server \
+  --namespace kyverno --create-namespace \
+  --wait \
+  --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
+  --set certificates.certManager.issuerRef.group=cert-manager.io \
+  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
+  --set certificates.certManager.issuerRef.name=selfsigned-issuer
 ```
 
 ## Create a Kyverno AuthorizationPolicy

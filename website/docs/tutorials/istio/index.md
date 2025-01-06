@@ -56,9 +56,34 @@ Notice that in the configuration, we define an `extensionProviders` section that
 [...]
 ```
 
+### Deploy cert-manager
+
+The Kyverno Authz Server comes with a validation webhook and needs a certificate to let the api server call into it.
+
+Let's deploy `cert-manager` to manage the certificate we need.
+
+```bash
+# install cert-manager
+helm install cert-manager \
+  --namespace cert-manager --create-namespace \
+  --wait \
+  --repo https://charts.jetstack.io cert-manager \
+  --set crds.enabled=true
+
+# create a self-signed cluster issuer
+kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+EOF
+```
+
 ### Deploy the Kyverno Authz Server
 
-The first step is to deploy the Kyverno Authz Server.
+Now we can deploy the Kyverno Authz Server.
 
 ```bash
 # create the kyverno namespace
@@ -68,7 +93,13 @@ kubectl create ns kyverno
 kubectl label namespace kyverno istio-injection=enabled
 
 # deploy the kyverno authz server
-helm install kyverno-authz-server --namespace kyverno --wait --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server
+helm install kyverno-authz-server \
+  --namespace kyverno \
+  --wait \
+  --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
+  --set certificates.certManager.issuerRef.group=cert-manager.io \
+  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
+  --set certificates.certManager.issuerRef.name=selfsigned-issuer
 ```
 
 ### Deploy a sample application
@@ -83,7 +114,9 @@ kubectl create ns demo
 kubectl label namespace demo istio-injection=enabled
 
 # deploy the httpbin application
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml -n demo
+kubectl apply \
+   -n demo \
+   -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
 ```
 
 ### Deploy an Istio AuthorizationPolicy

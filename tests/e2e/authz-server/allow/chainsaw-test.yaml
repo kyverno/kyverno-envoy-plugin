@@ -1,7 +1,7 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: deny
+  name: allow
 spec:
   namespace: app
   steps: 

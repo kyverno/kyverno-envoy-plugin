@@ -6,7 +6,7 @@ Match conditions are **CEL expressions**. All match conditions must evaluate to 
 
 !!!info
 
-    Match conditions have access to the same CEL variables as validation expressions.
+    The policy [variables](./variables.md) will NOT be available in match conditions because they are evaluated before the rest of the policy.
 
 ## Example
 

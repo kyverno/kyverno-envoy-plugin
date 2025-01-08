@@ -14,11 +14,12 @@ require (
 	k8s.io/apimachinery v0.32.0
 	k8s.io/apiserver v0.32.0
 	k8s.io/client-go v0.32.0
-	sigs.k8s.io/controller-runtime v0.19.3
+	sigs.k8s.io/controller-runtime v0.19.4
 )
 
 require (
 	cel.dev/expr v0.18.0 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	go.opentelemetry.io/otel v1.31.0 // indirect
 	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect

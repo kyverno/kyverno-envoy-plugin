@@ -261,12 +261,12 @@ When we decode the jwt token the payload data is
 
 ```
 
-To make it more user friendly experiance we need more builtin and custom function for matching and decoding which should be easy to use .
+To make it more user friendly experiance we need more builtin and custom function for matching and decoding which should be easy to use.
 
 The policy evaluation result, either 'pass' or 'fail', will be embed into the [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) message and sent back to Envoy. If policy result is `pass` then CheckResponse status is set to be `OK` or `200` then the incoming request will be allowed and if policy result `fail` then CheckResponse status is set to be `403` then the incoming request will be denied .
 
 
-### Deployemnt of Upstream sevice with the sidecar containers 
+### Deployment of Upstream sevice with the sidecar containers 
 
 Upstream App deployment with kyverno-envoy and Envoy as a sidecar 
 
@@ -379,9 +379,9 @@ data:
 
 ## Kyverno Authorization Server with Istio Service Mesh 
 
-Istio is an open source service mesh for manageing the different microservices that make up a cloud-native application . Istio provides a mechanism to use a service as an external authorizer with the [AuthorizationPolicy API](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/) .
+Istio is an open source service mesh for managing the different microservices that make up a cloud-native application. Istio provides a mechanism to use a service as an external authorizer with the [AuthorizationPolicy API](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/).
 
-The Istio service mesh already uses the envoy proxy so we will integrate our kyverno authorization server with istio envoy proxy , for this external authorization server implementation istio provides feature in the Istio authorization policy using action field value set to be `CUSTOM` to delegate the access control to an external authorization system which will be our kyverno authorization server 
+The Istio service mesh already uses the envoy proxy so we will integrate our kyverno authorization server with istio envoy proxy, for this external authorization server implementation istio provides feature in the Istio authorization policy using action field value set to be `CUSTOM` to delegate the access control to an external authorization system which will be our kyverno authorization server 
 
 #### Deployment of external authorizaion server
 

@@ -383,7 +383,7 @@ Istio is an open source service mesh for managing the different microservices th
 
 The Istio service mesh already uses the envoy proxy so we will integrate our kyverno authorization server with istio envoy proxy, for this external authorization server implementation istio provides feature in the Istio authorization policy using action field value set to be `CUSTOM` to delegate the access control to an external authorization system which will be our kyverno authorization server 
 
-#### Deployment of external authorizaion server
+#### Deployment of external authorization server
 
 Istio provides three type of deployment of external authorization server 
 - Deploy External authorizer in a standalone pod in the mesh 
@@ -419,18 +419,18 @@ Here are the pros and cons of each Deployment types
     - Minimizes network overhead for authorization checks and fastest on authorization checks as compared to others options.
     - Efficient resource utilization by sharing a pod.
   - Cons: 
-    - Very complex installation of the sidecar  . 
+    - Very complex installation of the sidecar. 
     - Failure of the application can impact authorization and vice versa.
   
 
 Explaining Deployement of kyverno external authorization as sidecar container in same Pod 
 
-- Consider tight coupling if the application and authorization logic are highly dependent and Considering minimum network overhead or lowest latency for authorization checks . If we automate or improve the installation then this method of deployment of external authorization will be best Way to deploy kyverno-envoy server as separate container in same pod or as sidecar container .
+- Consider tight coupling if the application and authorization logic are highly dependent and considering minimum network overhead or lowest latency for authorization checks. If we automate or improve the installation then this method of deployment of external authorization will be best way to deploy kyverno-envoy server as separate container in same pod or as sidecar container.
 
 ![Architecture](demo/istio/architecture2.png)
 
 To automate or improve the installation 
-  -  we can add a Mutate webhook admission controller to add/inject our sidecar container with the pod , if the pod configuration has annotation like `kyverno-envoy-injection=enabled` then the admission controller automatically inject the kyverno-envoy sidecar container into pods and opa also uses this type of admission controller which injects the sidecar 
+  -  we can add a Mutate webhook admission controller to add/inject our sidecar container with the pod, if the pod configuration has annotation like `kyverno-envoy-injection=enabled` then the admission controller automatically inject the kyverno-envoy sidecar container into pods and opa also uses this type of admission controller which injects the sidecar 
 
   -  To build the mutating webhook admission controller for injecting sidecar container we can take reference from an open-source project [tumblr/k8s-sidecar-injector](https://github.com/tumblr/k8s-sidecar-injector) 
 
@@ -466,7 +466,7 @@ To automate or improve the installation
             name: kyverno-policy
     ``` 
      
-we need to define external authorizer that is allowed to be used in the mesh , so we need to define extension provider in the mesh config 
+we need to define external authorizer that is allowed to be used in the mesh, so we need to define extension provider in the mesh config 
 
 ```
 kubectl edit configmap istio -n istio-system
@@ -506,7 +506,7 @@ spec:
     protocol: GRPC
   resolution: STATIC
 ```
-Then we have to apply authorization policy with the `CUSTOM` action value . 
+Then we have to apply authorization policy with the `CUSTOM` action value. 
 ```yml
 
 apiVersion: security.istio.io/v1

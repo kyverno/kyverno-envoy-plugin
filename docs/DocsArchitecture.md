@@ -103,7 +103,7 @@ static_resources:
 
 The external authorization filter calls an external gRPC service to check whether an incoming HTTP request is authorized or not. If the request is deemed unauthorized, then the request will be denied normally with 403 (Forbidden) response. 
 
-The content of the requests that are passed to kyverno ext authz service is specified by [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) and Envoy receives responce as [CheckResponce](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
+The content of the requests that are passed to kyverno ext authz service is specified by [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) and Envoy receives response as [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
 
 ### Kyverno External Authz server 
 
@@ -178,7 +178,7 @@ For example
 ``` 
 
 For evaluation we will use Kyverno-Json Go Api which is a way to embed the kyverno-JSON engine in Go program that validate JSON payloads using Kyverno policies.
-This CheckRequest json payload will executed/scan against accepted Argument validation policy.yaml in the kyverno-json engine and response of the engine will be converted into [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) and CheckResponse return back to envoy if request is deemed unauthorized then request will be denied normally with 403(Forbidden) reponse if the request is authorized then the request will be accepted with status OK responce then envoy will redirect request to upstream service .
+This CheckRequest json payload will executed/scan against accepted Argument validation policy.yaml in the kyverno-json engine and response of the engine will be converted into [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) and CheckResponse return back to envoy if request is deemed unauthorized then request will be denied normally with 403(Forbidden) reponse if the request is authorized then the request will be accepted with status OK response then envoy will redirect request to upstream service .
 
 
 ### Kyverno Policy 
@@ -261,12 +261,12 @@ When we decode the jwt token the payload data is
 
 ```
 
-To make it more user friendly experiance we need more builtin and custom function for matching and decoding which should be easy to use .
+To make it more user friendly experiance we need more builtin and custom function for matching and decoding which should be easy to use.
 
 The policy evaluation result, either 'pass' or 'fail', will be embed into the [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) message and sent back to Envoy. If policy result is `pass` then CheckResponse status is set to be `OK` or `200` then the incoming request will be allowed and if policy result `fail` then CheckResponse status is set to be `403` then the incoming request will be denied .
 
 
-### Deployemnt of Upstream sevice with the sidecar containers 
+### Deployment of Upstream sevice with the sidecar containers 
 
 Upstream App deployment with kyverno-envoy and Envoy as a sidecar 
 
@@ -379,11 +379,11 @@ data:
 
 ## Kyverno Authorization Server with Istio Service Mesh 
 
-Istio is an open source service mesh for manageing the different microservices that make up a cloud-native application . Istio provides a mechanism to use a service as an external authorizer with the [AuthorizationPolicy API](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/) .
+Istio is an open source service mesh for managing the different microservices that make up a cloud-native application. Istio provides a mechanism to use a service as an external authorizer with the [AuthorizationPolicy API](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/).
 
-The Istio service mesh already uses the envoy proxy so we will integrate our kyverno authorization server with istio envoy proxy , for this external authorization server implementation istio provides feature in the Istio authorization policy using action field value set to be `CUSTOM` to delegate the access control to an external authorization system which will be our kyverno authorization server 
+The Istio service mesh already uses the envoy proxy so we will integrate our kyverno authorization server with istio envoy proxy, for this external authorization server implementation istio provides feature in the Istio authorization policy using action field value set to be `CUSTOM` to delegate the access control to an external authorization system which will be our kyverno authorization server 
 
-#### Deployment of external authorizaion server
+#### Deployment of external authorization server
 
 Istio provides three type of deployment of external authorization server 
 - Deploy External authorizer in a standalone pod in the mesh 
@@ -419,18 +419,18 @@ Here are the pros and cons of each Deployment types
     - Minimizes network overhead for authorization checks and fastest on authorization checks as compared to others options.
     - Efficient resource utilization by sharing a pod.
   - Cons: 
-    - Very complex installation of the sidecar  . 
+    - Very complex installation of the sidecar. 
     - Failure of the application can impact authorization and vice versa.
   
 
 Explaining Deployement of kyverno external authorization as sidecar container in same Pod 
 
-- Consider tight coupling if the application and authorization logic are highly dependent and Considering minimum network overhead or lowest latency for authorization checks . If we automate or improve the installation then this method of deployment of external authorization will be best Way to deploy kyverno-envoy server as separate container in same pod or as sidecar container .
+- Consider tight coupling if the application and authorization logic are highly dependent and considering minimum network overhead or lowest latency for authorization checks. If we automate or improve the installation then this method of deployment of external authorization will be best way to deploy kyverno-envoy server as separate container in same pod or as sidecar container.
 
 ![Architecture](demo/istio/architecture2.png)
 
 To automate or improve the installation 
-  -  we can add a Mutate webhook admission controller to add/inject our sidecar container with the pod , if the pod configuration has annotation like `kyverno-envoy-injection=enabled` then the admission controller automatically inject the kyverno-envoy sidecar container into pods and opa also uses this type of admission controller which injects the sidecar 
+  -  we can add a Mutate webhook admission controller to add/inject our sidecar container with the pod, if the pod configuration has annotation like `kyverno-envoy-injection=enabled` then the admission controller automatically inject the kyverno-envoy sidecar container into pods and opa also uses this type of admission controller which injects the sidecar 
 
   -  To build the mutating webhook admission controller for injecting sidecar container we can take reference from an open-source project [tumblr/k8s-sidecar-injector](https://github.com/tumblr/k8s-sidecar-injector) 
 
@@ -466,7 +466,7 @@ To automate or improve the installation
             name: kyverno-policy
     ``` 
      
-we need to define external authorizer that is allowed to be used in the mesh , so we need to define extension provider in the mesh config 
+we need to define external authorizer that is allowed to be used in the mesh, so we need to define extension provider in the mesh config 
 
 ```
 kubectl edit configmap istio -n istio-system
@@ -506,7 +506,7 @@ spec:
     protocol: GRPC
   resolution: STATIC
 ```
-Then we have to apply authorization policy with the `CUSTOM` action value . 
+Then we have to apply authorization policy with the `CUSTOM` action value. 
 ```yml
 
 apiVersion: security.istio.io/v1

@@ -66,7 +66,7 @@ func TestInject(t *testing.T) {
 		pod: corev1.Pod{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
-					corev1.Container{
+					{
 						Name: sidecar.Name,
 					},
 				},
@@ -85,7 +85,7 @@ func TestInject(t *testing.T) {
 		pod: corev1.Pod{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
-					corev1.Container{
+					{
 						Name: "not-" + sidecar.Name,
 					},
 				},
@@ -95,7 +95,7 @@ func TestInject(t *testing.T) {
 		want: corev1.Pod{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
-					corev1.Container{
+					{
 						Name: "not-" + sidecar.Name,
 					},
 					sidecar,

@@ -5,8 +5,6 @@
 GIT_SHA                            := $(shell git rev-parse HEAD)
 ORG                                ?= kyverno
 PACKAGE                            ?= github.com/$(ORG)/kyverno-envoy-plugin
-GOPATH_SHIM                        := ${PWD}/.gopath
-PACKAGE_SHIM                       := $(GOPATH_SHIM)/src/$(PACKAGE)
 CLI_BIN                            := kyverno-envoy-plugin
 CGO_ENABLED                        ?= 0
 GOOS                               ?= $(shell go env GOOS)
@@ -30,15 +28,15 @@ KO_PLATFORMS                       ?= all
 
 TOOLS_DIR                          := $(PWD)/.tools
 HELM                               ?= $(TOOLS_DIR)/helm
-HELM_VERSION                       ?= v3.12.3
+HELM_VERSION                       ?= v3.17.3
 KIND                               := $(TOOLS_DIR)/kind
-KIND_VERSION                       := v0.22.0
+KIND_VERSION                       := v0.29.0
 KO                                 ?= $(TOOLS_DIR)/ko
 KO_VERSION                         ?= v0.15.1
 CONTROLLER_GEN                     ?= $(TOOLS_DIR)/controller-gen
 CONTROLLER_GEN_VERSION             := latest
 REGISTER_GEN                       ?= $(TOOLS_DIR)/register-gen
-REGISTER_GEN_VERSION               := v0.28.0
+REGISTER_GEN_VERSION               := v0.33.1
 REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
 REFERENCE_DOCS_VERSION             := latest
 PIP                                ?= "pip"
@@ -89,15 +87,6 @@ clean-tools: ## Remove installed tools
 # CODEGEN #
 ###########
 
-$(GOPATH_SHIM):
-	@echo Create gopath shim... >&2
-	@mkdir -p $(GOPATH_SHIM)
-
-.INTERMEDIATE: $(PACKAGE_SHIM)
-$(PACKAGE_SHIM): $(GOPATH_SHIM)
-	@echo Create package shim... >&2
-	@mkdir -p $(GOPATH_SHIM)/src/github.com/$(ORG) && ln -s -f ${PWD} $(PACKAGE_SHIM)
-
 .PHONY: codegen-crds
 codegen-crds: ## Generate CRDs
 codegen-crds: $(CONTROLLER_GEN)
@@ -105,7 +94,7 @@ codegen-crds: $(REGISTER_GEN)
 	@echo Generate CRDs... >&2
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
-	@$(REGISTER_GEN) --input-dirs=./apis/v1alpha1 --go-header-file=./.hack/boilerplate.go.txt --output-base=.
+	@$(REGISTER_GEN) --go-header-file=./.hack/boilerplate.go.txt --output-file zz_generated.register.go ./apis/...
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website

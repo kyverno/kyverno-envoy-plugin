@@ -3,12 +3,9 @@ package jwt
 import (
 	"reflect"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type lib struct{}
@@ -38,10 +35,12 @@ func (*lib) ProgramOptions() []cel.ProgramOption {
 func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	// get env type adapter
 	adapter := env.CELTypeAdapter()
+	// create implementation with adapter
+	impl := impl{adapter}
 	// build our function overloads
 	libraryDecls := map[string][]cel.FunctionOpt{
 		"jwt.Decode": {
-			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(decode(adapter))),
+			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(impl.decode)),
 		},
 	}
 	// create env options corresponding to our function overloads
@@ -51,39 +50,4 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	}
 	// extend environment with our function overloads
 	return env.Extend(options...)
-}
-
-func decode(adapter types.Adapter) func(token ref.Val, key ref.Val) ref.Val {
-	return func(token ref.Val, key ref.Val) ref.Val {
-		t, ok := token.(types.String)
-		if !ok {
-			return types.MaybeNoSuchOverloadErr(token)
-		}
-		k, ok := key.(types.String)
-		if !ok {
-			return types.MaybeNoSuchOverloadErr(key)
-		}
-		claimsMap := jwt.MapClaims{}
-		parsed, err := jwt.ParseWithClaims(string(t), claimsMap, func(*jwt.Token) (any, error) {
-			return []byte(k), nil
-		})
-		if err != nil {
-			return adapter.NativeToValue(nil)
-		}
-		header, err := structpb.NewStruct(parsed.Header)
-		if err != nil {
-			return types.WrapErr(err)
-		}
-		claims, err := structpb.NewStruct(claimsMap)
-		if err != nil {
-			return types.WrapErr(err)
-		}
-		return adapter.NativeToValue(
-			Token{
-				Header: header,
-				Claims: claims,
-				Valid:  parsed.Valid,
-			},
-		)
-	}
 }

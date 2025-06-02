@@ -74,7 +74,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		r.lock.Lock()
 		defer r.lock.Unlock()
 		defer resetSortPolicies()
-		delete(r.policies, req.NamespacedName.String())
+		delete(r.policies, req.String())
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
@@ -88,7 +88,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.policies[req.NamespacedName.String()] = compiled
+	r.policies[req.String()] = compiled
 	resetSortPolicies()
 	return ctrl.Result{}, nil
 }

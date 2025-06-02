@@ -48,7 +48,7 @@ func AdmissionReview(inner func(context.Context, *admissionv1.AdmissionRequest) 
 			HttpError(r.Context(), w, r, errors.New("empty body"), http.StatusBadRequest)
 			return
 		}
-		defer r.Body.Close()
+		defer r.Body.Close() //nolint:errcheck
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			HttpError(r.Context(), w, r, err, http.StatusBadRequest)

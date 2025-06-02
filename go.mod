@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
-	github.com/google/cel-go v0.23.2
+	github.com/google/cel-go v0.25.0
 	github.com/lestrrat-go/jwx/v3 v3.0.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.20.0 // indirect
+	cel.dev/expr v0.23.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect

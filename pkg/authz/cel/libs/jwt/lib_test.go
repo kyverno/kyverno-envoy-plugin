@@ -19,6 +19,7 @@ func Test_decode(t *testing.T) {
 		wantClaims map[string]any
 		wantValid  bool
 	}{{
+		name:  "HS256",
 		token: types.String("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk"),
 		key:   types.String("secret"),
 		wantHeader: map[string]any{
@@ -39,8 +40,8 @@ func Test_decode(t *testing.T) {
 				Lib(),
 			)
 			assert.NoError(t, err)
-			decode := decode(env.CELTypeAdapter())
-			out := decode(tt.token, tt.key)
+			impl := impl{env.CELTypeAdapter()}
+			out := impl.decode(tt.token, tt.key)
 			got, err := utils.ConvertToNative[Token](out)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantHeader, got.Header.AsMap())

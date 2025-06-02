@@ -19,26 +19,11 @@ func Test_decode(t *testing.T) {
 		wantClaims map[string]any
 		wantValid  bool
 	}{{
-		// 	name:  "HS256",
-		// 	token: types.String("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk"),
-		// 	key:   types.String("secret"),
-		// 	wantHeader: map[string]any{
-		// 		"alg": "HS256",
-		// 		"typ": "JWT",
-		// 	},
-		// 	wantClaims: map[string]any{
-		// 		"exp":  float64(2241081539),
-		// 		"nbf":  float64(1514851139),
-		// 		"role": "guest",
-		// 		"sub":  "YWxpY2U=",
-		// 	},
-		// 	wantValid: true,
-		// }, {
-		name:  "ES256",
-		token: types.String("eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwa2kuZXhhbXBsZS5jb20ifQ.ViJTHHv5FuJM9LsRrTpzts6tZkN8deKiu5x49-M8-nq6Rs6ta-Wn8fN_YVLlpZvwhFu_yfxpfUGhBRc33QSSsw"),
+		name:  "HS256",
+		token: types.String("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk"),
 		key:   types.String("secret"),
 		wantHeader: map[string]any{
-			"alg": "ES256",
+			"alg": "HS256",
 			"typ": "JWT",
 		},
 		wantClaims: map[string]any{

@@ -4,7 +4,6 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwk"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwt"
 	"k8s.io/apiserver/pkg/cel/library"
 )
@@ -36,6 +35,5 @@ func NewEnv() (*cel.Env, error) {
 		// register our libs
 		envoy.Lib(),
 		jwt.Lib(),
-		jwk.Lib(),
 	)
 }

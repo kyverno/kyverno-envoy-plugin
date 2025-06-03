@@ -1,10 +1,14 @@
 package jwt
 
 import (
-	"github.com/golang-jwt/jwt"
+	"time"
+
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jws"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -18,26 +22,52 @@ func (c *impl) decode(token ref.Val, key ref.Val) ref.Val {
 	} else if key, err := utils.ConvertToNative[string](key); err != nil {
 		return types.WrapErr(err)
 	} else {
-		claimsMap := jwt.MapClaims{}
-		parsed, err := jwt.ParseWithClaims(token, claimsMap, func(*jwt.Token) (any, error) {
-			return []byte(key), nil
-		})
-		if err != nil {
-			return c.NativeToValue(nil)
-		}
-		header, err := structpb.NewStruct(parsed.Header)
+		set := jwk.NewSet()
+		key, err := jwk.Import([]byte(key))
 		if err != nil {
 			return types.WrapErr(err)
 		}
-		claims, err := structpb.NewStruct(claimsMap)
+		if err := set.AddKey(key); err != nil {
+			return types.WrapErr(err)
+		}
+		tok, err := jwt.Parse(
+			[]byte(token),
+			jwt.WithValidate(false),
+			jwt.WithKeySet(
+				set,
+				jws.WithUseDefault(true),
+				jws.WithInferAlgorithmFromKey(true),
+			),
+		)
 		if err != nil {
 			return types.WrapErr(err)
+		}
+		var claims *structpb.Struct
+		if keys := tok.Keys(); len(keys) > 0 {
+			fields := make(map[string]any, len(keys))
+			for _, key := range keys {
+				var value any
+				err := tok.Get(key, &value)
+				if err != nil {
+					return types.WrapErr(err)
+				}
+				switch value := value.(type) {
+				case time.Time:
+					fields[key] = value.Unix()
+				default:
+					fields[key] = value
+				}
+			}
+			encoded, err := structpb.NewStruct(fields)
+			if err != nil {
+				return types.WrapErr(err)
+			}
+			claims = encoded
 		}
 		return c.NativeToValue(
 			Token{
-				Header: header,
 				Claims: claims,
-				Valid:  parsed.Valid,
+				Valid:  jwt.Validate(tok) == nil,
 			},
 		)
 	}

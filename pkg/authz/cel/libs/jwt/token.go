@@ -8,7 +8,6 @@ import (
 var TokenType = types.NewObjectType("jwt.Token")
 
 type Token struct {
-	Header *structpb.Struct
 	Claims *structpb.Struct
 	Valid  bool
 }

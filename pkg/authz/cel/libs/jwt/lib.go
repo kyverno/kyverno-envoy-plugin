@@ -6,6 +6,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwk"
 )
 
 type lib struct{}
@@ -21,6 +22,8 @@ func (*lib) LibraryName() string {
 
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
+		// register jwk lib
+		jwk.Lib(),
 		// register token type
 		ext.NativeTypes(reflect.TypeFor[Token]()),
 		// extend environment with function overloads

@@ -21,7 +21,7 @@ func (c *impl) fetch(from ref.Val) ref.Val {
 		if err != nil {
 			return types.WrapErr(err)
 		}
-		return c.NativeToValue(set)
+		return c.NativeToValue(Set{set})
 	}
 
 }

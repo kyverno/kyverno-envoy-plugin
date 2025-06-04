@@ -30,7 +30,7 @@ func TestSidecar(t *testing.T) {
 			Args: []string{
 				"serve",
 				"authz-server",
-				"--http-address=:9080",
+				"--probes-address=:9080",
 				"--grpc-address=:9081",
 			},
 		},

@@ -32,6 +32,7 @@ func TestSidecar(t *testing.T) {
 				"authz-server",
 				"--probes-address=:9080",
 				"--grpc-address=:9081",
+				"--metrics-address=:9082",
 			},
 		},
 	}}

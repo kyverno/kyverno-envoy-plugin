@@ -43,7 +43,8 @@ func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	// build our function overloads
 	libraryDecls := map[string][]cel.FunctionOpt{
 		"jwt.Decode": {
-			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(impl.decode)),
+			cel.Overload("decode_string_string", []*cel.Type{types.StringType, types.StringType}, TokenType, cel.BinaryBinding(impl.decode_string_string)),
+			cel.Overload("decode_string_set", []*cel.Type{types.StringType, jwk.SetType}, TokenType, cel.BinaryBinding(impl.decode_string_set)),
 		},
 	}
 	// create env options corresponding to our function overloads

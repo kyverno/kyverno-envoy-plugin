@@ -21,7 +21,7 @@ func Sidecar(image string) corev1.Container {
 		Args: []string{
 			"serve",
 			"authz-server",
-			"--http-address=:9080",
+			"--probes-address=:9080",
 			"--grpc-address=:9081",
 		},
 	}

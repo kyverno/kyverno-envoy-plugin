@@ -355,7 +355,7 @@ deploy-kyverno-sidecar-injector: $(HELM)
 .PHONY: install-kyverno-sidecar-injector
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
 install-kyverno-sidecar-injector: kind-load-image
-install-kyverno-authz-server: install-cluster-issuer
+install-kyverno-sidecar-injector: install-cluster-issuer
 install-kyverno-sidecar-injector: $(HELM)
 	@$(MAKE) deploy-kyverno-sidecar-injector
 

@@ -6,11 +6,13 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	jwklib "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwk"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_decode(t *testing.T) {
+func Test_decode_string_string(t *testing.T) {
 	tests := []struct {
 		name       string
 		token      ref.Val
@@ -71,7 +73,61 @@ func Test_decode(t *testing.T) {
 			)
 			assert.NoError(t, err)
 			impl := impl{env.CELTypeAdapter()}
-			out := impl.decode(tt.token, tt.key)
+			out := impl.decode_string_string(tt.token, tt.key)
+			got, err := utils.ConvertToNative[Token](out)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantClaims, got.Claims.AsMap())
+			assert.Equal(t, tt.wantValid, got.Valid)
+		})
+	}
+}
+
+func Test_decode_string_set(t *testing.T) {
+	jwks := `
+	{
+		"keys": [
+			{
+				"alg": "ES256",
+				"crv": "P-256",
+				"kid": "my-key-id",
+				"kty": "EC",
+				"use": "sig",
+				"x": "iTV4PECbWuDaNBMTLmwH0jwBTD3xUXR0S-VWsCYv8Gc",
+				"y": "-Cnw8d0XyQztrPZpynrFn8t10lyEb6oWqWcLJWPUB5A"
+			}
+		]
+	}`
+	set, err := jwk.Parse([]byte(jwks))
+	assert.NoError(t, err)
+	tests := []struct {
+		name       string
+		token      ref.Val
+		set        jwk.Set
+		wantHeader map[string]any
+		wantClaims map[string]any
+		wantValid  bool
+	}{{
+		name:  "ES256 - valid",
+		token: types.String("eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwa2kuZXhhbXBsZS5jb20ifQ.ViJTHHv5FuJM9LsRrTpzts6tZkN8deKiu5x49-M8-nq6Rs6ta-Wn8fN_YVLlpZvwhFu_yfxpfUGhBRc33QSSsw"),
+		set:   set,
+		wantHeader: map[string]any{
+			"alg": "ES256",
+			"typ": "JWT",
+		},
+		wantClaims: map[string]any{
+			"iss": "pki.example.com",
+		},
+		wantValid: true,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env, err := cel.NewEnv(
+				Lib(),
+			)
+			assert.NoError(t, err)
+			impl := impl{env.CELTypeAdapter()}
+			set := env.CELTypeAdapter().NativeToValue(jwklib.Set{Set: tt.set})
+			out := impl.decode_string_set(tt.token, set)
 			got, err := utils.ConvertToNative[Token](out)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantClaims, got.Claims.AsMap())

@@ -112,6 +112,7 @@ spec:
             - serve
             - validation-webhook
             - --probes-address=:9080
+            - --metrics-address=:9082
           volumeMounts:
             - name: certs
               mountPath: /tmp/k8s-webhook-server/serving-certs

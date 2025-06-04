@@ -345,7 +345,6 @@ install-istio: $(HELM)
 		--set meshConfig.extensionProviders[0].name=kyverno-authz-server \
 		--set meshConfig.extensionProviders[0].envoyExtAuthzGrpc.service=$(KYVERNO_AUTHZ_SERVICE) \
 		--set-string meshConfig.extensionProviders[0].envoyExtAuthzGrpc.port=9081
-# kyverno-authz-server.kyverno.svc.cluster.local
 
 ########
 # HELM #

@@ -343,8 +343,9 @@ install-istio: $(HELM)
 	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
 	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod \
 		--set meshConfig.extensionProviders[0].name=kyverno-authz-server \
-		--set meshConfig.extensionProviders[0].envoyExtAuthzGrpc.service=kyverno-authz-server.kyverno.svc.cluster.local \
+		--set meshConfig.extensionProviders[0].envoyExtAuthzGrpc.service=$(KYVERNO_AUTHZ_SERVICE) \
 		--set-string meshConfig.extensionProviders[0].envoyExtAuthzGrpc.port=9081
+# kyverno-authz-server.kyverno.svc.cluster.local
 
 ########
 # HELM #

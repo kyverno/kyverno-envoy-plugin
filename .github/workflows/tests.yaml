@@ -164,7 +164,7 @@ jobs:
         run: |
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
-          make install-istio
+          KYVERNO_AUTHZ_SERVICE=kyverno-authz-server.kyverno.svc.cluster.local make install-istio
       - name: Setup cert-manager
         run: |
           set -e

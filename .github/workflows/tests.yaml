@@ -114,6 +114,11 @@ jobs:
         run: |
           set -e
           make kind-load-archive
+      - name: Setup istio
+        run: |
+          set -e
+          export HELM=${{ steps.helm.outputs.helm-path }}
+          KYVERNO_AUTHZ_SERVICE=kyverno-authz-server.local make install-istio
       - name: Setup cert-manager
         run: |
           set -e
@@ -164,7 +169,7 @@ jobs:
         run: |
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
-          make install-istio
+          KYVERNO_AUTHZ_SERVICE=kyverno-authz-server.kyverno.svc.cluster.local make install-istio
       - name: Setup cert-manager
         run: |
           set -e

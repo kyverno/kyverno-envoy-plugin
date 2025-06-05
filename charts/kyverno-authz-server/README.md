@@ -66,7 +66,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | containers.server.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"}]` | Container ports. |
-| containers.server.args | list | `["serve","authz-server","--probes-address=:9080","--grpc-address=:9081"]` | Container args. |
+| containers.server.args | list | `["serve","authz-server","--probes-address=:9080","--grpc-address=:9081","--metrics-address=:9082"]` | Container args. |
 | service.port | int | `9081` | Service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |

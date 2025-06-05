@@ -16,10 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 func Command() *cobra.Command {
 	var probesAddress string
+	var metricsAddress string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	command := &cobra.Command{
 		Use:   "validation-webhook",
@@ -50,6 +52,9 @@ func Command() *cobra.Command {
 					}
 					mgr, err := ctrl.NewManager(config, ctrl.Options{
 						Scheme: scheme,
+						Metrics: metricsserver.Options{
+							BindAddress: metricsAddress,
+						},
 					})
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
@@ -92,6 +97,7 @@ func Command() *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
+	command.Flags().StringVar(&metricsAddress, "metrics-address", ":908Z", "Address to listen on for metrics")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

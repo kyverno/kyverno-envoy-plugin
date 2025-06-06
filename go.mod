@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
 	github.com/google/cel-go v0.25.0
-	github.com/lestrrat-go/jwx/v3 v3.0.2
+	github.com/lestrrat-go/jwx/v3 v3.0.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/multierr v1.11.0
@@ -49,7 +49,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc/v3 v3.0.0-beta2 // indirect
+	github.com/lestrrat-go/httprc/v3 v3.0.0 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -110,14 +110,139 @@ spec:
 EOF
 ```
 
+### Deploy cert-manager
+
+The Kyverno Authz Server comes with a validation webhook and needs a certificate to let the api server call into it.
+
+Let's deploy `cert-manager` to manage the certificate we need.
+
+```bash
+# install cert-manager
+helm install cert-manager \
+  --namespace cert-manager --create-namespace \
+  --wait \
+  --repo https://charts.jetstack.io cert-manager \
+  --set crds.enabled=true
+
+# create a self-signed cluster issuer
+kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+EOF
+```
+
+For more certificate management options, refer to [Certificates management](../../install/certificates.md).
+
+### Deploy the Kyverno Authz Server
+
+Now deploy the Kyverno Authz Server.
+
+```bash
+# deploy the kyverno authz server
+helm install kyverno-authz-server \
+  --namespace kyverno --create-namespace \
+  --wait \
+  --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
+  --set certificates.certManager.issuerRef.group=cert-manager.io \
+  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
+  --set certificates.certManager.issuerRef.name=selfsigned-issuer
+```
+
+## Create a Kyverno AuthorizationPolicy
+
+In summary the policy below does the following:
+
+- Checks that the JWT token is valid
+- Checks that the action is allowed based on the token payload `role` and the request path
+
+```bash
+# deploy kyverno authorization policy
+kubectl apply -f - <<EOF
+apiVersion: envoy.kyverno.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: demo
+spec:
+  failurePolicy: Fail
+  variables:
+  - name: authorization
+    expression: object.attributes.request.http.headers[?"authorization"].orValue("").split(" ")
+  - name: token
+    expression: >
+      size(variables.authorization) == 2 && variables.authorization[0].lowerAscii() == "bearer"
+        ? jwt.Decode(variables.authorization[1], "secret")
+        : null
+  deny:
+    # request not authenticated -> 401
+  - match: >
+      variables.token == null || !variables.token.Valid
+    response: >
+      envoy.Denied(401).Response()
+    # request authenticated but not admin role -> 403
+  - match: >
+      variables.token.Claims.?role.orValue("") != "admin"
+    response: >
+      envoy.Denied(403).Response()
+  allow:
+    # request authenticated and admin role -> 200
+  - response: >
+      envoy
+        .Allowed()
+        .WithHeader("x-validated-by", "my-security-checkpoint")
+        .WithoutHeader("x-force-authorized")
+        .WithResponseHeader("x-add-custom-response-header", "added")
+        .Response()
+EOF
+```
+
 TBC
 
+## Create a GatewayExtension to delegate auth to the Kyverno Authz Server
 
+```bash
+kubectl apply -f - <<EOF
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: GatewayExtension
+metadata:
+  namespace: kgateway-system
+  name: kyverno-authz-server
+spec:
+  type: ExtAuth
+  extAuth:
+    grpcService:
+      backendRef:
+        name: kyverno-authz-server
+        namespace: kyverno
+        port: 9081
+EOF
+```
 
+### Grant access to the Kyverno Authz Server service
 
+Last thing we need to configure is to grant access to the Kyverno Authz Server service for our GatewayExtension to take effect.
 
-
-
+```bash
+# grant access
+kubectl apply -n kyverno -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: reference-grant
+  namespace: kgateway-system
+spec:
+  from:
+    - group: gateway.kgateway.dev
+      kind: GatewayExtension
+      namespace: demo
+  to:
+    - group: ""
+      kind: Service
+EOF
+```
 
 ## Testing
 
@@ -149,7 +274,7 @@ For convenience, we will store Alice’s and Bob’s tokens in environment varia
 
 Here Bob is assigned the admin role and Alice is assigned the guest role.
 
-```bash 
+```bash
 export ALICE_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6Imd1ZXN0Iiwic3ViIjoiWVd4cFkyVT0ifQ.ja1bgvIt47393ba_WbSBm35NrUhdxM4mOVQN8iXz8lk"
 export BOB_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyNDEwODE1MzksIm5iZiI6MTUxNDg1MTEzOSwicm9sZSI6ImFkbWluIiwic3ViIjoiWVd4cFkyVT0ifQ.veMeVDYlulTdieeX-jxFZ_tCmqQ_K8rwx2OktUHv5Z0"
 ```

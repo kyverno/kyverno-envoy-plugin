@@ -219,6 +219,22 @@ spec:
         namespace: kyverno
         port: 9081
 EOF
+
+kubectl apply -f - <<EOF
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: TrafficPolicy
+metadata:
+  namespace: kgateway-system
+  name: kyverno-authz-server
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: http
+  extAuth:
+    extensionRef: 
+      name: kyverno-authz-server
+EOF
 ```
 
 ### Grant access to the Kyverno Authz Server service
@@ -227,17 +243,17 @@ Last thing we need to configure is to grant access to the Kyverno Authz Server s
 
 ```bash
 # grant access
-kubectl apply -n kyverno -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: reference-grant
-  namespace: kgateway-system
+  name: kgateway-gateway
+  namespace: kyverno
 spec:
   from:
     - group: gateway.kgateway.dev
       kind: GatewayExtension
-      namespace: demo
+      namespace: kgateway-system
   to:
     - group: ""
       kind: Service

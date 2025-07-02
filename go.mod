@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
 	github.com/google/cel-go v0.25.0
-	github.com/lestrrat-go/jwx/v3 v3.0.7
+	github.com/lestrrat-go/jwx/v3 v3.0.8
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/multierr v1.11.0

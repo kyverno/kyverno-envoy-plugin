@@ -248,6 +248,11 @@ service:
   # -- Service annotations.
   annotations: {}
 
+  # -- Service application protocol.
+  # Setting app protocol is only needed in specific cases like integration with certain gateways
+  # ref: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol
+  appProtocol:
+
 webhook:
 
   # -- Webhook annotations

@@ -71,6 +71,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
 | service.annotations | object | `{}` | Service annotations. |
+| service.appProtocol | string | `nil` | Service application protocol. Only needed in specific cases (eg: kgateway needs kubernetes.io/h2c to work properly) |
 | webhook.annotations | object | `{}` | Webhook annotations |
 | webhook.failurePolicy | string | `"Fail"` | Webhook failure policy |
 | webhook.objectSelector | string | `nil` | Webhook object selector |

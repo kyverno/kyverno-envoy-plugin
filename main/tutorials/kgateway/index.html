@@ -133,18 +133,34 @@ kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>
 <span class=s>        namespace: kyverno</span>
 <span class=s>        port: 9081</span>
 <span class=s>EOF</span>
+
+kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+<span class=s>apiVersion: gateway.kgateway.dev/v1alpha1</span>
+<span class=s>kind: TrafficPolicy</span>
+<span class=s>metadata:</span>
+<span class=s>  namespace: kgateway-system</span>
+<span class=s>  name: kyverno-authz-server</span>
+<span class=s>spec:</span>
+<span class=s>  targetRefs:</span>
+<span class=s>  - group: gateway.networking.k8s.io</span>
+<span class=s>    kind: Gateway</span>
+<span class=s>    name: http</span>
+<span class=s>  extAuth:</span>
+<span class=s>    extensionRef: </span>
+<span class=s>      name: kyverno-authz-server</span>
+<span class=s>EOF</span>
 </code></pre></div> <h3 id=grant-access-to-the-kyverno-authz-server-service>Grant access to the Kyverno Authz Server service<a class=headerlink href=#grant-access-to-the-kyverno-authz-server-service title="Permanent link">&para;</a></h3> <p>Last thing we need to configure is to grant access to the Kyverno Authz Server service for our GatewayExtension to take effect.</p> <div class=highlight><pre><span></span><code><span class=c1># grant access</span>
-kubectl<span class=w> </span>apply<span class=w> </span>-n<span class=w> </span>kyverno<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
 <span class=s>apiVersion: gateway.networking.k8s.io/v1beta1</span>
 <span class=s>kind: ReferenceGrant</span>
 <span class=s>metadata:</span>
-<span class=s>  name: reference-grant</span>
-<span class=s>  namespace: kgateway-system</span>
+<span class=s>  name: kgateway-gateway</span>
+<span class=s>  namespace: kyverno</span>
 <span class=s>spec:</span>
 <span class=s>  from:</span>
 <span class=s>    - group: gateway.kgateway.dev</span>
 <span class=s>      kind: GatewayExtension</span>
-<span class=s>      namespace: demo</span>
+<span class=s>      namespace: kgateway-system</span>
 <span class=s>  to:</span>
 <span class=s>    - group: &quot;&quot;</span>
 <span class=s>      kind: Service</span>

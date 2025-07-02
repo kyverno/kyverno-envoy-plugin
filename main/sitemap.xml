@@ -108,4 +108,8 @@
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/tutorials/istio/</loc>
          <lastmod>2025-07-02</lastmod>
     </url>
+    <url>
+         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/tutorials/kgateway/</loc>
+         <lastmod>2025-07-02</lastmod>
+    </url>
 </urlset>

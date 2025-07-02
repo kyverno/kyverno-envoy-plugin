@@ -28,6 +28,7 @@ nav:
   - tutorials/index.md
   - tutorials/istio/index.md
   - tutorials/envoy-gateway/index.md
+  - tutorials/kgateway/index.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md

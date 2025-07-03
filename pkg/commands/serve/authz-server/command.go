@@ -24,6 +24,7 @@ func Command() *cobra.Command {
 	var grpcAddress string
 	var grpcNetwork string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
+	var externalPolicySources []string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -103,6 +104,7 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":908Z", "Address to listen on for metrics")
+	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

@@ -78,6 +78,7 @@ helm<span class=w> </span>install<span class=w> </span>kyverno-authz-server<span
 <span class=w>  </span>--namespace<span class=w> </span>kyverno<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--wait<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--repo<span class=w> </span>https://kyverno.github.io/kyverno-envoy-plugin<span class=w> </span>kyverno-authz-server<span class=w> </span><span class=se>\</span>
+<span class=w>  </span>--set<span class=w> </span>service.appProtocol<span class=o>=</span><span class=s2>&quot;kubernetes.io/h2c&quot;</span><span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.group<span class=o>=</span>cert-manager.io<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.kind<span class=o>=</span>ClusterIssuer<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.name<span class=o>=</span>selfsigned-issuer

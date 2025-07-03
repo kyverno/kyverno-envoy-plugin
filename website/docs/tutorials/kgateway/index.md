@@ -145,6 +145,7 @@ helm install kyverno-authz-server \
   --namespace kyverno --create-namespace \
   --wait \
   --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
+  --devel \
   --set service.appProtocol="kubernetes.io/h2c" \
   --set certificates.certManager.issuerRef.group=cert-manager.io \
   --set certificates.certManager.issuerRef.kind=ClusterIssuer \

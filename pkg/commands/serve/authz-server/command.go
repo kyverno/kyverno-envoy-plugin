@@ -103,7 +103,7 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
-	command.Flags().StringVar(&metricsAddress, "metrics-address", ":908Z", "Address to listen on for metrics")
+	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command

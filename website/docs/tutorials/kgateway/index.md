@@ -198,8 +198,6 @@ spec:
 EOF
 ```
 
-TBC
-
 ## Create a GatewayExtension to delegate auth to the Kyverno Authz Server
 
 ```bash

@@ -90,8 +90,6 @@ kind: HTTPRoute
 metadata:
   name: httpbin
   namespace: demo
-  labels:
-    example: httpbin-route
 spec:
   parentRefs:
   - name: http

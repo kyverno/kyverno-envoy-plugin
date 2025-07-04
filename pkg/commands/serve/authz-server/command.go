@@ -68,11 +68,21 @@ func Command() *cobra.Command {
 					}
 					// create compiler
 					compiler := policy.NewCompiler()
-					// create provider
-					provider, err := policy.NewKubeProvider(mgr, compiler)
+					// create kube provider
+					kubeProvider, err := policy.NewKubeProvider(mgr, compiler)
 					if err != nil {
 						return err
 					}
+					// create external providers
+					externalProvider, err := getExternalProviders(compiler, externalPolicySources...)
+					if err != nil {
+						return err
+					}
+					// create final provider
+					provider := policy.NewComposite(
+						kubeProvider,
+						policy.NewComposite(externalProvider...),
+					)
 					// create a cancellable context
 					ctx, cancel := context.WithCancel(ctx)
 					// start manager
@@ -114,7 +124,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(compiler policy.Compiler, urls ...string) []policy.Provider {
+func getExternalProviders(compiler policy.Compiler, urls ...string) ([]policy.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	mux.Add(httpfs.FS)
@@ -123,10 +133,10 @@ func getExternalProviders(compiler policy.Compiler, urls ...string) []policy.Pro
 	var providers []policy.Provider
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
-		if err == nil {
-			// TODO: proper error handling
-			providers = append(providers, policy.NewFsProvider(compiler, fsys))
+		if err != nil {
+			return nil, err
 		}
+		providers = append(providers, policy.NewFsProvider(compiler, fsys))
 	}
-	return providers
+	return providers, nil
 }

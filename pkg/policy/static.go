@@ -62,6 +62,9 @@ func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 				ext := filepath.Ext(entry.Name())
 				if ext == ".yml" || ext == ".yaml" {
 					bytes, err := fs.ReadFile(f, entry.Name())
+					if err != nil {
+						return nil
+					}
 					documents, err := yaml.SplitDocuments(bytes)
 					if err != nil {
 						return nil
@@ -95,5 +98,5 @@ func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 	// 	}
 	// 	log.Println(string(data))
 	// }
-	return NewStaticProvider(compiler)
+	return NewStaticProvider(compiler, policies...)
 }

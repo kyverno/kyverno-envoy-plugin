@@ -95,6 +95,9 @@ codegen-crds: $(REGISTER_GEN)
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
 	@$(REGISTER_GEN) --go-header-file=./.hack/boilerplate.go.txt --output-file zz_generated.register.go ./apis/...
+	@echo Copy generated CRDs to embed in the binary... >&2
+	@rm -rf pkg/data/crds && mkdir -p pkg/data/crds
+	@cp $(CRDS_PATH)/* pkg/data/crds
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website

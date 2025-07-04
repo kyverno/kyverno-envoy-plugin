@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-json/pkg/data"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/data"
 	"github.com/kyverno/pkg/ext/resource/convert"
 	"github.com/kyverno/pkg/ext/resource/loader"
 	"github.com/kyverno/pkg/ext/yaml"

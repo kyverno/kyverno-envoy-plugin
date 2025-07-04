@@ -97,7 +97,7 @@ func Command() *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
-	command.Flags().StringVar(&metricsAddress, "metrics-address", ":908Z", "Address to listen on for metrics")
+	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

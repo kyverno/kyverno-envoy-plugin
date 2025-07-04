@@ -6,6 +6,7 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
 	github.com/google/cel-go v0.25.0
 	github.com/hairyhenderson/go-fsimpl v0.3.1
+	github.com/kyverno/pkg/ext v0.0.0-20250303002756-48769d003e55
 	github.com/lestrrat-go/jwx/v3 v3.0.8
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -17,6 +18,32 @@ require (
 	k8s.io/apiserver v0.33.2
 	k8s.io/client-go v0.33.2
 	sigs.k8s.io/controller-runtime v0.21.0
+)
+
+require (
+	github.com/NYTimes/gziphandler v1.1.1 // indirect
+	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
+	github.com/coreos/go-semver v0.3.1 // indirect
+	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20210315223345-82c243799c99 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.21 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.21 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.36.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.36.0 // indirect
+	go.opentelemetry.io/otel/metric v1.36.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.36.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.6.0 // indirect
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
+	sigs.k8s.io/kubectl-validate v0.0.2-0.20240220161158-e1c86ccfb593 // indirect
 )
 
 require (

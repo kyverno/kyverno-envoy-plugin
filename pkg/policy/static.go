@@ -3,10 +3,15 @@ package policy
 import (
 	"context"
 	"io/fs"
-	"log"
 	"path/filepath"
+	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"github.com/kyverno/kyverno-json/pkg/data"
+	"github.com/kyverno/pkg/ext/resource/convert"
+	"github.com/kyverno/pkg/ext/resource/loader"
+	"github.com/kyverno/pkg/ext/yaml"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
 )
 
 type staticProvider struct {
@@ -31,7 +36,21 @@ func (p *staticProvider) CompiledPolicies(ctx context.Context) ([]CompiledPolicy
 	return p.compiled, p.err
 }
 
+func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
+	if _fs == nil {
+		_fs = data.Crds
+	}
+	crdsFs, err := _fs()
+	if err != nil {
+		return nil, err
+	}
+	return loader.New(openapiclient.NewLocalCRDFiles(crdsFs))
+}
+
+var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
+
 func NewFsProvider(compiler Compiler, f fs.FS) Provider {
+	var policies []v1alpha1.AuthorizationPolicy
 	if f, ok := f.(fs.ReadDirFS); ok {
 		entries, err := f.ReadDir(".")
 		if err != nil {
@@ -42,7 +61,26 @@ func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 			if !entry.IsDir() {
 				ext := filepath.Ext(entry.Name())
 				if ext == ".yml" || ext == ".yaml" {
-					log.Println(entry.Name())
+					bytes, err := fs.ReadFile(f, entry.Name())
+					documents, err := yaml.SplitDocuments(bytes)
+					if err != nil {
+						return nil
+					}
+					for _, document := range documents {
+						loader, err := DefaultLoader()
+						if err != nil {
+							return nil
+						}
+						_, untyped, err := loader.Load(document)
+						if err != nil {
+							return nil
+						}
+						typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
+						if err != nil {
+							return nil
+						}
+						policies = append(policies, *typed)
+					}
 				}
 				// TODO: json
 			}

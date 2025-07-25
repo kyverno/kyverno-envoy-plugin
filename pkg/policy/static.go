@@ -54,13 +54,11 @@ func parseYAMLFiles(f fs.FS) ([]v1alpha1.AuthorizationPolicy, error) {
 	var policies []v1alpha1.AuthorizationPolicy
 
 	entries, err := fs.ReadDir(f, ".")
-	fmt.Println(entries)
 	if err != nil {
 		return nil, err
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
-			fmt.Println("skipping directory", entry.Name())
 			continue
 		}
 
@@ -87,21 +85,18 @@ func parseYAMLFiles(f fs.FS) ([]v1alpha1.AuthorizationPolicy, error) {
 			_, untyped, err := ldr.Load(document)
 			if err != nil {
 				// Not an AuthorizationPolicy, skip
-				fmt.Println(err)
 				continue
 			}
 
 			typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
 			if err != nil {
-				// Conversion fails,
-				fmt.Println(err)
+				// Conversion fails, skip
 				continue
 			}
 
 			policies = append(policies, *typed)
 		}
 	}
-	fmt.Println(len(policies), "policies parsed")
 	return policies, nil
 }
 

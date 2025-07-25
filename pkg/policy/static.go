@@ -50,13 +50,14 @@ func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 
 var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
 
-func parseYAMLFiles(f fs.FS) ([]v1alpha1.AuthorizationPolicy, error) {
+func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 	var policies []v1alpha1.AuthorizationPolicy
 
 	entries, err := fs.ReadDir(f, ".")
 	if err != nil {
-		return nil, err
+		return &staticProvider{err: err}
 	}
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -68,18 +69,18 @@ func parseYAMLFiles(f fs.FS) ([]v1alpha1.AuthorizationPolicy, error) {
 
 		bytes, err := fs.ReadFile(f, entry.Name())
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
+			return &staticProvider{err: fmt.Errorf("failed to read file %s: %w", entry.Name(), err)}
 		}
 
 		documents, err := yaml.SplitDocuments(bytes)
 		if err != nil {
-			return nil, fmt.Errorf("failed to split documents: %w", err)
+			return &staticProvider{err: fmt.Errorf("failed to split documents: %w", err)}
 		}
 
 		for _, document := range documents {
 			ldr, err := DefaultLoader()
 			if err != nil {
-				return nil, fmt.Errorf("failed to load CRDs: %w", err)
+				return &staticProvider{err: fmt.Errorf("failed to load CRDs: %w", err)}
 			}
 
 			_, untyped, err := ldr.Load(document)
@@ -96,14 +97,6 @@ func parseYAMLFiles(f fs.FS) ([]v1alpha1.AuthorizationPolicy, error) {
 
 			policies = append(policies, *typed)
 		}
-	}
-	return policies, nil
-}
-
-func NewFsProvider(compiler Compiler, f fs.FS) Provider {
-	policies, err := parseYAMLFiles(f)
-	if err != nil {
-		return &staticProvider{err: err}
 	}
 	return NewStaticProvider(compiler, policies...)
 }

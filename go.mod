@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
-	github.com/google/cel-go v0.25.0
+	github.com/google/cel-go v0.26.0
 	github.com/hairyhenderson/go-fsimpl v0.3.1
 	github.com/kyverno/pkg/ext v0.0.0-20250303002756-48769d003e55
 	github.com/lestrrat-go/jwx/v3 v3.0.8
@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.23.1 // indirect
+	cel.dev/expr v0.24.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect

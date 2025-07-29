@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
-	github.com/google/cel-go v0.25.0
+	github.com/google/cel-go v0.26.0
 	github.com/hairyhenderson/go-fsimpl v0.3.1
 	github.com/kyverno/pkg/ext v0.0.0-20250303002756-48769d003e55
 	github.com/lestrrat-go/jwx/v3 v3.0.8

@@ -205,3 +205,11 @@ jobs:
         run:  |
           set -e
           chainsaw test tests/e2e/validation-webhook
+
+  required:
+    needs:
+      - e2e-authz-server
+      - e2e-sidecar-injector
+    runs-on: ubuntu-latest
+    steps:
+      - run: ${{ true }}

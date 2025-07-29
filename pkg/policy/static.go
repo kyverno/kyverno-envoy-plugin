@@ -91,8 +91,7 @@ func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 
 			typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
 			if err != nil {
-				// Conversion fails, skip
-				continue
+				return &staticProvider{err: fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)}
 			}
 
 			policies = append(policies, *typed)

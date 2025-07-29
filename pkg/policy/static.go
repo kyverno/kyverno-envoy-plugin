@@ -3,8 +3,8 @@ package policy
 import (
 	"context"
 	"fmt"
+	"github.com/kyverno/pkg/ext/file"
 	"io/fs"
-	"path/filepath"
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
@@ -59,11 +59,7 @@ func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		if ext := filepath.Ext(entry.Name()); ext != ".yml" && ext != ".yaml" {
+		if entry.IsDir() || !file.IsYaml(entry.Name()) {
 			continue
 		}
 
@@ -77,12 +73,12 @@ func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 			return &staticProvider{err: fmt.Errorf("failed to split documents: %w", err)}
 		}
 
-		for _, document := range documents {
-			ldr, err := DefaultLoader()
-			if err != nil {
-				return &staticProvider{err: fmt.Errorf("failed to load CRDs: %w", err)}
-			}
+		ldr, err := DefaultLoader()
+		if err != nil {
+			return &staticProvider{err: fmt.Errorf("failed to load CRDs: %w", err)}
+		}
 
+		for _, document := range documents {
 			_, untyped, err := ldr.Load(document)
 			if err != nil {
 				// Not an AuthorizationPolicy, skip

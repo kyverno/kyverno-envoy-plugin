@@ -75,6 +75,7 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | webhook.failurePolicy | string | `"Fail"` | Webhook failure policy |
 | webhook.objectSelector | string | `nil` | Webhook object selector |
 | webhook.namespaceSelector | object | `{"matchExpressions":[{"key":"kyverno-injection","operator":"In","values":["enabled"]}]}` | Webhook namespace selector |
+| externalPolicySources | string | `nil` | External policy sources |
 
 ## Source Code
 

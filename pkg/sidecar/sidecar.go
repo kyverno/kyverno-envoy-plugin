@@ -27,7 +27,7 @@ func Sidecar(image string, externalPolicySources ...string) corev1.Container {
 		},
 	}
 	for _, source := range externalPolicySources {
-		container.Args = append(container.Args, "--metrics-address="+source)
+		container.Args = append(container.Args, "--external-policy-source="+source)
 	}
 	return container
 }

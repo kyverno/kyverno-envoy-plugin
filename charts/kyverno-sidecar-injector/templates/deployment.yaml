@@ -108,9 +108,12 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
+          {{- with .args }}
             {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- range $.Values.externalPolicySources }}
+            {{- (printf "--external-policy-source=%s" (tpl (toYaml .) $)) | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: certs

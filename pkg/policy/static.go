@@ -2,8 +2,9 @@ package policy
 
 import (
 	"context"
+	"fmt"
+	"github.com/kyverno/pkg/ext/file"
 	"io/fs"
-	"path/filepath"
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
@@ -51,52 +52,46 @@ var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defau
 
 func NewFsProvider(compiler Compiler, f fs.FS) Provider {
 	var policies []v1alpha1.AuthorizationPolicy
-	if f, ok := f.(fs.ReadDirFS); ok {
-		entries, err := f.ReadDir(".")
-		if err != nil {
-			// TODO: proper error handling
-			return nil
+
+	entries, err := fs.ReadDir(f, ".")
+	if err != nil {
+		return &staticProvider{err: err}
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !file.IsYaml(entry.Name()) {
+			continue
 		}
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				ext := filepath.Ext(entry.Name())
-				if ext == ".yml" || ext == ".yaml" {
-					bytes, err := fs.ReadFile(f, entry.Name())
-					if err != nil {
-						return nil
-					}
-					documents, err := yaml.SplitDocuments(bytes)
-					if err != nil {
-						return nil
-					}
-					for _, document := range documents {
-						loader, err := DefaultLoader()
-						if err != nil {
-							return nil
-						}
-						_, untyped, err := loader.Load(document)
-						if err != nil {
-							return nil
-						}
-						typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
-						if err != nil {
-							return nil
-						}
-						policies = append(policies, *typed)
-					}
-				}
-				// TODO: json
+
+		bytes, err := fs.ReadFile(f, entry.Name())
+		if err != nil {
+			return &staticProvider{err: fmt.Errorf("failed to read file %s: %w", entry.Name(), err)}
+		}
+
+		documents, err := yaml.SplitDocuments(bytes)
+		if err != nil {
+			return &staticProvider{err: fmt.Errorf("failed to split documents: %w", err)}
+		}
+
+		ldr, err := DefaultLoader()
+		if err != nil {
+			return &staticProvider{err: fmt.Errorf("failed to load CRDs: %w", err)}
+		}
+
+		for _, document := range documents {
+			_, untyped, err := ldr.Load(document)
+			if err != nil {
+				// Not an AuthorizationPolicy, skip
+				continue
 			}
+
+			typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
+			if err != nil {
+				return &staticProvider{err: fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)}
+			}
+
+			policies = append(policies, *typed)
 		}
 	}
-	// TODO: see https://github.com/hairyhenderson/go-fsimpl/issues/1079
-	// if f, ok := f.(fs.ReadFileFS); ok {
-	// 	data, err := f.ReadFile("..")
-	// 	if err != nil {
-	// 		// TODO: proper error handling
-	// 		return nil
-	// 	}
-	// 	log.Println(string(data))
-	// }
 	return NewStaticProvider(compiler, policies...)
 }

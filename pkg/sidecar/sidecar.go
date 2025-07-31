@@ -24,6 +24,7 @@ func Sidecar(image string, externalPolicySources ...string) corev1.Container {
 			"--probes-address=:9080",
 			"--grpc-address=:9081",
 			"--metrics-address=:9082",
+			"--kube-policy-source=false",
 		},
 	}
 	for _, source := range externalPolicySources {

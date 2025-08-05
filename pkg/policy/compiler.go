@@ -23,13 +23,10 @@ const (
 	ObjectKey    = "object"
 )
 
-type (
-	AllowFunc func() (*authv3.CheckResponse, error)
-	DenyFunc  func() (*authv3.CheckResponse, error)
-)
+type PolicyFunc func() (*authv3.CheckResponse, error)
 
 type CompiledPolicy interface {
-	For(r *authv3.CheckRequest) (AllowFunc, DenyFunc)
+	For(r *authv3.CheckRequest) (PolicyFunc, PolicyFunc)
 }
 
 type authorizationProgram struct {
@@ -45,7 +42,7 @@ type compiledPolicy struct {
 	deny            []authorizationProgram
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
+func (p compiledPolicy) For(r *authv3.CheckRequest) (PolicyFunc, PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,

@@ -2,10 +2,11 @@ package policy_test
 
 import (
 	"context"
-	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"testing"
 	"testing/fstest"
+
+	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
@@ -138,7 +139,7 @@ func (m *MockCompiler) Compile(policy *v1alpha1.AuthorizationPolicy) (policy.Com
 // MockCompiledPolicy est un mock de CompiledPolicy pour les tests
 type MockCompiledPolicy struct{}
 
-func (m *MockCompiledPolicy) For(r *authv3.CheckRequest) (policy.AllowFunc, policy.DenyFunc) {
+func (m *MockCompiledPolicy) For(r *authv3.CheckRequest) (policy.PolicyFunc, policy.PolicyFunc) {
 	return func() (*authv3.CheckResponse, error) { return nil, nil },
 		func() (*authv3.CheckResponse, error) { return nil, nil }
 }

@@ -9,7 +9,10 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
+	apolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/provider"
+	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/generic/providers"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
@@ -56,13 +59,13 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 					// create compiler
-					compiler := policy.NewCompiler()
+					compiler := apolcompiler.NewCompiler()
 					// create external providers
 					externalProviders, err := getExternalProviders(compiler, externalPolicySources...)
 					if err != nil {
 						return err
 					}
-					provider := policy.NewComposite(externalProviders...)
+					provider := genericproviders.NewComposite(externalProviders...)
 					// if kube policy source is enabled
 					if kubePolicySource {
 						// create a controller manager
@@ -80,12 +83,12 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create kube provider
-						kubeProvider, err := policy.NewKubeProvider(mgr, compiler)
+						kubeProvider, err := apolprovider.NewKubeProvider(mgr, compiler)
 						if err != nil {
 							return err
 						}
 						// create final provider
-						provider = policy.NewComposite(kubeProvider, provider)
+						provider = genericproviders.NewComposite(kubeProvider, provider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -127,19 +130,19 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(compiler policy.Compiler, urls ...string) ([]policy.Provider, error) {
+func getExternalProviders(compiler apolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
 	// mux.Add(blobfs.FS)
 	mux.Add(gitfs.FS)
-	var providers []policy.Provider
+	var providers []engine.Provider
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, policy.NewFsProvider(compiler, fsys))
+		providers = append(providers, genericproviders.NewFsProvider(compiler, fsys))
 	}
 	return providers, nil
 }

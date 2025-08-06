@@ -5,12 +5,12 @@ import (
 	"net"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"google.golang.org/grpc"
 )
 
-func NewServer(network, addr string, provider policy.Provider) server.ServerFunc {
+func NewServer(network, addr string, provider engine.Provider) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()

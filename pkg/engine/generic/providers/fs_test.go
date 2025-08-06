@@ -1,15 +1,16 @@
-package policy_test
+package providers_test
 
 import (
 	"context"
-	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"testing"
 	"testing/fstest"
 
+	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/generic/providers"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestNewFsProvider(t *testing.T) {
@@ -102,7 +103,7 @@ spec:
 			}
 
 			// Create provider
-			provider := policy.NewFsProvider(mockCompiler, fsys)
+			provider := providers.NewFsProvider(mockCompiler, fsys)
 			policies, err := provider.CompiledPolicies(context.Background())
 
 			if tt.expectedError != "" {
@@ -122,7 +123,7 @@ type MockCompiler struct {
 	shouldError bool
 }
 
-func (m *MockCompiler) Compile(policy *v1alpha1.AuthorizationPolicy) (policy.CompiledPolicy, field.ErrorList) {
+func (m *MockCompiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	if m.shouldError {
 		return nil, field.ErrorList{
 			&field.Error{
@@ -138,7 +139,7 @@ func (m *MockCompiler) Compile(policy *v1alpha1.AuthorizationPolicy) (policy.Com
 // MockCompiledPolicy est un mock de CompiledPolicy pour les tests
 type MockCompiledPolicy struct{}
 
-func (m *MockCompiledPolicy) For(r *authv3.CheckRequest) (policy.AllowFunc, policy.DenyFunc) {
+func (m *MockCompiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
 	return func() (*authv3.CheckResponse, error) { return nil, nil },
 		func() (*authv3.CheckResponse, error) { return nil, nil }
 }

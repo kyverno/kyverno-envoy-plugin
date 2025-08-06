@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
@@ -60,7 +60,7 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
 					// create compiler
-					compiler := policy.NewCompiler()
+					compiler := apolcompiler.NewCompiler()
 					// register validation webhook
 					compileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
 						_, err := compiler.Compile(policy)

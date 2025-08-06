@@ -1,4 +1,4 @@
-package policy
+package provider
 
 import (
 	"cmp"
@@ -8,17 +8,15 @@ import (
 	"sync"
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Provider interface {
-	CompiledPolicies(context.Context) ([]CompiledPolicy, error)
-}
-
-func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
+func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
 	r := newPolicyReconciler(mgr.GetClient(), compiler)
 	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
 		return nil, fmt.Errorf("failed to construct manager: %w", err)
@@ -28,19 +26,19 @@ func NewKubeProvider(mgr ctrl.Manager, compiler Compiler) (Provider, error) {
 
 type policyReconciler struct {
 	client       client.Client
-	compiler     Compiler
+	compiler     compiler.Compiler
 	lock         *sync.Mutex
-	policies     map[string]CompiledPolicy
-	sortPolicies func() []CompiledPolicy
+	policies     map[string]engine.CompiledPolicy
+	sortPolicies func() []engine.CompiledPolicy
 }
 
-func newPolicyReconciler(client client.Client, compiler Compiler) *policyReconciler {
+func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *policyReconciler {
 	return &policyReconciler{
 		client:   client,
 		compiler: compiler,
 		lock:     &sync.Mutex{},
-		policies: map[string]CompiledPolicy{},
-		sortPolicies: func() []CompiledPolicy {
+		policies: map[string]engine.CompiledPolicy{},
+		sortPolicies: func() []engine.CompiledPolicy {
 			return nil
 		},
 	}
@@ -63,7 +61,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	var policy v1alpha1.AuthorizationPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
-		r.sortPolicies = sync.OnceValue(func() []CompiledPolicy {
+		r.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {
 			r.lock.Lock()
 			defer r.lock.Unlock()
 			return mapToSortedSlice(r.policies)
@@ -93,6 +91,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	return ctrl.Result{}, nil
 }
 
-func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]CompiledPolicy, error) {
+func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
 	return slices.Clone(r.sortPolicies()), nil
 }

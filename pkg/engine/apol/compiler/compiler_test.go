@@ -1,13 +1,12 @@
-package policy_test
+package compiler_test
 
 import (
 	"testing"
 
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
-
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	"github.com/stretchr/testify/assert"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 )
@@ -47,7 +46,7 @@ var pol = &v1alpha1.AuthorizationPolicy{
 }
 
 func TestCompiler(t *testing.T) {
-	compiler := policy.NewCompiler()
+	compiler := compiler.NewCompiler()
 
 	compiled, errList := compiler.Compile(pol)
 	assert.NoError(t, errList.ToAggregate())

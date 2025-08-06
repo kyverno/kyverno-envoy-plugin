@@ -1,4 +1,4 @@
-package policy
+package compiler
 
 import (
 	"fmt"
@@ -9,9 +9,10 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	engine "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
+	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -22,15 +23,6 @@ const (
 	VariablesKey = "variables"
 	ObjectKey    = "object"
 )
-
-type (
-	AllowFunc func() (*authv3.CheckResponse, error)
-	DenyFunc  func() (*authv3.CheckResponse, error)
-)
-
-type CompiledPolicy interface {
-	For(r *authv3.CheckRequest) (AllowFunc, DenyFunc)
-}
 
 type authorizationProgram struct {
 	match    cel.Program
@@ -45,7 +37,7 @@ type compiledPolicy struct {
 	deny            []authorizationProgram
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
+func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,
@@ -74,7 +66,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (AllowFunc, DenyFunc) {
 		return true, multierr.Combine(errs...)
 	})
 	variables := sync.OnceValue(func() map[string]any {
-		vars := lazy.NewMapValue(engine.VariablesType)
+		vars := lazy.NewMapValue(authzcel.VariablesType)
 		data := map[string]any{
 			ObjectKey:    r,
 			VariablesKey: vars,
@@ -206,7 +198,7 @@ func evaluateRule[T any](rule authorizationProgram, data map[string]any) (*T, er
 }
 
 type Compiler interface {
-	Compile(*v1alpha1.AuthorizationPolicy) (CompiledPolicy, field.ErrorList)
+	Compile(*v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList)
 }
 
 func NewCompiler() Compiler {
@@ -215,16 +207,16 @@ func NewCompiler() Compiler {
 
 type compiler struct{}
 
-func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (CompiledPolicy, field.ErrorList) {
+func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	var allErrs field.ErrorList
-	base, err := engine.NewEnv()
+	base, err := authzcel.NewEnv()
 	if err != nil {
 		return nil, append(allErrs, field.InternalError(nil, err))
 	}
-	provider := engine.NewVariablesProvider(base.CELTypeProvider())
+	provider := authzcel.NewVariablesProvider(base.CELTypeProvider())
 	env, err := base.Extend(
 		cel.Variable(ObjectKey, envoy.CheckRequest),
-		cel.Variable(VariablesKey, engine.VariablesType),
+		cel.Variable(VariablesKey, authzcel.VariablesType),
 		cel.CustomTypeProvider(provider),
 	)
 	if err != nil {

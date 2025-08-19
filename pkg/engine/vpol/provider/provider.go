@@ -18,7 +18,7 @@ import (
 
 func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
 	r := newPolicyReconciler(mgr.GetClient(), compiler)
-	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
+	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 		return nil, fmt.Errorf("failed to construct manager: %w", err)
 	}
 	return r, nil

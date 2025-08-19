@@ -197,9 +197,7 @@ func evaluateRule[T any](rule authorizationProgram, data map[string]any) (*T, er
 	return &response, nil
 }
 
-type Compiler interface {
-	Compile(*v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList)
-}
+type Compiler = engine.Compiler[*v1alpha1.AuthorizationPolicy]
 
 func NewCompiler() Compiler {
 	return &compiler{}

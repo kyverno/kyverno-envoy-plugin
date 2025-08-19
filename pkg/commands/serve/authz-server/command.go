@@ -12,7 +12,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	apolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/provider"
-	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/generic/providers"
+	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
@@ -64,7 +64,7 @@ func Command() *cobra.Command {
 					apolCompiler := apolcompiler.NewCompiler()
 					vpolCompiler := vpolcompiler.NewCompiler()
 					// create external providers
-					externalProviders, err := getExternalProviders(apolCompiler, externalPolicySources...)
+					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, externalPolicySources...)
 					if err != nil {
 						return err
 					}
@@ -137,7 +137,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(compiler apolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -149,7 +149,7 @@ func getExternalProviders(compiler apolcompiler.Compiler, urls ...string) ([]eng
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, genericproviders.NewFsProvider(compiler, fsys))
+		providers = append(providers, genericproviders.NewFsProvider(apolCompiler, vpolCompiler, fsys))
 	}
 	return providers, nil
 }

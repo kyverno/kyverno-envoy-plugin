@@ -1,0 +1,108 @@
+package providers
+
+import (
+	"context"
+	"fmt"
+	"io/fs"
+	"sync"
+
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/data"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
+	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	"github.com/kyverno/pkg/ext/file"
+	"github.com/kyverno/pkg/ext/resource/convert"
+	"github.com/kyverno/pkg/ext/resource/loader"
+	"github.com/kyverno/pkg/ext/yaml"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
+)
+
+var (
+	apol = v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy")
+	vpol = v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy")
+)
+
+func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
+	if _fs == nil {
+		_fs = data.Crds
+	}
+	crdsFs, err := _fs()
+	if err != nil {
+		return nil, err
+	}
+	return loader.New(openapiclient.NewLocalCRDFiles(crdsFs))
+}
+
+var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
+
+type fsProvider struct {
+	apolCompiler apolcompiler.Compiler
+	vpolCompiler vpolcompiler.Compiler
+	fs           fs.FS
+}
+
+func NewFsProvider(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
+	return &fsProvider{
+		apolCompiler: apolCompiler,
+		vpolCompiler: vpolCompiler,
+		fs:           fs,
+	}
+}
+
+func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
+	var policies []engine.CompiledPolicy
+	entries, err := fs.ReadDir(p.fs, ".")
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range entries {
+		// TODO: recursive loading
+		// TODO: json support
+		if entry.IsDir() || !file.IsYaml(entry.Name()) {
+			continue
+		}
+		bytes, err := fs.ReadFile(p.fs, entry.Name())
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
+		}
+		documents, err := yaml.SplitDocuments(bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to split documents: %w", err)
+		}
+		ldr, err := DefaultLoader()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load CRDs: %w", err)
+		}
+		for _, document := range documents {
+			gvk, untyped, err := ldr.Load(document)
+			switch gvk {
+			case apol:
+				typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
+				if err != nil {
+					return nil, fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
+				}
+				compiled, errs := p.apolCompiler.Compile(typed)
+				if len(errs) > 0 {
+					return nil, fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
+				}
+				policies = append(policies, compiled)
+			case vpol:
+				typed, err := convert.To[v1alpha1.ValidatingPolicy](untyped)
+				if err != nil {
+					return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
+				}
+				compiled, errs := p.vpolCompiler.Compile(typed)
+				if len(errs) > 0 {
+					return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
+				}
+				policies = append(policies, compiled)
+			}
+			if err != nil {
+				// Not an AuthorizationPolicy, skip
+				continue
+			}
+		}
+	}
+	return policies, nil
+}

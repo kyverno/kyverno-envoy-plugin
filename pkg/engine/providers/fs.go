@@ -76,6 +76,9 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 		}
 		for _, document := range documents {
 			gvk, untyped, err := ldr.Load(document)
+			if err != nil {
+				continue
+			}
 			switch gvk {
 			case apol:
 				typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
@@ -97,10 +100,6 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 					return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
 				}
 				policies = append(policies, compiled)
-			}
-			if err != nil {
-				// Not an AuthorizationPolicy, skip
-				continue
 			}
 		}
 	}

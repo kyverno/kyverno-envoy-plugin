@@ -106,7 +106,7 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 		if err := issues.Err(); err != nil {
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
-		if !(ast.OutputType().IsExactType(envoy.DeniedResponseType) || ast.OutputType().IsExactType(envoy.OkResponseType)) {
+		if !ast.OutputType().IsExactType(envoy.DeniedResponseType) && !ast.OutputType().IsExactType(envoy.OkResponseType) {
 			msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkResponseType.TypeName(), envoy.DeniedResponseType.TypeName())
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 		}

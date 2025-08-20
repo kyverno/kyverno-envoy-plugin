@@ -95,7 +95,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 				continue
 			}
 			// evaluate the rule
-			response, err := evaluateRule[envoy.OkResponse](rule, data)
+			response, err := evaluateRule(rule, data)
 			// check error
 			if err != nil {
 				return nil, err
@@ -123,7 +123,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 				continue
 			}
 			// evaluate the rule
-			response, err := evaluateRule[envoy.DeniedResponse](rule, data)
+			response, err := evaluateRule(rule, data)
 			// check error
 			if err != nil {
 				return nil, err
@@ -163,16 +163,16 @@ func matchRule(rule authorizationProgram, data map[string]any) (bool, error) {
 	return matched, err
 }
 
-func evaluateRule[T any](rule authorizationProgram, data map[string]any) (*T, error) {
+func evaluateRule(rule authorizationProgram, data map[string]any) (envoy.Response, error) {
 	out, _, err := rule.response.Eval(data)
 	// check error
 	if err != nil {
 		return nil, err
 	}
-	response, err := utils.ConvertToNative[T](out)
+	response, err := utils.ConvertToNative[envoy.Response](out)
 	// check error
 	if err != nil {
 		return nil, err
 	}
-	return &response, nil
+	return response, nil
 }

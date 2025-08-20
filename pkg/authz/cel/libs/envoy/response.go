@@ -6,6 +6,10 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+type Response interface {
+	ToCheckResponse() *authv3.CheckResponse
+}
+
 type OkResponse struct {
 	// Status “OK“ allows the request. Any other status indicates the request should be denied, and
 	// for HTTP filter, if not overridden by :ref:`denied HTTP response status <envoy_v3_api_field_service.auth.v3.DeniedHttpResponse.status>`

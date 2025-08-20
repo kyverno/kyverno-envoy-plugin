@@ -83,7 +83,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 		path := path.Child("validations")
 		for i, rule := range policy.Spec.Validations {
 			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env, envoy.DeniedResponseType)
+			program, errs := compileAuthorization(path, rule, env)
 			if errs != nil {
 				return nil, append(allErrs, errs...)
 			}
@@ -98,7 +98,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}, nil
 }
 
-func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env, output *types.Type) (cel.Program, field.ErrorList) {
+func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env) (cel.Program, field.ErrorList) {
 	var allErrs field.ErrorList
 	{
 		path := path.Child("expression")
@@ -106,8 +106,8 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 		if err := issues.Err(); err != nil {
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
-		if !ast.OutputType().IsExactType(output) {
-			msg := fmt.Sprintf("rule response output is expected to be of type %s", output.TypeName())
+		if !(ast.OutputType().IsExactType(envoy.DeniedResponseType) || ast.OutputType().IsExactType(envoy.OkResponseType)) {
+			msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkResponseType.TypeName(), envoy.DeniedResponseType.TypeName())
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 		}
 		prog, err := env.Program(ast)

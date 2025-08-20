@@ -80,19 +80,15 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 		data := variables()
 		for _, rule := range p.rules {
 			// evaluate the rule
-			response, err := evaluateRule[envoy.OkResponse](rule, data)
+			response, err := evaluateRule(rule, data)
 			// check error
 			if err != nil {
 				return nil, err
 			}
-			// no error and evaluation result is not nil, return
-			return &authv3.CheckResponse{
-				Status: response.Status,
-				HttpResponse: &authv3.CheckResponse_OkResponse{
-					OkResponse: response.OkHttpResponse,
-				},
-				DynamicMetadata: response.DynamicMetadata,
-			}, nil
+			if response != nil {
+				// no error and evaluation result is not nil, return
+				return response.ToCheckResponse(), nil
+			}
 		}
 		return nil, nil
 	}
@@ -108,16 +104,16 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 	return failurePolicy(rules), nil
 }
 
-func evaluateRule[T any](rule cel.Program, data map[string]any) (*T, error) {
+func evaluateRule(rule cel.Program, data map[string]any) (envoy.Response, error) {
 	out, _, err := rule.Eval(data)
 	// check error
 	if err != nil {
 		return nil, err
 	}
-	response, err := utils.ConvertToNative[T](out)
+	response, err := utils.ConvertToNative[envoy.Response](out)
 	// check error
 	if err != nil {
 		return nil, err
 	}
-	return &response, nil
+	return response, nil
 }

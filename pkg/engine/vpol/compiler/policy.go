@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"errors"
 	"sync"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -110,10 +111,19 @@ func evaluateRule(rule cel.Program, data map[string]any) (envoy.Response, error)
 	if err != nil {
 		return nil, err
 	}
-	response, err := utils.ConvertToNative[envoy.Response](out)
-	// check error
-	if err != nil {
-		return nil, err
+	if out == nil {
+		return nil, nil
+	}
+	if out == types.NullValue {
+		return nil, nil
+	}
+	value := out.Value()
+	if value == nil {
+		return nil, nil
+	}
+	response, ok := value.(envoy.Response)
+	if !ok {
+		return nil, errors.New("rule result is expected to be envoy.Response")
 	}
 	return response, nil
 }

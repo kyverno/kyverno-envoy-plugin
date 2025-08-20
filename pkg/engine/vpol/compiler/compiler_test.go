@@ -34,6 +34,9 @@ var pol = &v1alpha1.ValidatingPolicy{
 			{
 				Expression: `!variables.force_authorized ? envoy.Denied(403).WithBody("Unauthorized Request").Response() : null`,
 			},
+			{
+				Expression: `envoy.Allowed().WithHeader("x-validated-by", "my-security-checkpoint").WithoutHeader("x-force-authorized").WithResponseHeader("x-add-custom-response-header", "added").Response().WithMetadata(variables.metadata)`,
+			},
 		},
 	},
 }

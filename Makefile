@@ -173,6 +173,7 @@ codegen-schemas-json: codegen-schemas-openapi
 	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
 	@mkdir -p ./.schemas/json
 	@cp ./.temp/.schemas/json/authorizationpolicy-envoy-*.json ./.schemas/json
+	@cp ./.temp/.schemas/json/validatingpolicy-envoy-*.json ./.schemas/json
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs

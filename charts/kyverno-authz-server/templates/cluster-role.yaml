@@ -11,6 +11,7 @@ rules:
   - envoy.kyverno.io
   resources:
   - authorizationpolicies
+  - validatingpolicies
   verbs:
   - get
   - list

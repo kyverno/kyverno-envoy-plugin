@@ -9,6 +9,7 @@ import (
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -17,7 +18,7 @@ const (
 	ObjectKey    = "object"
 )
 
-type Compiler = engine.Compiler[*v1alpha1.AuthorizationPolicy]
+type Compiler = engine.Compiler[*v1alpha1.ValidatingPolicy]
 
 func NewCompiler() Compiler {
 	return &compiler{}
@@ -25,7 +26,7 @@ func NewCompiler() Compiler {
 
 type compiler struct{}
 
-func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList) {
+func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	var allErrs field.ErrorList
 	base, err := authzcel.NewEnv()
 	if err != nil {
@@ -77,72 +78,42 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.Compile
 			variables[variable.Name] = prog
 		}
 	}
-	var denies []authorizationProgram
+	var rules []cel.Program
 	{
-		path := path.Child("deny")
-		for i, rule := range policy.Spec.Deny {
+		path := path.Child("validations")
+		for i, rule := range policy.Spec.Validations {
 			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env, envoy.DeniedResponseType)
+			program, errs := compileAuthorization(path, rule, env)
 			if errs != nil {
 				return nil, append(allErrs, errs...)
 			}
-			denies = append(denies, program)
-		}
-	}
-	var allows []authorizationProgram
-	{
-		path := path.Child("allow")
-		for i, rule := range policy.Spec.Allow {
-			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env, envoy.OkResponseType)
-			if errs != nil {
-				return nil, append(allErrs, errs...)
-			}
-			allows = append(allows, program)
+			rules = append(rules, program)
 		}
 	}
 	return compiledPolicy{
-		failurePolicy:   policy.Spec.GetFailurePolicy(),
+		failurePolicy:   policy.GetFailurePolicy(),
 		matchConditions: matchConditions,
 		variables:       variables,
-		allow:           allows,
-		deny:            denies,
+		rules:           rules,
 	}, nil
 }
 
-func compileAuthorization(path *field.Path, rule v1alpha1.Authorization, env *cel.Env, output *types.Type) (authorizationProgram, field.ErrorList) {
+func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env) (cel.Program, field.ErrorList) {
 	var allErrs field.ErrorList
-	program := authorizationProgram{}
-	if rule.Match != "" {
-		path := path.Child("match")
-		ast, issues := env.Compile(rule.Match)
-		if err := issues.Err(); err != nil {
-			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
-		}
-		if !ast.OutputType().IsExactType(types.BoolType) {
-			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Match, "rule match output is expected to be of type bool"))
-		}
-		prog, err := env.Program(ast)
-		if err != nil {
-			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Match, err.Error()))
-		}
-		program.match = prog
-	}
 	{
-		path := path.Child("response")
-		ast, issues := env.Compile(rule.Response)
+		path := path.Child("expression")
+		ast, issues := env.Compile(rule.Expression)
 		if err := issues.Err(); err != nil {
-			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
+			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
-		if !ast.OutputType().IsExactType(output) {
-			msg := fmt.Sprintf("rule response output is expected to be of type %s", output.TypeName())
-			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Response, msg))
+		if !ast.OutputType().IsExactType(envoy.DeniedResponseType) && !ast.OutputType().IsExactType(envoy.OkResponseType) {
+			msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkResponseType.TypeName(), envoy.DeniedResponseType.TypeName())
+			return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 		}
 		prog, err := env.Program(ast)
 		if err != nil {
-			return authorizationProgram{}, append(allErrs, field.Invalid(path, rule.Response, err.Error()))
+			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
-		program.response = prog
+		return prog, nil
 	}
-	return program, nil
 }

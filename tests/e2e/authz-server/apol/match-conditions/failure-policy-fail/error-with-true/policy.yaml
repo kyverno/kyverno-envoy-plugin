@@ -1,15 +1,15 @@
-# yaml-language-server: $schema=../../../../../../.schemas/json/authorizationpolicy-envoy-v1alpha1.json
+# yaml-language-server: $schema=../../../../../../../.schemas/json/authorizationpolicy-envoy-v1alpha1.json
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: AuthorizationPolicy
 metadata:
   name: policy
 spec:
-  failurePolicy: Ignore
+  failurePolicy: Fail
   matchConditions:
   - name: error
     expression: '(2 / 0) == 1'
-  - name: 'false'
-    expression: 'false'
+  - name: 'true'
+    expression: 'true'
   deny:
   - response: >
       envoy

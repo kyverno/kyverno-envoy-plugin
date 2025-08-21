@@ -6,6 +6,10 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+type Response interface {
+	ToCheckResponse() *authv3.CheckResponse
+}
+
 type OkResponse struct {
 	// Status “OK“ allows the request. Any other status indicates the request should be denied, and
 	// for HTTP filter, if not overridden by :ref:`denied HTTP response status <envoy_v3_api_field_service.auth.v3.DeniedHttpResponse.status>`
@@ -29,6 +33,16 @@ type OkResponse struct {
 	DynamicMetadata *structpb.Struct `cel:"dynamic_metadata"`
 }
 
+func (r OkResponse) ToCheckResponse() *authv3.CheckResponse {
+	return &authv3.CheckResponse{
+		Status: r.Status,
+		HttpResponse: &authv3.CheckResponse_OkResponse{
+			OkResponse: r.OkHttpResponse,
+		},
+		DynamicMetadata: r.DynamicMetadata,
+	}
+}
+
 type DeniedResponse struct {
 	// Status “OK“ allows the request. Any other status indicates the request should be denied, and
 	// for HTTP filter, if not overridden by :ref:`denied HTTP response status <envoy_v3_api_field_service.auth.v3.DeniedHttpResponse.status>`
@@ -50,4 +64,14 @@ type DeniedResponse struct {
 	// - :ref:`envoy.filters.http.ext_authz <config_http_filters_ext_authz_dynamic_metadata>` for HTTP filter.
 	// - :ref:`envoy.filters.network.ext_authz <config_network_filters_ext_authz_dynamic_metadata>` for network filter.
 	DynamicMetadata *structpb.Struct `cel:"dynamic_metadata"`
+}
+
+func (r DeniedResponse) ToCheckResponse() *authv3.CheckResponse {
+	return &authv3.CheckResponse{
+		Status: r.Status,
+		HttpResponse: &authv3.CheckResponse_DeniedResponse{
+			DeniedResponse: r.DeniedHttpResponse,
+		},
+		DynamicMetadata: r.DynamicMetadata,
+	}
 }

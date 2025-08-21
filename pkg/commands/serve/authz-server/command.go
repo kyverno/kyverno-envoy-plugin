@@ -12,7 +12,9 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	apolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/provider"
-	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/generic/providers"
+	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
+	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
@@ -58,10 +60,11 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-					// create compiler
-					compiler := apolcompiler.NewCompiler()
+					// create compilers
+					apolCompiler := apolcompiler.NewCompiler()
+					vpolCompiler := vpolcompiler.NewCompiler()
 					// create external providers
-					externalProviders, err := getExternalProviders(compiler, externalPolicySources...)
+					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, externalPolicySources...)
 					if err != nil {
 						return err
 					}
@@ -82,13 +85,17 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						// create kube provider
-						kubeProvider, err := apolprovider.NewKubeProvider(mgr, compiler)
+						// create kube providers
+						apolProvider, err := apolprovider.NewKubeProvider(mgr, apolCompiler)
+						if err != nil {
+							return err
+						}
+						vpolProvider, err := vpolprovider.NewKubeProvider(mgr, vpolCompiler)
 						if err != nil {
 							return err
 						}
 						// create final provider
-						provider = genericproviders.NewComposite(kubeProvider, provider)
+						provider = genericproviders.NewComposite(apolProvider, vpolProvider, provider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -130,7 +137,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(compiler apolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -142,7 +149,7 @@ func getExternalProviders(compiler apolcompiler.Compiler, urls ...string) ([]eng
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, genericproviders.NewFsProvider(compiler, fsys))
+		providers = append(providers, genericproviders.NewFsProvider(apolCompiler, vpolCompiler, fsys))
 	}
 	return providers, nil
 }

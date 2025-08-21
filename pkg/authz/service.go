@@ -23,7 +23,7 @@ func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 	return response, err
 }
 
-func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3.CheckResponse, _err error) {
 	// fetch compiled policies
 	policies, err := s.provider.CompiledPolicies(ctx)
 	if err != nil {
@@ -36,8 +36,12 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 	for _, policy := range policies {
 		// collect allow/deny
 		a, d := policy.For(r)
-		allow = append(allow, a)
-		deny = append(deny, d)
+		if a != nil {
+			allow = append(allow, a)
+		}
+		if d != nil {
+			deny = append(deny, d)
+		}
 	}
 	// check deny first
 	for _, deny := range deny {

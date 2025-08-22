@@ -14,7 +14,8 @@ metadata:
     {{- end }}
   {{- end }}
 webhooks:
-- name: {{ printf "%s.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
+webhooks:
+- name: {{ printf "%s-authorizationpolicy.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
   clientConfig:
     service:
       name: {{ template "validation-webhook.name" . }}
@@ -28,20 +29,26 @@ webhooks:
   sideEffects: None
   admissionReviewVersions: [ v1 ]
   rules:
-  - apiGroups:
-    - envoy.kyverno.io
-    apiVersions:
-    - v1alpha1
-    resources:
-    - authorizationpolicies
-    operations:
-    - CREATE
-    - UPDATE
-  {{- with .Values.webhook.objectSelector }}
-  objectSelector:
-    {{- tpl (toYaml .) $ | nindent 6 }}
-  {{- end }}
-  {{- with .Values.webhook.namespaceSelector }}
-  namespaceSelector:
-    {{- tpl (toYaml .) $ | nindent 6 }}
-  {{- end }}
+  - apiGroups: [envoy.kyverno.io]
+    apiVersions: [v1alpha1]
+    resources: [authorizationpolicies]
+    operations: [CREATE, UPDATE]
+- name: {{ printf "%s-validatingpolicy.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
+  clientConfig:
+    service:
+      name: {{ template "validation-webhook.name" . }}
+      namespace: {{ template "kyverno.lib.namespace" . }}
+      port: 9443
+      path: /validate-envoy-kyverno-io-v1alpha1-validatingpolicy
+    {{- if .Values.certificates.static }}
+    caBundle: {{ index .Values.certificates.static.crt | b64enc }}
+    {{- end }}
+  failurePolicy: {{ .Values.webhook.failurePolicy }}
+  sideEffects: None
+  admissionReviewVersions: [ v1 ]
+  rules:
+  - apiGroups: [envoy.kyverno.io]
+    apiVersions: [v1alpha1]
+    resources: [validatingpolicies]
+    operations: [CREATE, UPDATE]
+

@@ -1793,7 +1793,11 @@
       "version": "v1alpha1"
     }
   ],
-  "x-kubernetes-selectable-fields": [],
+  "x-kubernetes-selectable-fields": [
+    {
+      "fieldPath": "spec.evaluation.mode"
+    }
+  ],
   "additionalProperties": false,
   "$schema": "http://json-schema.org/schema#"
 }

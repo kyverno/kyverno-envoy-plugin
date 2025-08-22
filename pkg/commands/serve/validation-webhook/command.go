@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
+	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
@@ -59,15 +60,26 @@ func Command() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
-					// create compiler
-					compiler := apolcompiler.NewCompiler()
-					// register validation webhook
-					compileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
-						_, err := compiler.Compile(policy)
+					// create apol compiler
+					apolCompiler := apolcompiler.NewCompiler()
+					apolCompileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
+						_, err := apolCompiler.Compile(policy)
+						fmt.Println("authorization policy", policy.Name, err)
+						return err
+					}
+					// create vpol compiler
+					vpolCompiler := vpolcompiler.NewCompiler()
+					vpolCompileFunc := func(policy *v1alpha1.ValidatingPolicy) field.ErrorList {
+						_, err := vpolCompiler.Compile(policy)
 						fmt.Println("validating policy", policy.Name, err)
 						return err
 					}
-					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(validation.NewValidator(compileFunc)).Complete(); err != nil {
+					v := validation.NewValidator(apolCompileFunc, vpolCompileFunc)
+
+					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(v).Complete(); err != nil {
+						return fmt.Errorf("failed to create webhook: %w", err)
+					}
+					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).WithValidator(v).Complete(); err != nil {
 						return fmt.Errorf("failed to create webhook: %w", err)
 					}
 					// create a cancellable context

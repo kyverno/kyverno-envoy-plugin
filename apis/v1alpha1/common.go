@@ -3,8 +3,9 @@ package v1alpha1
 type EvaluationMode string
 
 const (
-	EvaluationModeKubernetes EvaluationMode = "Kubernetes"
+	EvaluationModeEnvoy      EvaluationMode = "Envoy"
 	EvaluationModeJSON       EvaluationMode = "JSON"
+	EvaluationModeKubernetes EvaluationMode = "Kubernetes"
 )
 
 type EvaluationConfiguration struct {

@@ -14,6 +14,7 @@ import (
 func NewValidator(compileApol func(*v1alpha1.AuthorizationPolicy) field.ErrorList, compileVpol func(*v1alpha1.ValidatingPolicy) field.ErrorList) *validator {
 	return &validator{
 		compileApol: compileApol,
+		compileVpol: compileVpol,
 	}
 }
 

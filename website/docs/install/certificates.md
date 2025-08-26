@@ -11,8 +11,8 @@ If you want to bring your own certificate, you can set `certificates.static` val
 ```bash
 # create certificate
 openssl req -new -x509  \
-  -subj "/CN=kyverno-authz-server-validation.kyverno.svc" \
-  -addext "subjectAltName = DNS:kyverno-authz-server-validation.kyverno.svc" \
+  -subj "/CN=kyverno-authz-server-validation-authorizationpolicy.kyverno.svc" \
+  -addext "subjectAltName = DNS:kyverno-authz-server-validation-authorizationpolicy.kyverno.svc" \
   -nodes -newkey rsa:4096 -keyout tls.key -out tls.crt
 
 # install chart with static certificate

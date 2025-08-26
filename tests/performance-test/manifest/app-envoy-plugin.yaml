@@ -161,6 +161,8 @@ data:
     metadata:
       name: checkrequest
     spec:
+      evaluation:
+        mode: Envoy
       rules:
         - name: deny-guest-request-at-post
           assert:

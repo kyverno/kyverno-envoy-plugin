@@ -59,12 +59,15 @@ func (v *validator) validateApol(policy *v1alpha1.AuthorizationPolicy) error {
 }
 
 func (v *validator) validateVpol(policy *v1alpha1.ValidatingPolicy) error {
-	if allErrs := v.compileVpol(policy); len(allErrs) > 0 {
-		return apierrors.NewInvalid(
-			v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy").GroupKind(),
-			policy.Name,
-			allErrs,
-		)
+	if policy.Spec.EvaluationConfiguration != nil &&
+		policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeEnvoy {
+		if allErrs := v.compileVpol(policy); len(allErrs) > 0 {
+			return apierrors.NewInvalid(
+				v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy").GroupKind(),
+				policy.Name,
+				allErrs,
+			)
+		}
 	}
 	return nil
 }

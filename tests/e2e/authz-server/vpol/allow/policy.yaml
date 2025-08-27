@@ -4,6 +4,8 @@ kind: ValidatingPolicy
 metadata:
   name: policy
 spec:
+  evaluation:
+    mode: Envoy
   validations:
   - expression: >
       envoy

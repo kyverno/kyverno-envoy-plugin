@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../../.schemas/json/validatingpolicy-envoy-v1alpha1.json
+apiVersion: envoy.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: policy
+spec:
+  evaluation:
+    mode: Envoy
+  validations:
+  - expression: >
+      envoy
+        .Denied(403)
+        .WithBody("Unauthorized Request")
+        .Response()

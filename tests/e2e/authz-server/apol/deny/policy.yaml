@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../../.schemas/json/authorizationpolicy-envoy-v1alpha1.json
+apiVersion: envoy.kyverno.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: policy
+spec:
+  deny:
+  - response: >
+      envoy
+        .Denied(403)
+        .WithBody("Unauthorized Request")
+        .Response()

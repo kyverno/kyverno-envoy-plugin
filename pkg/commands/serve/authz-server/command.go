@@ -9,7 +9,12 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
+	apolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/provider"
+	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
+	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
@@ -28,6 +33,7 @@ func Command() *cobra.Command {
 	var grpcNetwork string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
+	var kubePolicySource bool
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -46,52 +52,60 @@ func Command() *cobra.Command {
 					if err != nil {
 						return err
 					}
+					// create a cancellable context
+					ctx, cancel := context.WithCancel(ctx)
+					// cancel context at the end
+					defer cancel()
 					// create a wait group
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-					// create a controller manager
-					scheme := runtime.NewScheme()
-					if err := v1alpha1.Install(scheme); err != nil {
-						return err
-					}
-					mgr, err := ctrl.NewManager(config, ctrl.Options{
-						Scheme: scheme,
-						Metrics: metricsserver.Options{
-							BindAddress: metricsAddress,
-						},
-					})
-					if err != nil {
-						return fmt.Errorf("failed to construct manager: %w", err)
-					}
-					// create compiler
-					compiler := policy.NewCompiler()
-					// create kube provider
-					kubeProvider, err := policy.NewKubeProvider(mgr, compiler)
-					if err != nil {
-						return err
-					}
+					// create compilers
+					apolCompiler := apolcompiler.NewCompiler()
+					vpolCompiler := vpolcompiler.NewCompiler()
 					// create external providers
-					externalProvider, err := getExternalProviders(compiler, externalPolicySources...)
+					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, externalPolicySources...)
 					if err != nil {
 						return err
 					}
-					// create final provider
-					provider := policy.NewComposite(
-						kubeProvider,
-						policy.NewComposite(externalProvider...),
-					)
-					// create a cancellable context
-					ctx, cancel := context.WithCancel(ctx)
-					// start manager
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
-						defer cancel()
-						mgrErr = mgr.Start(ctx)
-					})
-					if !mgr.GetCache().WaitForCacheSync(ctx) {
-						defer cancel()
-						return fmt.Errorf("failed to wait for cache sync")
+					provider := genericproviders.NewComposite(externalProviders...)
+					// if kube policy source is enabled
+					if kubePolicySource {
+						// create a controller manager
+						scheme := runtime.NewScheme()
+						if err := v1alpha1.Install(scheme); err != nil {
+							return err
+						}
+						mgr, err := ctrl.NewManager(config, ctrl.Options{
+							Scheme: scheme,
+							Metrics: metricsserver.Options{
+								BindAddress: metricsAddress,
+							},
+						})
+						if err != nil {
+							return fmt.Errorf("failed to construct manager: %w", err)
+						}
+						// create kube providers
+						apolProvider, err := apolprovider.NewKubeProvider(mgr, apolCompiler)
+						if err != nil {
+							return err
+						}
+						vpolProvider, err := vpolprovider.NewKubeProvider(mgr, vpolCompiler)
+						if err != nil {
+							return err
+						}
+						// create final provider
+						provider = genericproviders.NewComposite(apolProvider, vpolProvider, provider)
+						// start manager
+						group.StartWithContext(ctx, func(ctx context.Context) {
+							// cancel context at the end
+							defer cancel()
+							mgrErr = mgr.Start(ctx)
+						})
+						if !mgr.GetCache().WaitForCacheSync(ctx) {
+							defer cancel()
+							return fmt.Errorf("failed to wait for cache sync")
+						}
 					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
@@ -118,23 +132,24 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
+	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }
 
-func getExternalProviders(compiler policy.Compiler, urls ...string) ([]policy.Provider, error) {
+func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
 	// mux.Add(blobfs.FS)
 	mux.Add(gitfs.FS)
-	var providers []policy.Provider
+	var providers []engine.Provider
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, policy.NewFsProvider(compiler, fsys))
+		providers = append(providers, genericproviders.NewFsProvider(apolCompiler, vpolCompiler, fsys))
 	}
 	return providers, nil
 }

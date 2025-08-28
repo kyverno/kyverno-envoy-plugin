@@ -265,3 +265,8 @@ webhook:
         operator: In
         values:
         - enabled
+
+# -- External policy sources
+externalPolicySources:
+# - ...
+# - ...

@@ -4,8 +4,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Sidecar(image string) corev1.Container {
-	return corev1.Container{
+func Sidecar(image string, externalPolicySources ...string) corev1.Container {
+	container := corev1.Container{
 		Name:            "kyverno-authz-server",
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Image:           image,
@@ -24,8 +24,13 @@ func Sidecar(image string) corev1.Container {
 			"--probes-address=:9080",
 			"--grpc-address=:9081",
 			"--metrics-address=:9082",
+			"--kube-policy-source=false",
 		},
 	}
+	for _, source := range externalPolicySources {
+		container.Args = append(container.Args, "--external-policy-source="+source)
+	}
+	return container
 }
 
 func Inject(pod corev1.Pod, container corev1.Container) corev1.Pod {

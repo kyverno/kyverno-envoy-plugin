@@ -7,6 +7,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/logging"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
@@ -28,6 +29,7 @@ func Command() *cobra.Command {
 		Use:   "validation-webhook",
 		Short: "Start the validation webhook",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := logging.WithName("validation-webhook")
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
@@ -64,14 +66,14 @@ func Command() *cobra.Command {
 					apolCompiler := apolcompiler.NewCompiler()
 					apolCompileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
 						_, err := apolCompiler.Compile(policy)
-						fmt.Println("authorization policy", policy.Name, err)
+						logger.Info("authorization policy", policy.Name, err)
 						return err
 					}
 					// create vpol compiler
 					vpolCompiler := vpolcompiler.NewCompiler()
 					vpolCompileFunc := func(policy *v1alpha1.ValidatingPolicy) field.ErrorList {
 						_, err := vpolCompiler.Compile(policy)
-						fmt.Println("validating policy", policy.Name, err)
+						logger.Info("validating policy", policy.Name, err)
 						return err
 					}
 					v := validation.NewValidator(apolCompileFunc, vpolCompileFunc)

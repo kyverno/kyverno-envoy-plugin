@@ -3,16 +3,18 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/logging"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+var httpLogger = logging.WithName("http-server")
+
 func RunHttp(ctx context.Context, server *http.Server, certFile, keyFile string) error {
-	defer fmt.Println("HTTP Server stopped")
+	defer httpLogger.Info("HTTP Server stopped")
 	// track shutdown error
 	var shutdownErr error
 	// track serve error
@@ -29,7 +31,7 @@ func RunHttp(ctx context.Context, server *http.Server, certFile, keyFile string)
 		group.StartWithContext(ctx, func(ctx context.Context) {
 			// wait context cancelled
 			<-ctx.Done()
-			fmt.Println("HTTP Server shutting down...")
+			httpLogger.Info("HTTP Server shutting down...")
 			// create a context with timeout
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -37,7 +39,7 @@ func RunHttp(ctx context.Context, server *http.Server, certFile, keyFile string)
 			shutdownErr = server.Shutdown(ctx)
 		})
 		serve := func() error {
-			fmt.Printf("HTTP Server starting at %s...\n", server.Addr)
+			httpLogger.Info("HTTP Server starting ...\n", "serverAddress", server.Addr)
 			if certFile != "" && keyFile != "" {
 				// server over https
 				return server.ListenAndServeTLS(certFile, keyFile)

@@ -8,11 +8,11 @@ import (
 	stdlog "log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zerologr"
-	"github.com/rs/zerolog"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/grpclog"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -42,22 +42,35 @@ func InitFlags(flags *flag.FlagSet) {
 }
 
 func Setup(logFormat string, timestampFormat string, level int, disableColor bool) error {
-	zerologr.SetMaxV(level)
-
-	var logger zerolog.Logger
+	var logger *zap.Logger
+	var err error
 
 	switch logFormat {
 	case TextFormat:
-		output := zerolog.ConsoleWriter{Out: os.Stderr, NoColor: disableColor}
-		output.TimeFormat = resolveTimestampFormat(timestampFormat)
-		logger = zerolog.New(output).With().Timestamp().Caller().Logger()
+		config := zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeTime = resolveZapTimeEncoder(timestampFormat)
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		if disableColor {
+			config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		}
+		config.Level = zap.NewAtomicLevelAt(zapcore.Level(-level))
+		logger, err = config.Build()
 	case JSONFormat:
-		logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
+		config := zap.NewProductionConfig()
+		config.EncoderConfig.EncodeTime = resolveZapTimeEncoder(timestampFormat)
+		config.Level = zap.NewAtomicLevelAt(zapcore.Level(-level))
+		logger, err = config.Build()
 	default:
 		return errors.New("log format unrecognized, pass `text` for text mode or `json` for JSON mode, passed : " + logFormat)
 	}
 
-	globalLog = zerologr.New(&logger)
+	if err != nil {
+		return err
+	}
+
+	// Create a zapr logger that implements logr.Logger
+	zapLogger := zapr.NewLogger(logger)
+	globalLog = zapLogger
 	klog.SetLogger(globalLog.WithName("klog"))
 	log.SetLogger(globalLog)
 
@@ -68,24 +81,20 @@ func Setup(logFormat string, timestampFormat string, level int, disableColor boo
 	return nil
 }
 
-func resolveTimestampFormat(format string) string {
+func resolveZapTimeEncoder(format string) zapcore.TimeEncoder {
 	switch format {
-	case ISO8601:
-		return time.RFC3339
-	case RFC3339:
-		return time.RFC3339
+	case ISO8601, RFC3339, DefaultTime:
+		return zapcore.ISO8601TimeEncoder
 	case MILLIS:
-		return time.StampMilli
+		return zapcore.EpochMillisTimeEncoder
 	case NANOS:
-		return time.StampNano
+		return zapcore.EpochNanosTimeEncoder
 	case EPOCH:
-		return time.UnixDate
+		return zapcore.EpochTimeEncoder
 	case RFC3339NANO:
-		return time.RFC3339Nano
-	case DefaultTime:
-		return time.RFC3339
+		return zapcore.RFC3339NanoTimeEncoder
 	default:
-		return time.RFC3339
+		return zapcore.ISO8601TimeEncoder
 	}
 }
 
@@ -113,12 +122,8 @@ func Error(err error, msg string, keysAndValues ...interface{}) {
 	GlobalLogger().WithCallDepth(1).Error(err, msg, keysAndValues...)
 }
 
-func FromContext(ctx context.Context, keysAndValues ...interface{}) (logr.Logger, error) {
-	logger, err := logr.FromContext(ctx)
-	if err != nil {
-		return logger, err
-	}
-	return logger.WithValues(keysAndValues...), nil
+func FromContext(ctx context.Context) (logr.Logger, error) {
+	return logr.FromContext(ctx)
 }
 
 func IntoContext(ctx context.Context, logger logr.Logger) context.Context {

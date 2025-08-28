@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
@@ -80,7 +81,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	compiled, errs := r.compiler.Compile(&policy)
 	if len(errs) > 0 {
-		fmt.Println(errs)
+		log.FromContext(ctx).Error(fmt.Errorf("compilation errors: %v", errs), "failed to compile validating policy", "policy", req.String())
 		// No need to retry it
 		return ctrl.Result{}, nil
 	}

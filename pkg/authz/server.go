@@ -8,6 +8,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func NewServer(network, addr string, provider engine.Provider) server.ServerFunc {
@@ -20,6 +21,7 @@ func NewServer(network, addr string, provider engine.Provider) server.ServerFunc
 		}
 		// register our authorization service
 		authv3.RegisterAuthorizationServer(s, svc)
+		reflection.Register(s)
 		// create a listener
 		l, err := net.Listen(network, addr)
 		if err != nil {

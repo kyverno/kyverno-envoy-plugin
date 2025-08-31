@@ -66,3 +66,14 @@ func (c *impl) with_header(args ...ref.Val) ref.Val {
 		return c.NativeToValue(r)
 	}
 }
+
+func (c *impl) with_body(r ref.Val, b ref.Val) ref.Val {
+	if r, err := utils.ConvertToNative[*Response](r); err != nil {
+		return types.WrapErr(err)
+	} else if b, err := utils.ConvertToNative[string](b); err != nil {
+		return types.WrapErr(err)
+	} else {
+		r.Body = b
+		return c.NativeToValue(r)
+	}
+}

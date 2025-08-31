@@ -41,8 +41,8 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 				ResponseType,
 				cel.BinaryBinding(impl.with_status),
 			)},
-		"response": {
-			cel.MemberOverload("response",
+		"http.response": {
+			cel.Overload("http_response",
 				[]*cel.Type{},
 				ResponseType,
 				cel.FunctionBinding(func(values ...ref.Val) ref.Val { return impl.response() }),
@@ -52,6 +52,12 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 				[]*cel.Type{ResponseType, cel.StringType, cel.StringType},
 				ResponseType,
 				cel.FunctionBinding(impl.with_header),
+			)},
+		"withBody": {
+			cel.MemberOverload("with_body",
+				[]*cel.Type{ResponseType, cel.StringType},
+				ResponseType,
+				cel.BinaryBinding(impl.with_body),
 			)},
 	}
 

@@ -19,7 +19,7 @@ import (
 const (
 	VariablesKey = "variables"
 	ObjectKey    = "object"
-	RequestKey   = "request"
+	RequestKey   = "http.request"
 )
 
 type Compiler = engine.Compiler[*v1alpha1.ValidatingPolicy]
@@ -38,13 +38,13 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}
 
 	varsProvider := authzcel.NewVariablesProvider(base.CELTypeProvider())
-	provider := http.NewResponseProvider(varsProvider)
+	// provider := http.NewResponseProvider(varsProvider)
 	env, err := base.Extend(
 		ext.NativeTypes(reflect.TypeFor[http.Request]()),
 		cel.Variable(ObjectKey, envoy.CheckRequest),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
 		cel.Variable(RequestKey, http.RequestType),
-		cel.CustomTypeProvider(provider),
+		cel.CustomTypeProvider(varsProvider),
 	)
 	if err != nil {
 		return nil, append(allErrs, field.InternalError(nil, err))

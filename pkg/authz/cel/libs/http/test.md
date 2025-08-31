@@ -265,59 +265,11 @@ spec:
 
 # Implementation
 
-  
+- Add a new CEL HTTP library
 
-This is the technical portion of the KDP, where you explain the design in sufficient detail.
+- Expose a HTTP endpoint that will receive requests and evalute them through the existing policies
 
-  
-
-The section should return to the examples given in the previous section, and explain more fully how the detailed proposal makes those examples work.
-
-  
-
-## Link to the Implementation PR
-
-  
-
-
-# Drawbacks
-
-  
-
-Why should we **not** do this?
-
-  
-
-# Alternatives
-
-  
-
-- What other designs have been considered?
-
-- Why is this proposal the best?
-
-- What is the impact of not doing this?
-
-  
-
-# Prior Art
-
-  
-
-Discuss prior art, both the good and bad.
-
-  
-
-# Unresolved Questions
-
-  
-
-- What parts of the design do you expect to be resolved before this gets merged?
-
-- What parts of the design do you expect to be resolved through implementation of the feature?
-
-- What related issues do you consider out of scope for this KDP that could be addressed in the future independently of the solution that comes out of this KDP?
-
+- Declare `http.request` as a variable in the CEL environment
   
 
 # CRD Changes (OPTIONAL)

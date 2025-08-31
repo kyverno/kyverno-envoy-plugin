@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
 )
 
@@ -11,7 +12,7 @@ type lib struct{}
 
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
-		ext.NativeTypes(reflect.TypeFor[Request](), reflect.TypeFor[Response](), reflect.TypeFor[KV]()),
+		ext.NativeTypes(reflect.TypeFor[Request](), reflect.TypeFor[Response](), reflect.TypeFor[KV](), ext.ParseStructTags(true)),
 		c.extendEnv,
 	}
 }
@@ -39,6 +40,12 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 				[]*cel.Type{ResponseType, cel.IntType},
 				ResponseType,
 				cel.BinaryBinding(impl.with_status),
+			)},
+		"response": {
+			cel.MemberOverload("response",
+				[]*cel.Type{},
+				ResponseType,
+				cel.FunctionBinding(func(values ...ref.Val) ref.Val { return impl.response() }),
 			)},
 		"withHeader": {
 			cel.MemberOverload("with_header",

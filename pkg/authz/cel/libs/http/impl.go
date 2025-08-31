@@ -10,6 +10,11 @@ type impl struct {
 	types.Adapter
 }
 
+func (c *impl) response() ref.Val {
+	r := &Response{}
+	return c.NativeToValue(r)
+}
+
 func (c *impl) get_header_value(req ref.Val, header ref.Val) ref.Val {
 	if kv, err := utils.ConvertToNative[KV](req); err != nil {
 		return types.WrapErr(err)

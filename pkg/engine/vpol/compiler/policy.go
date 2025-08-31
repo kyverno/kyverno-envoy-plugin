@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"errors"
+	"net/http"
 	"sync"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -23,6 +24,8 @@ type compiledPolicy struct {
 	variables       map[string]cel.Program
 	rules           []cel.Program
 }
+
+func (p compiledPolicy) Ammar(r http.Request) {}
 
 func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {

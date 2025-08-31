@@ -3,11 +3,11 @@
 
 [meta]: #meta
 
-- Name: (fill in the feature name: HTTP authorization mode for ValidatingPolicy)
+- Name: HTTP authorization mode for ValidatingPolicy
 
-- Start Date: (fill in today's date: 2025-08-30)
+- Start Date: 2025-09-01
 
-- Author(s): (aerosouund)
+- Author(s): aerosouund
 
   
 
@@ -47,7 +47,7 @@
 
 [overview]: #overview
 
-Administrators and operations engineers run alot into the question of how to provide authentication to their HTTP endpoints. Using the power of CEL, and the flexibility of the ValidatingPolicy resource, its possible to turn those policies into a spec for authorization into a HTTP endpoint. This KDP aims to propose a library that will be intergrated into the envoy plugin, giving it the aformentioned capabilities.
+Administrators and operations engineers run alot into the question of how to provide authentication to their HTTP endpoints. Using the power of CEL, and the flexibility of the ValidatingPolicy resource, its possible to turn those policies into a spec for authorization into a HTTP endpoint. This KDP aims to propose a library that will be intergrated into the envoy plugin, giving it the aformentioned capabilities
   
 
 # Motivation
@@ -68,7 +68,7 @@ Administrators and operations engineers run alot into the question of how to pro
 
   
 HTTP authorization policies are a flavor of `ValidatingPolicies`, with their evaluation mode set to `HTTP`. 
-A `request` CEL object will be introduced in the environment. Which will have the following fields with their respective types
+An `http.request` CEL object will be introduced in the environment. Which will have the following fields with their respective types
 
 ```golang
 type request struct {
@@ -87,7 +87,7 @@ type request struct {
 }
 ```
 
-The return type of the entire expression will be `http.Response`, structured as such:
+The return type of the entire expression will be `http.response()`, structured as such:
 
 ``` golang
 type response struct {
@@ -107,46 +107,45 @@ type response struct {
 
 | Function                  | Arguments                  | Return |
 |---------------------------|---------------------------|--------|
-| `request.headers.get()`   | `key` (`string`) – get the first value for header with key | `[]string` |
-| `request.headers.getAll()`   | `key` (`string`) get all values for a header that was passed multiple times | `[]string` |
+| `http.request.headers.get()`   | `key` (`string`) – get the first value for header with key | `[]string` |
+| `http.request.headers.getAll()`   | `key` (`string`) get all values for a header that was passed multiple times | `[]string` |
 
 
 ### Query parameters:
 
 | Function                  | Arguments                  | Return |
 |---------------------------|---------------------------|--------|
-| `request.queryParams.get()`   | `key` (`string`) – get the first value for a set parameter| `string` |
-| `request.queryParams.getAll()`   | `key` (`string`) get all values for a parameter that was passed multiple times | `[]string` |
+| `http.request.queryParams.get()`   | `key` (`string`) – get the first value for a set parameter| `string` |
+| `http.request.queryParams.getAll()`   | `key` (`string`) get all values for a parameter that was passed multiple times | `[]string` |
 
 
 ### Response type
 
 | Function                  | Arguments                  | Return |
 |---------------------------|---------------------------|--------|
-| `response.withHeader()`   | `key` (`string`), `value` (`string`): header key and value | `response` |
-| `response.status()`   | `status` (`int`): integer value representing the status | `response` |
-| `response.withBody()`   | `body` (`string`): add http response body | `response` |
+| `http.response().withHeader()`   | `key` (`string`), `value` (`string`): header key and value | `response` |
+| `http.response().status()`   | `status` (`int`): integer value representing the status | `response` |
+| `http.response().withBody()`   | `body` (`string`): add http response body | `response` |
 
 
 ## Example policies:
 
 - Allow requests that contain a certain header
 
-todo: give proper naming to policies
 
 ```yaml
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: require-foo-header
 spec:
   evaluation:
     mode: HTTP
   validations:
   - expression: >
-      request.headers.get("foo") != "" 
-        ? http.response.status(400).withBody("header 'foo' is required")
-        : http.response.status(200)
+      http.request.headers.get("foo") != "" 
+        ? http.response().status(400).withBody("header 'foo' is required")
+        : http.response().status(200)
 ```
 
 - Allow requests where a certain header is a certain value
@@ -155,15 +154,15 @@ spec:
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: validate-foo-header-value
 spec:
   evaluation:
     mode: HTTP
   validations:
   - expression: >
-      request.headers.get("foo") == "bar" 
-        ? http.response.status(400).withBody("header 'foo' must have value 'bar'")
-        : http.response.status(200)
+      http.request.headers.get("foo") == "bar" 
+        ? http.response().status(400).withBody("header 'foo' must have value 'bar'")
+        : http.response().status(200)
 ```
 
 - Allow requests where a certain header is a certain value to a particular path
@@ -172,15 +171,15 @@ spec:
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: validate-users-endpoint-access
 spec:
   evaluation:
     mode: HTTP
   validations:
   - expression: >
-      request.headers.get("foo") == "bar" && request.path == "/v1/users"
-        ? http.response.status(400).withBody("header 'foo' must have value 'bar' when calling /v1/users")
-        : http.response.status(200)
+      http.request.headers.get("foo") == "bar" && http.request.path == "/v1/users"
+        ? http.response().status(400).withBody("header 'foo' must have value 'bar' when calling /v1/users")
+        : http.response().status(200)
 ```
 
 - Allow requests where a certain header is a certain value to a particular path regex
@@ -189,15 +188,15 @@ spec:
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: validate-post-users-regex
 spec:
   evaluation:
     mode: HTTP
   validations:
   - expression: >
-      request.headers.get("foo") == "bar" && request.path.matches("/*/users") && request.method == "POST"
-        ? http.response.status(400)
-        : http.response.status(200)
+      http.request.headers.get("foo") == "bar" && http.request.path.matches("/*/users") && http.request.method == "POST"
+        ? http.response().status(400)
+        : http.response().status(200)
 ```
 
 - Allow requests where a certain header is a certain value to a particular path prefix
@@ -206,15 +205,15 @@ spec:
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: validate-post-users-prefix
 spec:
   evaluation:
     mode: HTTP
   validations:
   - expression: >
-      request.headers.get("foo") == "bar" && request.path.startsWith("/users") && request.method == "POST"
-        ? http.response.status(400)
-        : http.response.status(200)
+      http.request.headers.get("foo") == "bar" && http.request.path.startsWith("/users") && http.request.method == "POST"
+        ? http.response().status(400)
+        : http.response().status(200)
 ```
 
 - Allow requests where a certain header is a certain value to a particular path prefix
@@ -223,15 +222,15 @@ spec:
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: validate-header-and-query-params
 spec:
   evaluation:
     mode: HTTP
   validations:
   - expression: >
-      request.headers.get("foo") == "bar" && request.queryParams.get("something") == "someone"
-        ? http.response.status(400)
-        : http.response.status(200)
+      http.request.headers.get("foo") == "bar" && http.request.queryParams.get("something") == "someone"
+        ? http.response().status(400)
+        : http.response().status(200)
 ```
 
 - Token based authorization (using the JWT library)
@@ -240,7 +239,7 @@ spec:
 apiVersion: envoy.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: allow-header
+  name: jwt-token-authorization
 spec:
   evaluation:
     mode: HTTP
@@ -248,7 +247,7 @@ spec:
   - name: jwks
     expression: "https://myidp.com/.well-known/jwks.json"
   - name: authorization
-    expression: request.headers.get("authorization").split(" ")
+    expression: http.request.headers.get("authorization").split(" ")
   - name: token
     expression: >
       size(variables.authorization) == 2 &&
@@ -258,8 +257,8 @@ spec:
   validations:
   - expression: >
       variables.token.Claims["myidp:groups"] in ["devops", "backend"]
-        ? http.response.status(400).withHeader("foo", "bar")
-        : http.response.status(200)
+        ? http.response().status(403).withHeader("foo", "bar")
+        : http.response().status(200)
 ```
 
   

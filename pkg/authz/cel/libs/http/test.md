@@ -94,6 +94,12 @@ type Response struct {
 }
 ```
 
+```golang
+type KV struct {
+	kv map[string][]string `cel:"kv"`
+}
+```
+
 ## Library spec
 
 

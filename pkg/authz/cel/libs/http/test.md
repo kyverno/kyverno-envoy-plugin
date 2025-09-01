@@ -424,7 +424,6 @@ spec:
 - Caching
 - Rate limiting
 
-# CRD Changes (OPTIONAL)
+# CRD Changes
 
-  
 New evaluation mode `HTTP` for `ValidatingPolicy`

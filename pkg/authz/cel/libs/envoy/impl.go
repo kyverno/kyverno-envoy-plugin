@@ -197,9 +197,9 @@ func (c *impl) response_ok(ok ref.Val) ref.Val {
 	if ok, err := utils.ConvertToNative[*authv3.OkHttpResponse](ok); err != nil {
 		return types.WrapErr(err)
 	} else {
-		return c.NativeToValue(&OkResponse{
-			Status:         &status.Status{Code: int32(codes.OK)},
-			OkHttpResponse: ok,
+		return c.NativeToValue(&authv3.CheckResponse{
+			Status:       &status.Status{Code: int32(codes.OK)},
+			HttpResponse: &authv3.CheckResponse_OkResponse{OkResponse: ok},
 		})
 	}
 }
@@ -208,15 +208,15 @@ func (c *impl) response_denied(denied ref.Val) ref.Val {
 	if denied, err := utils.ConvertToNative[*authv3.DeniedHttpResponse](denied); err != nil {
 		return types.WrapErr(err)
 	} else {
-		return c.NativeToValue(&DeniedResponse{
-			Status:             &status.Status{Code: int32(codes.PermissionDenied)},
-			DeniedHttpResponse: denied,
+		return c.NativeToValue(&authv3.CheckResponse{
+			Status:       &status.Status{Code: int32(codes.PermissionDenied)},
+			HttpResponse: &authv3.CheckResponse_DeniedResponse{DeniedResponse: denied},
 		})
 	}
 }
 
-func (c *impl) response_ok_with_message(response ref.Val, message ref.Val) ref.Val {
-	if response, err := utils.ConvertToNative[*OkResponse](response); err != nil {
+func (c *impl) response_with_message(response ref.Val, message ref.Val) ref.Val {
+	if response, err := utils.ConvertToNative[*authv3.CheckResponse](response); err != nil {
 		return types.WrapErr(err)
 	} else if message, err := utils.ConvertToNative[string](message); err != nil {
 		return types.WrapErr(err)
@@ -226,30 +226,8 @@ func (c *impl) response_ok_with_message(response ref.Val, message ref.Val) ref.V
 	}
 }
 
-func (c *impl) response_denied_with_message(response ref.Val, message ref.Val) ref.Val {
-	if response, err := utils.ConvertToNative[*DeniedResponse](response); err != nil {
-		return types.WrapErr(err)
-	} else if message, err := utils.ConvertToNative[string](message); err != nil {
-		return types.WrapErr(err)
-	} else {
-		response.Status.Message = message
-		return c.NativeToValue(response)
-	}
-}
-
-func (c *impl) response_ok_with_metadata(response ref.Val, metadata ref.Val) ref.Val {
-	if response, err := utils.ConvertToNative[*OkResponse](response); err != nil {
-		return types.WrapErr(err)
-	} else if metadata, err := utils.ConvertToNative[*structpb.Struct](metadata); err != nil {
-		return types.WrapErr(err)
-	} else {
-		response.DynamicMetadata = metadata
-		return c.NativeToValue(response)
-	}
-}
-
-func (c *impl) response_denied_with_metadata(response ref.Val, metadata ref.Val) ref.Val {
-	if response, err := utils.ConvertToNative[*DeniedResponse](response); err != nil {
+func (c *impl) response_with_metadata(response ref.Val, metadata ref.Val) ref.Val {
+	if response, err := utils.ConvertToNative[*authv3.CheckResponse](response); err != nil {
 		return types.WrapErr(err)
 	} else if metadata, err := utils.ConvertToNative[*structpb.Struct](metadata); err != nil {
 		return types.WrapErr(err)

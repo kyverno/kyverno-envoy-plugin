@@ -18,7 +18,7 @@ func TestOkResponse(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
-		want   envoy.OkResponse
+		want   *authv3.CheckResponse
 	}{{
 		name: "fluent",
 		source: `
@@ -28,18 +28,20 @@ func TestOkResponse(t *testing.T) {
 			.Response()
 			.WithMetadata({"my-new-metadata": "my-new-value"})
 		`,
-		want: envoy.OkResponse{
+		want: &authv3.CheckResponse{
 			Status: &status.Status{
 				Code: 0,
 			},
-			OkHttpResponse: &authv3.OkHttpResponse{
-				Headers: []*corev3.HeaderValueOption{{
-					Header: &corev3.HeaderValue{
-						Key:   "foo",
-						Value: "bar",
-					},
-					KeepEmptyValue: true,
-				}},
+			HttpResponse: &authv3.CheckResponse_OkResponse{
+				OkResponse: &authv3.OkHttpResponse{
+					Headers: []*corev3.HeaderValueOption{{
+						Header: &corev3.HeaderValue{
+							Key:   "foo",
+							Value: "bar",
+						},
+						KeepEmptyValue: true,
+					}},
+				},
 			},
 			DynamicMetadata: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
@@ -49,19 +51,19 @@ func TestOkResponse(t *testing.T) {
 		},
 	}, {
 		name: "empty",
-		want: envoy.OkResponse{},
+		want: &authv3.CheckResponse{},
 		source: `
-		envoy.OkResponse{}
+		envoy.service.auth.v3.CheckResponse{}
 		`,
 	}, {
 		name: "with status",
-		want: envoy.OkResponse{
+		want: &authv3.CheckResponse{
 			Status: &status.Status{
 				Code: 0,
 			},
 		},
 		source: `
-		envoy.OkResponse{
+		envoy.service.auth.v3.CheckResponse{
 			status: google.rpc.Status{
 				code: 0
 			}
@@ -69,7 +71,7 @@ func TestOkResponse(t *testing.T) {
 		`,
 	}, {
 		name: "with metadata",
-		want: envoy.OkResponse{
+		want: &authv3.CheckResponse{
 			DynamicMetadata: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"foo": structpb.NewStringValue("bar"),
@@ -77,7 +79,7 @@ func TestOkResponse(t *testing.T) {
 			},
 		},
 		source: `
-		envoy.OkResponse{
+		envoy.service.auth.v3.CheckResponse{
 			dynamic_metadata: {
 				"foo": "bar"
 			}
@@ -85,12 +87,12 @@ func TestOkResponse(t *testing.T) {
 		`,
 	}, {
 		name: "with response",
-		want: envoy.OkResponse{
-			OkHttpResponse: &authv3.OkHttpResponse{},
+		want: &authv3.CheckResponse{
+			HttpResponse: &authv3.CheckResponse_OkResponse{OkResponse: &authv3.OkHttpResponse{}},
 		},
 		source: `
-		envoy.OkResponse{
-			http_response: envoy.service.auth.v3.OkHttpResponse{}
+		envoy.service.auth.v3.CheckResponse{
+			ok_response: envoy.service.auth.v3.OkHttpResponse{}
 		}
 		`,
 	}}
@@ -106,7 +108,7 @@ func TestOkResponse(t *testing.T) {
 			out, _, err := prog.Eval(interpreter.EmptyActivation())
 			assert.NoError(t, err)
 			assert.NotNil(t, out)
-			got, err := out.ConvertToNative(reflect.TypeFor[envoy.OkResponse]())
+			got, err := out.ConvertToNative(reflect.TypeFor[*authv3.CheckResponse]())
 			assert.NoError(t, err)
 			assert.EqualExportedValues(t, tt.want, got)
 		})

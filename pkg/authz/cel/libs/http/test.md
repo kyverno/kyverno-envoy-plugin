@@ -267,7 +267,6 @@ spec:
       http.request.headers.get("users") == "allowedUser"
         && http.response().status(200)
 ```
-s
 
 ## Advanced Real-World Use Cases:
 
@@ -298,6 +297,28 @@ spec:
       variables.token.Claims["myidp:groups"] in ["devops", "backend"]
         ? http.response().status(200)
         : http.response().status(403).withBody("Insufficient permissions")
+```
+
+- Request body size validation using rawBody
+
+```yaml
+apiVersion: envoy.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: request-body-size-limit
+spec:
+  evaluation:
+    mode: HTTP
+  variables:
+  - name: bodySize
+    expression: size(http.request.rawBody)
+  - name: maxSizeBytes
+    expression: 1048576  # 1MB limit
+  validations:
+  - expression: >
+      variables.bodySize > variables.maxSizeBytes
+        ? http.response().status(413).withBody("Request body too large: " + string(variables.bodySize) + " bytes (max: " + string(variables.maxSizeBytes) + ")")
+        : http.response().status(200)
 ```
 
 - File upload restrictions with security headers
@@ -363,6 +384,8 @@ spec:
       variables.userAgent.contains("bot") || variables.userAgent.contains("crawler")
         ? http.response().status(403).withBody("Automated requests not allowed")
         : null
+  - expression: > # return 200 otherwise
+      http.response().status(200)
 ```
 
 

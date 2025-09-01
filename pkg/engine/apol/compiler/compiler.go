@@ -82,7 +82,7 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.Compile
 		path := path.Child("deny")
 		for i, rule := range policy.Spec.Deny {
 			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env, envoy.DeniedResponseType)
+			program, errs := compileAuthorization(path, rule, env, envoy.CheckResponse)
 			if errs != nil {
 				return nil, append(allErrs, errs...)
 			}
@@ -94,7 +94,7 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.Compile
 		path := path.Child("allow")
 		for i, rule := range policy.Spec.Allow {
 			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env, envoy.OkResponseType)
+			program, errs := compileAuthorization(path, rule, env, envoy.CheckResponse)
 			if errs != nil {
 				return nil, append(allErrs, errs...)
 			}

@@ -9,7 +9,6 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
-	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"go.uber.org/multierr"
@@ -88,7 +87,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 			}
 			if response != nil {
 				// no error and evaluation result is not nil, return
-				return response.ToCheckResponse(), nil
+				return response, nil
 			}
 		}
 		return nil, nil
@@ -105,7 +104,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 	return failurePolicy(rules), nil
 }
 
-func evaluateRule(rule cel.Program, data map[string]any) (envoy.Response, error) {
+func evaluateRule(rule cel.Program, data map[string]any) (*authv3.CheckResponse, error) {
 	out, _, err := rule.Eval(data)
 	// check error
 	if err != nil {
@@ -121,9 +120,9 @@ func evaluateRule(rule cel.Program, data map[string]any) (envoy.Response, error)
 	if value == nil {
 		return nil, nil
 	}
-	response, ok := value.(envoy.Response)
+	response, ok := value.(*authv3.CheckResponse)
 	if !ok {
-		return nil, errors.New("rule result is expected to be envoy.Response")
+		return nil, errors.New("rule result is expected to be authv3.CheckResponse")
 	}
 	return response, nil
 }

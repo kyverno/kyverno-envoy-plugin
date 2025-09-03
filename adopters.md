@@ -4,7 +4,6 @@ This document lists organizations that are adopting the kyverno-envoy-plugin.
 
 ## Organizations
 
-
 | Organization                    | Contact                                                                            |
 | ------------------------------- | ---------------------------------------------------------------------------------- |
 | [Nirmata](https://nirmata.com/) | [@nirmata](https://github.com/nirmata)                                       |

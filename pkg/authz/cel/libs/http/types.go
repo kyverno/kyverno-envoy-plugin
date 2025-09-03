@@ -14,7 +14,7 @@ var (
 )
 
 type KV struct {
-	inner map[string][]string `cel:"kv"`
+	inner map[string][]string `cel:"inner"`
 }
 
 func (k *KV) GetInnerMap() map[string][]string {
@@ -23,11 +23,11 @@ func (k *KV) GetInnerMap() map[string][]string {
 
 type Request struct {
 	Method   string `cel:"method"`
-	Headers  KV     `cel:"headers"`
+	Headers  *KV    `cel:"headers"`
 	Path     string `cel:"path"`
 	Host     string `cel:"host"`
 	Scheme   string `cel:"scheme"`
-	Query    KV     `cel:"queryParams"`
+	Query    *KV    `cel:"queryParams"`
 	Fragment string `cel:"fragment"`
 	Size     int64  `cel:"size"`
 	Protocol string `cel:"protocol"`
@@ -37,7 +37,7 @@ type Request struct {
 
 type Response struct {
 	Status  int    `cel:"status"`
-	Headers KV     `cel:"headers"`
+	Headers *KV    `cel:"headers"`
 	Body    string `cel:"body"`
 }
 
@@ -49,19 +49,15 @@ func NewRequest(r *http.Request) (Request, error) {
 	}
 	return Request{
 		Method:   r.Method,
-		Headers:  KV{inner: r.Header},
+		Headers:  &KV{inner: r.Header},
 		Path:     r.URL.Path,
 		Host:     r.URL.Host,
 		Protocol: r.Proto,
 		RawBody:  bodyBytes,
 		Body:     string(bodyBytes),
-		Query:    KV{inner: r.URL.Query()},
+		Query:    &KV{inner: r.URL.Query()},
 		Size:     int64(len(bodyBytes)),
 		Fragment: r.URL.Fragment,
 		Scheme:   r.URL.Scheme,
 	}, nil
-}
-
-func ToNativeResponse(r Response) http.Response {
-	return http.Response{}
 }

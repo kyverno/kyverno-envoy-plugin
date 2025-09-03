@@ -17,7 +17,7 @@ func NewServer(addr string, provider engine.Provider) server.ServerFunc {
 			provider: provider,
 		}
 
-		mux.Handle("POST /authorize", http.HandlerFunc(a.NewHandler()))
+		mux.Handle("POST /", http.HandlerFunc(a.NewHandler()))
 		// create server
 		s := &http.Server{
 			Addr:    addr,

@@ -38,9 +38,16 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}
 
 	varsProvider := authzcel.NewVariablesProvider(base.CELTypeProvider())
+	var objKey cel.EnvOption
+	if policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeHTTP {
+		objKey = cel.Variable(ObjectKey, http.RequestType)
+	} else {
+		objKey = cel.Variable(ObjectKey, envoy.CheckRequest)
+	}
+
 	env, err := base.Extend(
 		ext.NativeTypes(reflect.TypeFor[http.Request]()),
-		cel.Variable(ObjectKey, http.RequestType),
+		objKey,
 		cel.Variable(VariablesKey, authzcel.VariablesType),
 		cel.CustomTypeProvider(varsProvider),
 	)
@@ -120,8 +127,7 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 			}
 		case v1alpha1.EvaluationModeEnvoy:
 			if !ast.OutputType().IsExactType(envoy.DeniedResponseType) && !ast.OutputType().IsExactType(envoy.OkResponseType) &&
-				!ast.OutputType().IsExactType(types.NullType) &&
-				!ast.OutputType().IsExactType(http.ResponseType) { // todo: remove this
+				!ast.OutputType().IsExactType(types.NullType) {
 				msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkResponseType.TypeName(), envoy.DeniedResponseType.TypeName())
 				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 			}

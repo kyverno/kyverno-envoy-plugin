@@ -52,11 +52,14 @@ func writeErrResp(w http.ResponseWriter, err error) {
 }
 
 func writeResponse(w http.ResponseWriter, resp *httpcel.Response) {
-	for k, v := range resp.Headers.GetInnerMap() {
-		for _, val := range v {
-			w.Header().Set(k, val)
+	if resp.Headers != nil {
+		for k, v := range resp.Headers.GetInnerMap() {
+			for _, val := range v {
+				w.Header().Set(k, val)
+			}
 		}
 	}
+
 	w.WriteHeader(resp.Status)
 	fmt.Fprint(w, resp.Body)
 }

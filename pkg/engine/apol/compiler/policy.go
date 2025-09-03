@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"errors"
+	"net/http"
 	"sync"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -28,6 +29,11 @@ type compiledPolicy struct {
 	variables       map[string]cel.Program
 	allow           []authorizationProgram
 	deny            []authorizationProgram
+}
+
+func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
+	// ammar: should apols also implement http authorization?
+	return nil
 }
 
 func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/google/cel-go/common/types"
@@ -9,35 +10,15 @@ import (
 var (
 	RequestType  = types.NewObjectType("http.Request")
 	KVType       = types.NewObjectType("http.KV")
-	ResponseType = types.NewObjectType("http.response")
+	ResponseType = types.NewObjectType("http.Response")
 )
 
-type responseProvider struct {
-	types.Provider
-}
-
 type KV struct {
-	kv map[string][]string
+	inner map[string][]string `cel:"kv"`
 }
 
-func NewResponseProvider(p types.Provider) *responseProvider {
-	return &responseProvider{
-		Provider: p,
-	}
-}
-
-func (p *responseProvider) FindStructType(typeName string) (*types.Type, bool) {
-	if typeName == "http.response" {
-		return p.Provider.FindStructType("http.Response")
-	}
-	return p.Provider.FindStructType(typeName)
-}
-
-func (p *responseProvider) FindStructFieldType(typeName, fieldName string) (*types.FieldType, bool) {
-	if typeName == "http.response" {
-		return p.Provider.FindStructFieldType("http.Response", fieldName)
-	}
-	return p.Provider.FindStructFieldType(typeName, fieldName)
+func (k *KV) GetInnerMap() map[string][]string {
+	return k.inner
 }
 
 type Request struct {
@@ -60,15 +41,25 @@ type Response struct {
 	Body    string `cel:"body"`
 }
 
-// flow -> compiled policies received from earlier -> request received ->
-
-func ToCELRequest(r http.Request) Request {
-	return Request{
-		Method:  r.Method,
-		Headers: KV{kv: r.Header},
-		Path:    r.URL.Path,
-		Host:    r.URL.Host,
+func NewRequest(r *http.Request) (Request, error) {
+	defer r.Body.Close()
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return Request{}, err
 	}
+	return Request{
+		Method:   r.Method,
+		Headers:  KV{inner: r.Header},
+		Path:     r.URL.Path,
+		Host:     r.URL.Host,
+		Protocol: r.Proto,
+		RawBody:  bodyBytes,
+		Body:     string(bodyBytes),
+		Query:    KV{inner: r.URL.Query()},
+		Size:     int64(len(bodyBytes)),
+		Fragment: r.URL.Fragment,
+		Scheme:   r.URL.Scheme,
+	}, nil
 }
 
 func ToNativeResponse(r Response) http.Response {

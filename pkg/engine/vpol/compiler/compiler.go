@@ -38,12 +38,10 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}
 
 	varsProvider := authzcel.NewVariablesProvider(base.CELTypeProvider())
-	// provider := http.NewResponseProvider(varsProvider)
 	env, err := base.Extend(
 		ext.NativeTypes(reflect.TypeFor[http.Request]()),
-		cel.Variable(ObjectKey, envoy.CheckRequest),
+		cel.Variable(ObjectKey, http.RequestType),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
-		cel.Variable(RequestKey, http.RequestType),
 		cel.CustomTypeProvider(varsProvider),
 	)
 	if err != nil {
@@ -115,15 +113,15 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
 		switch mode {
-		// case v1alpha1.EvaluationModeHTTP:
-		// 	if !ast.OutputType().IsExactType(http.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
-		// 		msg := fmt.Sprintf("rule response output is expected to be of type %s", http.ResponseType.TypeName())
-		// 		return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
-		// 	}
+		case v1alpha1.EvaluationModeHTTP:
+			if !ast.OutputType().IsExactType(http.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
+				msg := fmt.Sprintf("rule response output is expected to be of type %s", http.ResponseType.TypeName())
+				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
+			}
 		case v1alpha1.EvaluationModeEnvoy:
 			if !ast.OutputType().IsExactType(envoy.DeniedResponseType) && !ast.OutputType().IsExactType(envoy.OkResponseType) &&
 				!ast.OutputType().IsExactType(types.NullType) &&
-				!ast.OutputType().IsExactType(http.ResponseType) {
+				!ast.OutputType().IsExactType(http.ResponseType) { // todo: remove this
 				msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkResponseType.TypeName(), envoy.DeniedResponseType.TypeName())
 				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 			}

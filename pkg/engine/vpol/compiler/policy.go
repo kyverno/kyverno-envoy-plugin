@@ -11,6 +11,8 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
+	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/http"
+
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"go.uber.org/multierr"
@@ -25,7 +27,60 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) Ammar(r http.Request) {}
+func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
+	// ammar: you removed match conditions
+	variables := sync.OnceValue(func() map[string]any {
+		vars := lazy.NewMapValue(authzcel.VariablesType)
+		req, err := httpcel.NewRequest(r)
+		if err != nil {
+			// return types.WrapErr(err)
+			// ammar: what to do with the error here ?
+		}
+		data := map[string]any{
+			ObjectKey:    req,
+			VariablesKey: vars,
+		}
+		for name, variable := range p.variables {
+			vars.Append(name, func(*lazy.MapValue) ref.Val {
+				out, _, err := variable.Eval(data)
+				if out != nil {
+					return out
+				}
+				if err != nil {
+					return types.WrapErr(err)
+				}
+				return nil
+			})
+		}
+		return data
+	})
+	rules := func() (*httpcel.Response, error) {
+		data := variables()
+		for _, rule := range p.rules {
+			// evaluate the rule
+			response, err := evaluateHTTP(rule, data)
+			// check error
+			if err != nil {
+				return nil, err
+			}
+			if response != nil {
+				// no error and evaluation result is not nil, return
+				return response, nil
+			}
+		}
+		return nil, nil
+	}
+	failurePolicy := func(inner func() (*httpcel.Response, error)) func() (*httpcel.Response, error) {
+		return func() (*httpcel.Response, error) {
+			response, err := inner()
+			if err != nil && p.failurePolicy == admissionregistrationv1.Fail {
+				return nil, err
+			}
+			return response, nil
+		}
+	}
+	return failurePolicy(rules)
+}
 
 func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {
@@ -127,6 +182,29 @@ func evaluateRule(rule cel.Program, data map[string]any) (envoy.Response, error)
 	response, ok := value.(envoy.Response)
 	if !ok {
 		return nil, errors.New("rule result is expected to be envoy.Response")
+	}
+	return response, nil
+}
+
+func evaluateHTTP(rule cel.Program, data map[string]any) (*httpcel.Response, error) {
+	out, _, err := rule.Eval(data)
+	// check error
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, nil
+	}
+	if out == types.NullValue {
+		return nil, nil
+	}
+	value := out.Value()
+	if value == nil {
+		return nil, nil
+	}
+	response, ok := value.(*httpcel.Response)
+	if !ok {
+		return nil, errors.New("rule result is expected to be http.Response")
 	}
 	return response, nil
 }

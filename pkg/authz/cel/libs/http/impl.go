@@ -4,6 +4,8 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type impl struct {
@@ -21,7 +23,8 @@ func (c *impl) get_header_value(req ref.Val, header ref.Val) ref.Val {
 	} else if header, err := utils.ConvertToNative[string](header); err != nil {
 		return types.WrapErr(err)
 	} else {
-		v, exists := kv.kv[header]
+		caser := cases.Title(language.Und) // turn all instances of a header to match a single case
+		v, exists := kv.inner[caser.String(header)]
 		if !exists {
 			return c.NativeToValue("")
 		}
@@ -35,7 +38,7 @@ func (c *impl) get_header_all(req ref.Val, header ref.Val) ref.Val {
 	} else if header, err := utils.ConvertToNative[string](header); err != nil {
 		return types.WrapErr(err)
 	} else {
-		v, exists := kv.kv[header]
+		v, exists := kv.inner[header]
 		if !exists {
 			return c.NativeToValue([]string{})
 		}
@@ -62,7 +65,7 @@ func (c *impl) with_header(args ...ref.Val) ref.Val {
 	} else if v, err := utils.ConvertToNative[string](args[2]); err != nil {
 		return types.WrapErr(err)
 	} else {
-		r.Headers.kv[k] = append(r.Headers.kv[k], v)
+		r.Headers.inner[k] = append(r.Headers.inner[k], v)
 		return c.NativeToValue(r)
 	}
 }

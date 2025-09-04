@@ -29,12 +29,11 @@ type compiledPolicy struct {
 
 func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 	// ammar: you removed match conditions
-	variables := sync.OnceValue(func() map[string]any {
+	variables := sync.OnceValues(func() (map[string]any, error) {
 		vars := lazy.NewMapValue(authzcel.VariablesType)
 		req, err := httpcel.NewRequest(r)
 		if err != nil {
-			// return types.WrapErr(err)
-			// ammar: what to do with the error here ?
+			return nil, err
 		}
 		data := map[string]any{
 			ObjectKey:    req,
@@ -52,10 +51,13 @@ func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 				return nil
 			})
 		}
-		return data
+		return data, nil
 	})
 	rules := func() (*httpcel.Response, error) {
-		data := variables()
+		data, err := variables()
+		if err != nil {
+			return nil, err
+		}
 		for _, rule := range p.rules {
 			// evaluate the rule
 			response, err := evaluateHTTP(rule, data)

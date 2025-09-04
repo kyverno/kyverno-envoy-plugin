@@ -6,8 +6,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
-	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
+	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
+	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )

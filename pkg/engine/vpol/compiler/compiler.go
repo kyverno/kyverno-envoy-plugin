@@ -19,7 +19,6 @@ import (
 const (
 	VariablesKey = "variables"
 	ObjectKey    = "object"
-	RequestKey   = "http.request"
 )
 
 type Compiler = engine.Compiler[*v1alpha1.ValidatingPolicy]

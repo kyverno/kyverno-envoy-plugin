@@ -6,7 +6,7 @@ import (
 	typesv3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"

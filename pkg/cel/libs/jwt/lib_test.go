@@ -6,8 +6,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	jwklib "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwk"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	jwklib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwk"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/stretchr/testify/assert"
 )

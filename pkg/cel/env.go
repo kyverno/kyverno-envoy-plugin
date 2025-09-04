@@ -3,8 +3,8 @@ package cel
 import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/jwt"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwt"
 	"k8s.io/apiserver/pkg/cel/library"
 )
 

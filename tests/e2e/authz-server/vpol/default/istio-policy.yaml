@@ -4,9 +4,6 @@ metadata:
   name: policy
   namespace: istio-system
 spec:
-  selector:
-    matchLabels:
-      ext-authz: enabled
   action: CUSTOM
   provider:
     name: kyverno-authz-server

@@ -59,7 +59,6 @@ func (v *validator) validateApol(policy *v1alpha1.AuthorizationPolicy) error {
 }
 
 func (v *validator) validateVpol(policy *v1alpha1.ValidatingPolicy) error {
-
 	if policy.Spec.EvaluationConfiguration != nil &&
 		(policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeEnvoy ||
 			policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeHTTP) {

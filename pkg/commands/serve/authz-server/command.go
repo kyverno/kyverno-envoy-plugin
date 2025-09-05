@@ -15,6 +15,7 @@ import (
 	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/httpauth"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/spf13/cobra"
@@ -31,6 +32,7 @@ func Command() *cobra.Command {
 	var metricsAddress string
 	var grpcAddress string
 	var grpcNetwork string
+	var httpAuthAddress string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
 	var kubePolicySource bool
@@ -41,7 +43,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var httpErr, grpcErr, mgrErr error
+				var httpErr, grpcErr, mgrErr, httpAuthErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -110,6 +112,8 @@ func Command() *cobra.Command {
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
 					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider)
+
+					httpAuth := httpauth.NewServer(httpAuthAddress, provider)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
@@ -119,16 +123,22 @@ func Command() *cobra.Command {
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
 						defer cancel()
+						httpAuthErr = httpAuth.Run(ctx)
+					})
+					group.StartWithContext(ctx, func(ctx context.Context) {
+						// cancel context at the end
+						defer cancel()
 						grpcErr = grpc.Run(ctx)
 					})
 					return nil
 				}(ctx)
-				return multierr.Combine(err, httpErr, grpcErr, mgrErr)
+				return multierr.Combine(err, httpErr, grpcErr, mgrErr, httpAuthErr)
 			})
 		},
 	}
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
+	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")

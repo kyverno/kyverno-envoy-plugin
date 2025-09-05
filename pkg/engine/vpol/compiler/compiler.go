@@ -2,14 +2,17 @@ package compiler
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/ext"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno/pkg/cel/libs/http"
+	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -36,13 +39,24 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	if err != nil {
 		return nil, append(allErrs, field.InternalError(nil, err))
 	}
-	provider := authzcel.NewVariablesProvider(base.CELTypeProvider())
+
+	varsProvider := authzcel.NewVariablesProvider(base.CELTypeProvider())
+	var objKey cel.EnvOption
+	if policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeHTTP {
+		objKey = cel.Variable(ObjectKey, http.RequestType)
+	} else {
+		objKey = cel.Variable(ObjectKey, envoy.CheckRequest)
+	}
+
 	env, err := base.Extend(
-		cel.Variable(HttpKey, http.ContextType),
+
+		ext.NativeTypes(reflect.TypeFor[http.Request]()),
+		objKey,
+		cel.Variable(HttpKey, httpreq.ContextType),
 		cel.Variable(ImageDataKey, imagedata.ContextType),
 		cel.Variable(ObjectKey, envoy.CheckRequest),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
-		cel.CustomTypeProvider(provider),
+		cel.CustomTypeProvider(varsProvider),
 	)
 	if err != nil {
 		return nil, append(allErrs, field.InternalError(nil, err))
@@ -76,7 +90,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 			if err := issues.Err(); err != nil {
 				return nil, append(allErrs, field.Invalid(path, variable.Expression, err.Error()))
 			}
-			provider.RegisterField(variable.Name, ast.OutputType())
+			varsProvider.RegisterField(variable.Name, ast.OutputType())
 			prog, err := env.Program(ast)
 			if err != nil {
 				return nil, append(allErrs, field.Invalid(path, variable.Expression, err.Error()))
@@ -89,7 +103,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 		path := path.Child("validations")
 		for i, rule := range policy.Spec.Validations {
 			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env)
+			program, errs := compileAuthorization(path, rule, env, policy.Spec.EvaluationMode())
 			if errs != nil {
 				return nil, append(allErrs, errs...)
 			}
@@ -104,7 +118,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}, nil
 }
 
-func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env) (cel.Program, field.ErrorList) {
+func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env, mode v1alpha1.EvaluationMode) (cel.Program, field.ErrorList) {
 	var allErrs field.ErrorList
 	{
 		path := path.Child("expression")
@@ -112,10 +126,21 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 		if err := issues.Err(); err != nil {
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
-		if !ast.OutputType().IsExactType(envoy.CheckResponse) && !ast.OutputType().IsExactType(types.NullType) {
-			msg := fmt.Sprintf("rule response output is expected to be of type %s", envoy.CheckResponse.TypeName())
-			return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
+
+		switch mode {
+		case v1alpha1.EvaluationModeHTTP:
+			if !ast.OutputType().IsExactType(http.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
+				msg := fmt.Sprintf("rule response output is expected to be of type %s", http.ResponseType.TypeName())
+				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
+			}
+		case v1alpha1.EvaluationModeEnvoy:
+			if !ast.OutputType().IsExactType(envoy.DeniedHttpResponse) && !ast.OutputType().IsExactType(envoy.OkHttpResponse) &&
+				!ast.OutputType().IsExactType(types.NullType) {
+				msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkHttpResponse.TypeName(), envoy.DeniedHttpResponse.TypeName())
+				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
+			}
 		}
+
 		prog, err := env.Program(ast)
 		if err != nil {
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))

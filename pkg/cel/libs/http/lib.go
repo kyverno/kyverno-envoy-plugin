@@ -10,11 +10,20 @@ import (
 
 type lib struct{}
 
+func Lib() cel.EnvOption {
+	// create the cel lib env option
+	return cel.Lib(&lib{})
+}
+
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		ext.NativeTypes(reflect.TypeFor[Request](), reflect.TypeFor[Response](), reflect.TypeFor[KV](), ext.ParseStructTags(true)),
 		c.extendEnv,
 	}
+}
+
+func (*lib) ProgramOptions() []cel.ProgramOption {
+	return []cel.ProgramOption{}
 }
 
 func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
@@ -68,13 +77,4 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	}
 	// extend environment with our function overloads
 	return env.Extend(options...)
-}
-
-func (*lib) ProgramOptions() []cel.ProgramOption {
-	return []cel.ProgramOption{}
-}
-
-func Lib() cel.EnvOption {
-	// create the cel lib env option
-	return cel.Lib(&lib{})
 }

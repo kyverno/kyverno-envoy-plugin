@@ -35,7 +35,6 @@ type compiledPolicy struct {
 }
 
 func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
-	// ammar: should apols also implement http authorization?
 	return nil
 }
 

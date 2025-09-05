@@ -13,6 +13,9 @@ import (
 
 var pol = &v1alpha1.ValidatingPolicy{
 	Spec: v1alpha1.ValidatingPolicySpec{
+		EvaluationConfiguration: &v1alpha1.EvaluationConfiguration{
+			Mode: v1alpha1.EvaluationModeEnvoy,
+		},
 		Variables: []admissionregistrationv1.Variable{
 			{
 				Name:       "force_authorized",

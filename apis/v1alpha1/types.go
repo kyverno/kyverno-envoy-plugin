@@ -14,7 +14,7 @@ import (
 // AuthorizationPolicy defines an authorization policy resource
 type AuthorizationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 	Spec              AuthorizationPolicySpec `json:"spec"`
 }
 

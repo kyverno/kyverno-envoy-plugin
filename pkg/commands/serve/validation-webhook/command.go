@@ -12,11 +12,14 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -55,6 +58,13 @@ func Command() *cobra.Command {
 						Scheme: scheme,
 						Metrics: metricsserver.Options{
 							BindAddress: metricsAddress,
+						},
+						Cache: cache.Options{
+							ByObject: map[client.Object]cache.ByObject{
+								&v1alpha1.ValidatingPolicy{}: {
+									Field: fields.OneTermEqualSelector("spec.evaluation.mode", "Envoy"),
+								},
+							},
 						},
 					})
 					if err != nil {

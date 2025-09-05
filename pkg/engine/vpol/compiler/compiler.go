@@ -2,11 +2,9 @@ package compiler
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/ext"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
@@ -34,14 +32,17 @@ func NewCompiler() Compiler {
 type compiler struct{}
 
 func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPolicy, field.ErrorList) {
-	var allErrs field.ErrorList
+	var (
+		allErrs field.ErrorList
+		objKey  cel.EnvOption
+	)
+
 	base, err := authzcel.NewEnv()
 	if err != nil {
 		return nil, append(allErrs, field.InternalError(nil, err))
 	}
 
 	varsProvider := authzcel.NewVariablesProvider(base.CELTypeProvider())
-	var objKey cel.EnvOption
 	if policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeHTTP {
 		objKey = cel.Variable(ObjectKey, http.RequestType)
 	} else {
@@ -49,7 +50,6 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}
 
 	env, err := base.Extend(
-		ext.NativeTypes(reflect.TypeFor[http.Request]()),
 		objKey,
 		cel.Variable(HttpKey, httpreq.ContextType),
 		cel.Variable(ImageDataKey, imagedata.ContextType),

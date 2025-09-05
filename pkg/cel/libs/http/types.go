@@ -42,7 +42,6 @@ type Response struct {
 }
 
 func NewRequest(r *http.Request) (Request, error) {
-	defer r.Body.Close()
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return Request{}, err

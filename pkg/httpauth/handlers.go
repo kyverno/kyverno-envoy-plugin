@@ -48,7 +48,7 @@ func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 
 func writeErrResp(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprint(w, err.Error())
+	fmt.Fprint(w, err.Error()) //nolint:errcheck
 }
 
 func writeResponse(w http.ResponseWriter, resp *httpcel.Response) {
@@ -61,5 +61,5 @@ func writeResponse(w http.ResponseWriter, resp *httpcel.Response) {
 	}
 
 	w.WriteHeader(resp.Status)
-	fmt.Fprint(w, resp.Body)
+	fmt.Fprint(w, resp.Body) //nolint:errcheck
 }

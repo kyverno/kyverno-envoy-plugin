@@ -39,7 +39,13 @@ func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 		if err != nil {
 			return nil, err
 		}
+		loader, err := variables.ImageData(nil)
+		if err != nil {
+			return nil, err
+		}
 		data := map[string]any{
+			HttpKey:      httpreq.Context{ContextInterface: httpreq.NewHTTP(nil)},
+			ImageDataKey: imagedata.Context{ContextInterface: loader},
 			ObjectKey:    req,
 			VariablesKey: vars,
 		}

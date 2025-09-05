@@ -17,8 +17,8 @@ func (c *impl) response() ref.Val {
 	return c.NativeToValue(r)
 }
 
-func (c *impl) get_header_value(req ref.Val, header ref.Val) ref.Val {
-	if kv, err := utils.ConvertToNative[*KV](req); err != nil {
+func (c *impl) get_header_value(allHeaders ref.Val, header ref.Val) ref.Val {
+	if kv, err := utils.ConvertToNative[*KV](allHeaders); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[string](header); err != nil {
 		return types.WrapErr(err)
@@ -32,8 +32,8 @@ func (c *impl) get_header_value(req ref.Val, header ref.Val) ref.Val {
 	}
 }
 
-func (c *impl) get_header_all(req ref.Val, header ref.Val) ref.Val {
-	if kv, err := utils.ConvertToNative[*KV](req); err != nil {
+func (c *impl) get_header_all(allHeaders ref.Val, header ref.Val) ref.Val {
+	if kv, err := utils.ConvertToNative[*KV](allHeaders); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[string](header); err != nil {
 		return types.WrapErr(err)

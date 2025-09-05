@@ -11,6 +11,9 @@ import (
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
+	"github.com/kyverno/kyverno/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apiserver/pkg/cel/lazy"
@@ -51,9 +54,15 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 		}
 		return true, multierr.Combine(errs...)
 	})
-	variables := sync.OnceValue(func() map[string]any {
+	variables := sync.OnceValues(func() (map[string]any, error) {
+		loader, err := variables.ImageData(nil)
+		if err != nil {
+			return nil, err
+		}
 		vars := lazy.NewMapValue(authzcel.VariablesType)
 		data := map[string]any{
+			HttpKey:      http.Context{ContextInterface: http.NewHTTP(nil)},
+			ImageDataKey: imagedata.Context{ContextInterface: loader},
 			ObjectKey:    r,
 			VariablesKey: vars,
 		}
@@ -69,7 +78,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 				return nil
 			})
 		}
-		return data
+		return data, nil
 	})
 	rules := func() (*authv3.CheckResponse, error) {
 		if match, err := match(); err != nil {
@@ -77,7 +86,10 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 		} else if !match {
 			return nil, nil
 		}
-		data := variables()
+		data, err := variables()
+		if err != nil {
+			return nil, err
+		}
 		for _, rule := range p.rules {
 			// evaluate the rule
 			response, err := evaluateRule(rule, data)

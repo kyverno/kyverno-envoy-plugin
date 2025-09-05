@@ -195,6 +195,7 @@ spec:
                 x-kubernetes-list-type: map
             type: object
         required:
+        - metadata
         - spec
         type: object
     served: true
@@ -1735,6 +1736,7 @@ spec:
                 type: boolean
             type: object
         required:
+        - metadata
         - spec
         type: object
     selectableFields:

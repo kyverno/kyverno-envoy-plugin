@@ -38,7 +38,7 @@ func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 	return nil
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
+func (p compiledPolicy) ForEnvoy(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,

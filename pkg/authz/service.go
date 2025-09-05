@@ -35,7 +35,7 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3
 	// iterate over policies
 	for _, policy := range policies {
 		// collect allow/deny
-		a, d := policy.For(r)
+		a, d := policy.ForEnvoy(r)
 		if a != nil {
 			allow = append(allow, a)
 		}

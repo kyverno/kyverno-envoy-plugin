@@ -49,12 +49,10 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}
 
 	env, err := base.Extend(
-
 		ext.NativeTypes(reflect.TypeFor[http.Request]()),
 		objKey,
 		cel.Variable(HttpKey, httpreq.ContextType),
 		cel.Variable(ImageDataKey, imagedata.ContextType),
-		cel.Variable(ObjectKey, envoy.CheckRequest),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
 		cel.CustomTypeProvider(varsProvider),
 	)

@@ -32,7 +32,33 @@ type compiledPolicy struct {
 }
 
 func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
-	// ammar: you removed match conditions
+	match := sync.OnceValues(func() (bool, error) {
+		data := map[string]any{
+			ObjectKey: r,
+		}
+		var errs []error
+		for _, matchCondition := range p.matchConditions {
+			// evaluate the condition
+			out, _, err := matchCondition.Eval(data)
+			// check error
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			// try to convert to a bool
+			result, err := utils.ConvertToNative[bool](out)
+			// check error
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			// if condition is false, skip
+			if !result {
+				return false, nil
+			}
+		}
+		return true, multierr.Combine(errs...)
+	})
 	variables := sync.OnceValues(func() (map[string]any, error) {
 		vars := lazy.NewMapValue(authzcel.VariablesType)
 		req, err := httpauth.NewRequest(r)
@@ -64,6 +90,11 @@ func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 		return data, nil
 	})
 	rules := func() (*httpauth.Response, error) {
+		if match, err := match(); err != nil {
+			return nil, err
+		} else if !match {
+			return nil, nil
+		}
 		data, err := variables()
 		if err != nil {
 			return nil, err

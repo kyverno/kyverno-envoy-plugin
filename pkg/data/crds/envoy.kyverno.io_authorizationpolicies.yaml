@@ -8,9 +8,13 @@ metadata:
 spec:
   group: envoy.kyverno.io
   names:
+    categories:
+    - kyverno
     kind: AuthorizationPolicy
     listKind: AuthorizationPolicyList
     plural: authorizationpolicies
+    shortNames:
+    - apol
     singular: authorizationpolicy
   scope: Cluster
   versions:
@@ -186,6 +190,7 @@ spec:
                 x-kubernetes-list-type: map
             type: object
         required:
+        - metadata
         - spec
         type: object
     served: true

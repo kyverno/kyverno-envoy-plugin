@@ -9,7 +9,7 @@ import (
 // +genclient:nonNamespaced
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=validatingpolicies,scope="Cluster",shortName=vpol,categories=kyverno
+// +kubebuilder:resource:path=validatingpolicies,scope=Cluster,shortName=vpol,categories=kyverno
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:printcolumn:name="READY",type=string,JSONPath=`.status.conditionStatus.ready`
 // +kubebuilder:selectablefield:JSONPath=`.spec.evaluation.mode`
@@ -17,11 +17,11 @@ import (
 
 type ValidatingPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 	Spec              ValidatingPolicySpec `json:"spec"`
 	// Status contains policy runtime data.
 	// +optional
-	Status ValidatingPolicyStatus `json:"status,omitempty"`
+	Status ValidatingPolicyStatus `json:"status"`
 }
 
 // BackgroundEnabled checks if background is set to true
@@ -31,10 +31,10 @@ func (s ValidatingPolicy) BackgroundEnabled() bool {
 
 type ValidatingPolicyStatus struct {
 	// +optional
-	ConditionStatus ConditionStatus `json:"conditionStatus,omitempty"`
+	ConditionStatus ConditionStatus `json:"conditionStatus"`
 
 	// +optional
-	Autogen ValidatingPolicyAutogenStatus `json:"autogen,omitempty"`
+	Autogen ValidatingPolicyAutogenStatus `json:"autogen"`
 
 	// Generated indicates whether a ValidatingAdmissionPolicy/MutatingAdmissionPolicy is generated from the policy or not
 	// +optional

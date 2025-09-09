@@ -9,12 +9,12 @@ import (
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Cluster,shortName=apol,categories=kyverno
 
 // AuthorizationPolicy defines an authorization policy resource
 type AuthorizationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 	Spec              AuthorizationPolicySpec `json:"spec"`
 }
 

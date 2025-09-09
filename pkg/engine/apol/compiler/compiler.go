@@ -6,15 +6,19 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel"
-	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/libs/envoy"
+	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
+	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
-	VariablesKey = "variables"
+	HttpKey      = "http"
+	ImageDataKey = "image"
 	ObjectKey    = "object"
+	VariablesKey = "variables"
 )
 
 type Compiler = engine.Compiler[*v1alpha1.AuthorizationPolicy]
@@ -33,6 +37,8 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.Compile
 	}
 	provider := authzcel.NewVariablesProvider(base.CELTypeProvider())
 	env, err := base.Extend(
+		cel.Variable(HttpKey, http.ContextType),
+		cel.Variable(ImageDataKey, imagedata.ContextType),
 		cel.Variable(ObjectKey, envoy.CheckRequest),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
 		cel.CustomTypeProvider(provider),

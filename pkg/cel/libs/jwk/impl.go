@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/cel/utils"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
@@ -23,5 +23,4 @@ func (c *impl) fetch(from ref.Val) ref.Val {
 		}
 		return c.NativeToValue(Set{set})
 	}
-
 }

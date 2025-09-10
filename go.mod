@@ -15,7 +15,7 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.5.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250826171959-ef028d996bc1
 	google.golang.org/grpc v1.75.0
-	k8s.io/apimachinery v0.34.0
+	k8s.io/apimachinery v0.34.1
 	k8s.io/apiserver v0.34.0
 	k8s.io/client-go v0.34.0
 	sigs.k8s.io/controller-runtime v0.22.1

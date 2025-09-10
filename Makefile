@@ -28,15 +28,15 @@ KO_PLATFORMS                       ?= all
 
 TOOLS_DIR                          := $(PWD)/.tools
 HELM                               ?= $(TOOLS_DIR)/helm
-HELM_VERSION                       ?= v3.17.3
+HELM_VERSION                       ?= v3.18.6
 KIND                               := $(TOOLS_DIR)/kind
-KIND_VERSION                       := v0.29.0
+KIND_VERSION                       := v0.30.0
 KO                                 ?= $(TOOLS_DIR)/ko
-KO_VERSION                         ?= v0.15.1
+KO_VERSION                         ?= v0.18.0
 CONTROLLER_GEN                     ?= $(TOOLS_DIR)/controller-gen
-CONTROLLER_GEN_VERSION             := latest
+CONTROLLER_GEN_VERSION             := v0.19.0
 REGISTER_GEN                       ?= $(TOOLS_DIR)/register-gen
-REGISTER_GEN_VERSION               := v0.33.1
+REGISTER_GEN_VERSION               := v0.34.1
 REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
 REFERENCE_DOCS_VERSION             := latest
 PIP                                ?= "pip"
@@ -60,9 +60,11 @@ $(KO):
 	@GOBIN=$(TOOLS_DIR) go install github.com/google/ko@$(KO_VERSION)
 
 $(CONTROLLER_GEN):
+	@echo Install controller-gen... >&2
 	@GOBIN=$(TOOLS_DIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 $(REGISTER_GEN):
+	@echo Install register-gen... >&2
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/register-gen@$(REGISTER_GEN_VERSION)
 
 $(REFERENCE_DOCS):

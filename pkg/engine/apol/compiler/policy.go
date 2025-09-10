@@ -2,6 +2,8 @@ package compiler
 
 import (
 	"errors"
+	"net/http"
+
 	"sync"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -12,7 +14,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
-	"github.com/kyverno/kyverno/pkg/cel/libs/http"
+	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -32,7 +34,11 @@ type compiledPolicy struct {
 	deny            []authorizationProgram
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
+func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
+	return nil
+}
+
+func (p compiledPolicy) ForEnvoy(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,
@@ -67,7 +73,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 		}
 		vars := lazy.NewMapValue(authzcel.VariablesType)
 		data := map[string]any{
-			HttpKey:      http.Context{ContextInterface: http.NewHTTP(nil)},
+			HttpKey:      httpreq.Context{ContextInterface: httpreq.NewHTTP(nil)},
 			ImageDataKey: imagedata.Context{ContextInterface: loader},
 			ObjectKey:    r,
 			VariablesKey: vars,

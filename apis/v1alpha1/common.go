@@ -6,6 +6,7 @@ const (
 	EvaluationModeEnvoy      EvaluationMode = "Envoy"
 	EvaluationModeJSON       EvaluationMode = "JSON"
 	EvaluationModeKubernetes EvaluationMode = "Kubernetes"
+	EvaluationModeHTTP       EvaluationMode = "HTTP"
 )
 
 type EvaluationConfiguration struct {

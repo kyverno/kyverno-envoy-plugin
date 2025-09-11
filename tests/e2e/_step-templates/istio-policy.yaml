@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/steptemplate-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: istio-policy
+spec:
+  try:
+  - create:
+      resource:
+        apiVersion: security.istio.io/v1
+        kind: AuthorizationPolicy
+        metadata:
+          name: policy
+          namespace: istio-system
+        spec:
+          action: CUSTOM
+          provider:
+            name: kyverno-authz-server
+          rules:
+          - {}

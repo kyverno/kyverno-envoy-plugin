@@ -8,9 +8,13 @@ spec:
   - name: create istio policy
     use:
       template: ../../../_step-templates/istio-policy.yaml
-  - try:
-    - create:
-        file: ./policy.yaml
+  - name: create policy
+    use:
+      template: ../../../_step-templates/policy.yaml
+      with:
+        bindings:
+        - name: file
+          value: policy.yaml
   - name: create shell
     use:
       template: ../../../_step-templates/shell.yaml

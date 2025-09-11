@@ -4,7 +4,6 @@ kind: Test
 metadata:
   name: policy-ordering
 spec:
-  namespace: app
   steps: 
   - try:
     - create:
@@ -15,17 +14,9 @@ spec:
     use:
       template: ../../../_step-templates/shell.yaml
   - try:
-    - wait:
-        apiVersion: v1
-        kind: Pod
-        timeout: 1m
-        for:
-          condition:
-            name: Ready
-            value: 'true'
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"
         check:
           ($stdout): |-
             Unauthorized Request from Policy B
@@ -34,7 +25,7 @@ spec:
         file: ./policy-a.yaml
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"
         check:
           ($stdout): |-
             Unauthorized Request from Policy A

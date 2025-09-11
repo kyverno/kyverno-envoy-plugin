@@ -4,7 +4,6 @@ kind: Test
 metadata:
   name: error-with-false
 spec:
-  namespace: app
   steps: 
   - try:
     - create:
@@ -15,16 +14,8 @@ spec:
     use:
       template: ../../../../../_step-templates/shell.yaml
   - try:
-    - wait:
-        apiVersion: v1
-        kind: Pod
-        timeout: 1m
-        for:
-          condition:
-            name: Ready
-            value: 'true'
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get
         check:
           (wildcard('*http_code=200', $stdout)): true

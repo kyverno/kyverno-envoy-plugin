@@ -57,6 +57,14 @@ spec:
                 secret:
                   secretName: curl-secret
                   optional: true
+  - wait:
+      apiVersion: v1
+      kind: Pod
+      timeout: 1m
+      for:
+        condition:
+          name: Ready
+          value: 'true'
   finally:
   - sleep:
       duration: 10s

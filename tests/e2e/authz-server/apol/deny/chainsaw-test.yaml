@@ -4,10 +4,11 @@ kind: Test
 metadata:
   name: deny
 spec:
-  steps: 
+  steps:
+  - name: create istio policy
+    use:
+      template: ../../../_step-templates/istio-policy.yaml
   - try:
-    - create:
-        file: ./istio-policy.yaml
     - create:
         file: ./policy.yaml
   - name: create shell

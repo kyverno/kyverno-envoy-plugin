@@ -5,9 +5,10 @@ metadata:
   name: deny
 spec:
   steps: 
+  - name: create istio policy
+    use:
+      template: ../../../_step-templates/istio-policy.yaml
   - try:
-    - create:
-        file: ./istio-policy.yaml
     - create:
         file: ./policy.yaml
   - name: create shell

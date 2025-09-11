@@ -1,28 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
   name: policy-ordering
 spec:
-  namespace: app
   steps: 
   - try:
     - create:
         file: ./istio-policy.yaml
     - create:
         file: ./policy-b.yaml
-    - create:
-        file: ./shell.yaml
-    - wait:
-        apiVersion: v1
-        kind: Pod
-        timeout: 1m
-        for:
-          condition:
-            name: Ready
-            value: 'true'
+  - name: create shell
+    use:
+      template: ../../../_step-templates/shell.yaml
+  - try:
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"
         check:
           ($stdout): |-
             Unauthorized Request from Policy B
@@ -31,11 +25,8 @@ spec:
         file: ./policy-a.yaml
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"
         check:
           ($stdout): |-
             Unauthorized Request from Policy A
             http_code=403
-    finally:
-    - sleep:
-        duration: 10s

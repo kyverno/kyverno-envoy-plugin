@@ -4,7 +4,6 @@ kind: Test
 metadata:
   name: default
 spec:
-  namespace: app
   steps: 
   - try:
     - create:
@@ -25,6 +24,6 @@ spec:
             value: 'true'
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: true"
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"
         check:
           (wildcard('*http_code=200', $stdout)): true

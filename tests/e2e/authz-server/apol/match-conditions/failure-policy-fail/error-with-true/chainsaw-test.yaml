@@ -4,7 +4,6 @@ kind: Test
 metadata:
   name: error-with-true
 spec:
-  namespace: app
   steps: 
   - try:
     - create:
@@ -25,6 +24,6 @@ spec:
             value: 'true'
     - script:
         content: >
-          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get
         check:
           (wildcard('*http_code=403', $stdout)): true

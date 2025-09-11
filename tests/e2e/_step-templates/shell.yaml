@@ -66,4 +66,4 @@ spec:
           name: Ready
           value: 'true'
   - sleep:
-      duration: 1s
+      duration: 10s

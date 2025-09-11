@@ -8,9 +8,13 @@ spec:
   - name: create istio policy
     use:
       template: ../../../_step-templates/istio-policy.yaml
-  - try:
-    - create:
-        file: ./policy-b.yaml
+  - name: create policy
+    use:
+      template: ../../../_step-templates/policy.yaml
+      with:
+        bindings:
+        - name: file
+          value: policy-b.yaml
   - name: create shell
     use:
       template: ../../../_step-templates/shell.yaml
@@ -22,8 +26,14 @@ spec:
           ($stdout): |-
             Unauthorized Request from Policy B
             http_code=403
-    - create:
-        file: ./policy-a.yaml
+  - name: create policy
+    use:
+      template: ../../../_step-templates/policy.yaml
+      with:
+        bindings:
+        - name: file
+          value: policy-a.yaml
+  - try:
     - script:
         content: >
           kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"

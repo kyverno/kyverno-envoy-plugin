@@ -18,3 +18,5 @@ spec:
             name: kyverno-authz-server
           rules:
           - {}
+  - sleep:
+      duration: 1s

@@ -34,6 +34,8 @@ spec:
         - name: file
           value: policy-a.yaml
   - try:
+    - sleep:
+        duration: 10s
     - script:
         content: >
           kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin.app:8000/get -H "x-force-authorized: true"

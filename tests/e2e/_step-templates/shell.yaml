@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/steptemplate-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: shell
+spec:
+  try:
+  - create:
+      resource:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: curl
+  - create:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: curl
+          labels:
+            app: curl
+            service: curl
+        spec:
+          ports:
+          - port: 80
+            name: http
+          selector:
+            app: curl
+  - create:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: curl
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: curl
+          template:
+            metadata:
+              labels:
+                app: curl
+            spec:
+              terminationGracePeriodSeconds: 0
+              serviceAccountName: curl
+              containers:
+              - name: curl
+                image: curlimages/curl
+                command: ["/bin/sleep", "infinity"]
+                imagePullPolicy: IfNotPresent
+                volumeMounts:
+                - mountPath: /etc/curl/tls
+                  name: secret-volume
+              volumes:
+              - name: secret-volume
+                secret:
+                  secretName: curl-secret
+                  optional: true
+  finally:
+  - sleep:
+      duration: 10s

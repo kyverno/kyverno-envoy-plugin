@@ -11,8 +11,10 @@ spec:
         file: ./istio-policy.yaml
     - create:
         file: ./policy-b.yaml
-    - create:
-        file: ./shell.yaml
+  - name: create shell
+    use:
+      template: ../../../_step-templates/shell.yaml
+  - try:
     - wait:
         apiVersion: v1
         kind: Pod
@@ -37,6 +39,3 @@ spec:
           ($stdout): |-
             Unauthorized Request from Policy A
             http_code=403
-    finally:
-    - sleep:
-        duration: 10s

@@ -11,8 +11,10 @@ spec:
         file: ./istio-policy.yaml
     - create:
         file: ./policy.yaml
-    - create:
-        file: ./shell.yaml
+  - name: create shell
+    use:
+      template: ../../../../../_step-templates/shell.yaml
+  - try:
     - wait:
         apiVersion: v1
         kind: Pod
@@ -26,6 +28,3 @@ spec:
           kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get
         check:
           (wildcard('*http_code=200', $stdout)): true
-    finally:
-    - sleep:
-        duration: 10s

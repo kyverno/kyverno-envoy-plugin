@@ -94,6 +94,7 @@ codegen-crds: ## Generate CRDs
 codegen-crds: $(CONTROLLER_GEN)
 codegen-crds: $(REGISTER_GEN)
 	@echo Generate CRDs... >&2
+	@rm -rf .crds && mkdir -p .crds
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
 	@$(REGISTER_GEN) --go-header-file=./.hack/boilerplate.go.txt --output-file zz_generated.register.go ./apis/...
@@ -175,7 +176,6 @@ codegen-schemas-json: codegen-schemas-openapi
 	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
 	@mkdir -p ./.schemas/json
 	@cp ./.temp/.schemas/json/authorizationpolicy-envoy-*.json ./.schemas/json
-	@cp ./.temp/.schemas/json/validatingpolicy-envoy-*.json ./.schemas/json
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs

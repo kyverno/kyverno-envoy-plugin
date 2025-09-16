@@ -17,6 +17,7 @@ import (
 	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/fields"
@@ -86,7 +87,7 @@ func Command() *cobra.Command {
 							},
 							Cache: cache.Options{
 								ByObject: map[client.Object]cache.ByObject{
-									&v1alpha1.ValidatingPolicy{}: {
+									&vpol.ValidatingPolicy{}: {
 										Field: fields.OneTermEqualSelector("spec.evaluation.mode", "Envoy"),
 									},
 								},

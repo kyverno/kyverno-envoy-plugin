@@ -10,6 +10,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/webhook/validation"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/fields"
@@ -61,7 +62,7 @@ func Command() *cobra.Command {
 						},
 						Cache: cache.Options{
 							ByObject: map[client.Object]cache.ByObject{
-								&v1alpha1.ValidatingPolicy{}: {
+								&vpol.ValidatingPolicy{}: {
 									Field: fields.OneTermEqualSelector("spec.evaluation.mode", "Envoy"),
 								},
 							},
@@ -79,7 +80,7 @@ func Command() *cobra.Command {
 					}
 					// create vpol compiler
 					vpolCompiler := vpolcompiler.NewCompiler()
-					vpolCompileFunc := func(policy *v1alpha1.ValidatingPolicy) field.ErrorList {
+					vpolCompileFunc := func(policy *vpol.ValidatingPolicy) field.ErrorList {
 						_, err := vpolCompiler.Compile(policy)
 						fmt.Println("validating policy", policy.Name, err)
 						return err
@@ -89,7 +90,7 @@ func Command() *cobra.Command {
 					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(v).Complete(); err != nil {
 						return fmt.Errorf("failed to create webhook: %w", err)
 					}
-					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).WithValidator(v).Complete(); err != nil {
+					if err := ctrl.NewWebhookManagedBy(mgr).For(&vpol.ValidatingPolicy{}).WithValidator(v).Complete(); err != nil {
 						return fmt.Errorf("failed to create webhook: %w", err)
 					}
 					// create a cancellable context

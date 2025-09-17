@@ -21,7 +21,7 @@ import (
 
 var (
 	apolGVK = v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy")
-	vpolGVK = v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy")
+	vpolGVK = vpol.SchemeGroupVersion.WithKind("ValidatingPolicy")
 )
 
 func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {

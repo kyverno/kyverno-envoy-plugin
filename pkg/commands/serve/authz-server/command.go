@@ -80,6 +80,9 @@ func Command() *cobra.Command {
 						if err := v1alpha1.Install(scheme); err != nil {
 							return err
 						}
+						if err := vpol.Install(scheme); err != nil {
+							return err
+						}
 						mgr, err := ctrl.NewManager(config, ctrl.Options{
 							Scheme: scheme,
 							Metrics: metricsserver.Options{

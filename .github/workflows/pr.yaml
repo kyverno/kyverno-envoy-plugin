@@ -256,6 +256,10 @@ jobs:
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
           make install-cert-manager install-cluster-issuer
+      - name: Install VPOL
+        run: |
+          set -e
+          make install-vpol
       - name: Install chart
         run: |
           set -e
@@ -311,6 +315,10 @@ jobs:
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
           make install-cert-manager install-cluster-issuer
+      - name: Install VPOL
+        run: |
+          set -e
+          make install-vpol
       - name: Install chart
         run: |
           set -e

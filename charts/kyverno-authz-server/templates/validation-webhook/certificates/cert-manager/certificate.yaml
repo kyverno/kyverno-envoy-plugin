@@ -8,6 +8,8 @@ metadata:
     {{- include "validation-webhook.labels" . | nindent 4 }}
 spec:
   secretName: {{ template "validation-webhook.name" . }}
+  privateKey:
+    rotationPolicy: Always
   dnsNames:
     - {{ printf "%s.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
   {{- with .Values.certificates.certManager.issuerRef }}

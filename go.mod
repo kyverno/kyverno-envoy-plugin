@@ -8,7 +8,7 @@ require (
 	github.com/hairyhenderson/go-fsimpl v0.3.1
 	github.com/kyverno/kyverno v1.5.0-rc1.0.20250916070327-3f0a7a475d1d
 	github.com/kyverno/pkg/ext v0.0.0-20250303002756-48769d003e55
-	github.com/lestrrat-go/jwx/v3 v3.0.10
+	github.com/lestrrat-go/jwx/v3 v3.0.11
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
@@ -20,6 +20,11 @@ require (
 	k8s.io/client-go v0.34.1
 	sigs.k8s.io/controller-runtime v0.22.1
 	sigs.k8s.io/kubectl-validate v0.0.5-0.20241223122011-eb064d2f92d5
+)
+
+require (
+	github.com/lestrrat-go/dsig v1.0.0 // indirect
+	github.com/lestrrat-go/dsig-secp256k1 v1.0.0 // indirect
 )
 
 require (

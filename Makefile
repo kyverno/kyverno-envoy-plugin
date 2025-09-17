@@ -353,6 +353,14 @@ install-istio: $(HELM)
 		--set-string meshConfig.extensionProviders[0].envoyExtAuthzGrpc.port=9081
 
 ########
+# VPOL #
+########
+
+.PHONY: install-vpol
+install-vpol: ## Install Validating policy CRD
+	@kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/refs/heads/main/config/crds/policies.kyverno.io/policies.kyverno.io_validatingpolicies.yaml
+
+########
 # HELM #
 ########
 
@@ -374,6 +382,7 @@ deploy-kyverno-sidecar-injector: $(HELM)
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
 install-kyverno-sidecar-injector: kind-load-image
 install-kyverno-sidecar-injector: install-cluster-issuer
+install-kyverno-sidecar-injector: install-vpol
 install-kyverno-sidecar-injector: $(HELM)
 	@$(MAKE) deploy-kyverno-sidecar-injector
 
@@ -395,6 +404,7 @@ deploy-kyverno-authz-server: $(HELM)
 install-kyverno-authz-server: ## Install kyverno-authz-server chart
 install-kyverno-authz-server: kind-load-image
 install-kyverno-authz-server: install-cluster-issuer
+install-kyverno-authz-server: install-vpol
 install-kyverno-authz-server: $(HELM)
 	@$(MAKE) deploy-kyverno-authz-server
 

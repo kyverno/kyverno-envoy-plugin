@@ -5,14 +5,14 @@ import (
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 )
 
-var pol = &v1alpha1.ValidatingPolicy{
-	Spec: v1alpha1.ValidatingPolicySpec{
+var pol = &vpol.ValidatingPolicy{
+	Spec: vpol.ValidatingPolicySpec{
 		Variables: []admissionregistrationv1.Variable{
 			{
 				Name:       "force_authorized",

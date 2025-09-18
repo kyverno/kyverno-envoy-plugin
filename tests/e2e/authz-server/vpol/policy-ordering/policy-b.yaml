@@ -1,5 +1,5 @@
-# yaml-language-server: $schema=../../../../../.schemas/json/validatingpolicy-envoy-v1alpha1.json
-apiVersion: envoy.kyverno.io/v1alpha1
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/playground/refs/heads/main/schemas/json/v3/validatingpolicy-policies.kyverno.io-v1alpha1.json
+apiVersion: policies.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
   name: policy-b

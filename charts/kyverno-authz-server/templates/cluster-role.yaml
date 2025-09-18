@@ -11,6 +11,13 @@ rules:
   - envoy.kyverno.io
   resources:
   - authorizationpolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - policies.kyverno.io
+  resources:
   - validatingpolicies
   verbs:
   - get

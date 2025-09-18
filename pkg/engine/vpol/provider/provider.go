@@ -78,16 +78,18 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	compiled, errs := r.compiler.Compile(&policy)
-	if len(errs) > 0 {
-		fmt.Println(errs)
-		// No need to retry it
-		return ctrl.Result{}, nil
+	if policy.Spec.EvaluationMode() == "Envoy" {
+		compiled, errs := r.compiler.Compile(&policy)
+		if len(errs) > 0 {
+			fmt.Println(errs)
+			// No need to retry it
+			return ctrl.Result{}, nil
+		}
+		r.lock.Lock()
+		defer r.lock.Unlock()
+		r.policies[req.String()] = compiled
+		resetSortPolicies()
 	}
-	r.lock.Lock()
-	defer r.lock.Unlock()
-	r.policies[req.String()] = compiled
-	resetSortPolicies()
 	return ctrl.Result{}, nil
 }
 

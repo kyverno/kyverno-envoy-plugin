@@ -89,7 +89,6 @@ func Command() *cobra.Command {
 						return err
 					}
 					v := validation.NewValidator(apolCompileFunc, vpolCompileFunc)
-
 					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(v).Complete(); err != nil {
 						return fmt.Errorf("failed to create webhook: %w", err)
 					}

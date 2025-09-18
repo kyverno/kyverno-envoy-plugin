@@ -27,7 +27,10 @@ spec:
     singular: authorizationpolicy
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - deprecated: true
+    deprecationWarning: AuthorizationPolicy is deprecated and will be removed in the
+      next release, please migrate to ValidatingPolicy
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: AuthorizationPolicy defines an authorization policy resource

@@ -10,6 +10,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,shortName=apol,categories=kyverno
+// +kubebuilder:deprecatedversion:warning="AuthorizationPolicy is deprecated and will be removed in the next release, please migrate to ValidatingPolicy"
 
 // AuthorizationPolicy defines an authorization policy resource
 type AuthorizationPolicy struct {

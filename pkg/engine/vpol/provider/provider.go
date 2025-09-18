@@ -7,9 +7,9 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -18,7 +18,7 @@ import (
 
 func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
 	r := newPolicyReconciler(mgr.GetClient(), compiler)
-	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
+	if err := ctrl.NewControllerManagedBy(mgr).For(&vpol.ValidatingPolicy{}).Complete(r); err != nil {
 		return nil, fmt.Errorf("failed to construct manager: %w", err)
 	}
 	return r, nil
@@ -58,7 +58,7 @@ func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
 }
 
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var policy v1alpha1.ValidatingPolicy
+	var policy vpol.ValidatingPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
 		r.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {

@@ -94,12 +94,24 @@ codegen-crds: ## Generate CRDs
 codegen-crds: $(CONTROLLER_GEN)
 codegen-crds: $(REGISTER_GEN)
 	@echo Generate CRDs... >&2
+	@rm -rf .crds && mkdir -p .crds
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
-	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
+	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... \
+		crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false \
+		output:dir=$(CRDS_PATH)/envoy.kyverno.io
+	@$(CONTROLLER_GEN) paths=github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1/... \
+		crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false \
+		output:dir=$(CRDS_PATH)/policies.kyverno.io
 	@$(REGISTER_GEN) --go-header-file=./.hack/boilerplate.go.txt --output-file zz_generated.register.go ./apis/...
+	@rm $(CRDS_PATH)/policies.kyverno.io/policies.kyverno.io_deletingpolicies.yaml
+	@rm $(CRDS_PATH)/policies.kyverno.io/policies.kyverno.io_generatingpolicies.yaml
+	@rm $(CRDS_PATH)/policies.kyverno.io/policies.kyverno.io_imagevalidatingpolicies.yaml
+	@rm $(CRDS_PATH)/policies.kyverno.io/policies.kyverno.io_mutatingpolicies.yaml
+	@rm $(CRDS_PATH)/policies.kyverno.io/policies.kyverno.io_policyexceptions.yaml
 	@echo Copy generated CRDs to embed in the binary... >&2
 	@rm -rf pkg/data/crds && mkdir -p pkg/data/crds
-	@cp $(CRDS_PATH)/* pkg/data/crds
+	@cp $(CRDS_PATH)/envoy.kyverno.io/* pkg/data/crds
+	@cp $(CRDS_PATH)/policies.kyverno.io/* pkg/data/crds
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
@@ -115,7 +127,7 @@ codegen-helm-docs: ## Generate helm docs
 .PHONY: codegen-helm-crds
 codegen-helm-crds: codegen-crds ## Generate helm CRDs
 	@echo Generate helm crds... >&2
-	@cat $(CRDS_PATH)/* \
+	@cat $(CRDS_PATH)/envoy.kyverno.io/* \
 		| $(SED) -e '1i{{- if .Values.crds.install }}' \
 		| $(SED) -e '$$a{{- end }}' \
 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
@@ -127,7 +139,7 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
  		> ./charts/kyverno-authz-server/templates/crds.yaml
-	@cat $(CRDS_PATH)/* \
+	@cat $(CRDS_PATH)/envoy.kyverno.io/* \
 		| $(SED) -e '1i{{- if .Values.crds.install }}' \
 		| $(SED) -e '$$a{{- end }}' \
 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
@@ -158,7 +170,7 @@ codegen-schemas-openapi: $(KIND)
 	@mkdir -p ./.temp/.schemas/openapi/v2
 	@mkdir -p ./.temp/.schemas/openapi/v3/apis/envoy.kyverno.io
 	@$(KIND) create cluster --name schema --image $(KIND_IMAGE)
-	@kubectl create -f $(CRDS_PATH)
+	@kubectl create -f $(CRDS_PATH)/envoy.kyverno.io
 	@sleep 15
 	@kubectl get --raw /openapi/v2 > ./.temp/.schemas/openapi/v2/schema.json
 	@kubectl get --raw /openapi/v3/apis/envoy.kyverno.io/v1alpha1 > ./.temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json
@@ -175,7 +187,6 @@ codegen-schemas-json: codegen-schemas-openapi
 	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
 	@mkdir -p ./.schemas/json
 	@cp ./.temp/.schemas/json/authorizationpolicy-envoy-*.json ./.schemas/json
-	@cp ./.temp/.schemas/json/validatingpolicy-envoy-*.json ./.schemas/json
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
@@ -353,6 +364,14 @@ install-istio: $(HELM)
 		--set-string meshConfig.extensionProviders[0].envoyExtAuthzGrpc.port=9081
 
 ########
+# VPOL #
+########
+
+.PHONY: install-vpol
+install-vpol: ## Install Validating policy CRD
+	@kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/refs/heads/main/config/crds/policies.kyverno.io/policies.kyverno.io_validatingpolicies.yaml
+
+########
 # HELM #
 ########
 
@@ -374,6 +393,7 @@ deploy-kyverno-sidecar-injector: $(HELM)
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart
 install-kyverno-sidecar-injector: kind-load-image
 install-kyverno-sidecar-injector: install-cluster-issuer
+install-kyverno-sidecar-injector: install-vpol
 install-kyverno-sidecar-injector: $(HELM)
 	@$(MAKE) deploy-kyverno-sidecar-injector
 
@@ -395,6 +415,7 @@ deploy-kyverno-authz-server: $(HELM)
 install-kyverno-authz-server: ## Install kyverno-authz-server chart
 install-kyverno-authz-server: kind-load-image
 install-kyverno-authz-server: install-cluster-issuer
+install-kyverno-authz-server: install-vpol
 install-kyverno-authz-server: $(HELM)
 	@$(MAKE) deploy-kyverno-authz-server
 

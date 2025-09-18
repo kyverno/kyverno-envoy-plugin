@@ -11,6 +11,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
 	"github.com/kyverno/pkg/ext/resource/convert"
 	"github.com/kyverno/pkg/ext/resource/loader"
@@ -19,8 +20,8 @@ import (
 )
 
 var (
-	apol = v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy")
-	vpol = v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy")
+	apolGVK = v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy")
+	vpolGVK = vpol.SchemeGroupVersion.WithKind("ValidatingPolicy")
 )
 
 func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
@@ -80,7 +81,7 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 				continue
 			}
 			switch gvk {
-			case apol:
+			case apolGVK:
 				typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
 				if err != nil {
 					return nil, fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
@@ -90,8 +91,8 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 					return nil, fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
 				}
 				policies = append(policies, compiled)
-			case vpol:
-				typed, err := convert.To[v1alpha1.ValidatingPolicy](untyped)
+			case vpolGVK:
+				typed, err := convert.To[vpol.ValidatingPolicy](untyped)
 				if err != nil {
 					return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
 				}

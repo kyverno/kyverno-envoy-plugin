@@ -13,14 +13,11 @@ import (
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -63,13 +60,6 @@ func Command() *cobra.Command {
 						Metrics: metricsserver.Options{
 							BindAddress: metricsAddress,
 						},
-						Cache: cache.Options{
-							ByObject: map[client.Object]cache.ByObject{
-								&vpol.ValidatingPolicy{}: {
-									Field: fields.OneTermEqualSelector("spec.evaluation.mode", "Envoy"),
-								},
-							},
-						},
 					})
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
@@ -103,10 +93,6 @@ func Command() *cobra.Command {
 						defer cancel()
 						mgrErr = mgr.Start(ctx)
 					})
-					if !mgr.GetCache().WaitForCacheSync(ctx) {
-						defer cancel()
-						return fmt.Errorf("failed to wait for cache sync")
-					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
 					// run servers

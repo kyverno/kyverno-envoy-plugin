@@ -39,8 +39,6 @@ kubectl<span class=w> </span>apply<span class=w> </span><span class=se>\</span>
 <span class=s>metadata:</span>
 <span class=s>  name: httpbin</span>
 <span class=s>  namespace: demo</span>
-<span class=s>  labels:</span>
-<span class=s>    example: httpbin-route</span>
 <span class=s>spec:</span>
 <span class=s>  parentRefs:</span>
 <span class=s>  - name: http</span>
@@ -78,6 +76,7 @@ helm<span class=w> </span>install<span class=w> </span>kyverno-authz-server<span
 <span class=w>  </span>--namespace<span class=w> </span>kyverno<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--wait<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--repo<span class=w> </span>https://kyverno.github.io/kyverno-envoy-plugin<span class=w> </span>kyverno-authz-server<span class=w> </span><span class=se>\</span>
+<span class=w>  </span>--devel<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--set<span class=w> </span>service.appProtocol<span class=o>=</span><span class=s2>&quot;kubernetes.io/h2c&quot;</span><span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.group<span class=o>=</span>cert-manager.io<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.kind<span class=o>=</span>ClusterIssuer<span class=w> </span><span class=se>\</span>
@@ -119,7 +118,7 @@ kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>
 <span class=s>        .WithResponseHeader(&quot;x-add-custom-response-header&quot;, &quot;added&quot;)</span>
 <span class=s>        .Response()</span>
 <span class=s>EOF</span>
-</code></pre></div> <p>TBC</p> <h2 id=create-a-gatewayextension-to-delegate-auth-to-the-kyverno-authz-server>Create a GatewayExtension to delegate auth to the Kyverno Authz Server<a class=headerlink href=#create-a-gatewayextension-to-delegate-auth-to-the-kyverno-authz-server title="Permanent link">&para;</a></h2> <div class=highlight><pre><span></span><code>kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+</code></pre></div> <h2 id=create-a-gatewayextension-to-delegate-auth-to-the-kyverno-authz-server>Create a GatewayExtension to delegate auth to the Kyverno Authz Server<a class=headerlink href=#create-a-gatewayextension-to-delegate-auth-to-the-kyverno-authz-server title="Permanent link">&para;</a></h2> <div class=highlight><pre><span></span><code>kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
 <span class=s>apiVersion: gateway.kgateway.dev/v1alpha1</span>
 <span class=s>kind: GatewayExtension</span>
 <span class=s>metadata:</span>

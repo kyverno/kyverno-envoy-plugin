@@ -5,10 +5,10 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -22,7 +22,7 @@ const (
 	VariablesKey = "variables"
 )
 
-type Compiler = engine.Compiler[*v1alpha1.ValidatingPolicy]
+type Compiler = engine.Compiler[*vpol.ValidatingPolicy]
 
 func NewCompiler() Compiler {
 	return &compiler{}
@@ -30,7 +30,7 @@ func NewCompiler() Compiler {
 
 type compiler struct{}
 
-func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPolicy, field.ErrorList) {
+func (c *compiler) Compile(policy *vpol.ValidatingPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	var allErrs field.ErrorList
 	base, err := authzcel.NewEnv()
 	if err != nil {

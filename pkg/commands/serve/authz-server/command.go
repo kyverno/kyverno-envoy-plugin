@@ -91,7 +91,7 @@ func Command() *cobra.Command {
 							Cache: cache.Options{
 								ByObject: map[client.Object]cache.ByObject{
 									&vpol.ValidatingPolicy{}: {
-										Field: fields.OneTermEqualSelector("spec.evaluation.mode", "Envoy"),
+										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeEnvoy)),
 									},
 								},
 							},

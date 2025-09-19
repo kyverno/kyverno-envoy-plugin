@@ -7,6 +7,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
@@ -78,7 +79,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if policy.Spec.EvaluationMode() == "Envoy" {
+	if policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeEnvoy {
 		compiled, errs := r.compiler.Compile(&policy)
 		if len(errs) > 0 {
 			fmt.Println(errs)

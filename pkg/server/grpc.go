@@ -10,7 +10,8 @@ import (
 )
 
 func RunGrpc(ctx context.Context, server *grpc.Server, listener net.Listener) error {
-	defer ctrl.LoggerFrom(ctx).Info("GRPC Server stopped")
+	logger := ctrl.LoggerFrom(ctx).WithValues("address", listener.Addr())
+	defer logger.Info("GRPC Server stopped")
 	// create a wait group
 	var group wait.Group
 	// wait all tasks in the group are over
@@ -23,11 +24,11 @@ func RunGrpc(ctx context.Context, server *grpc.Server, listener net.Listener) er
 	group.StartWithContext(ctx, func(ctx context.Context) {
 		// wait context cancelled
 		<-ctx.Done()
-		ctrl.LoggerFrom(ctx).Info("GRPC Server shutting down...")
+		logger.Info("GRPC Server shutting down...")
 		// gracefully shutdown server
 		server.GracefulStop()
 	})
-	ctrl.LoggerFrom(ctx).Info("GRPC Server starting...", "address", listener.Addr())
+	logger.Info("GRPC Server starting...")
 	// serve
 	return server.Serve(listener)
 }

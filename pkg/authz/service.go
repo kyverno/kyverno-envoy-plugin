@@ -17,7 +17,7 @@ func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 	response, err := s.check(ctx, r)
 	// log error if any
 	if err != nil {
-		ctrl.LoggerFrom(ctx).Error(err, "check failed")
+		ctrl.LoggerFrom(ctx).Error(err, "Check failed")
 	}
 	// return response and error
 	return response, err

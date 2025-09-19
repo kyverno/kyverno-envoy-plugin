@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -10,18 +9,21 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
-	"golang.org/x/exp/maps"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
-	r := newPolicyReconciler(mgr.GetClient(), compiler)
-	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
-		return nil, fmt.Errorf("failed to construct manager: %w", err)
+	provider := newPolicyReconciler(mgr.GetClient(), compiler)
+	builder := ctrl.
+		NewControllerManagedBy(mgr).
+		For(&v1alpha1.AuthorizationPolicy{})
+	if err := builder.Complete(provider); err != nil {
+		return nil, fmt.Errorf("failed to construct controller: %w", err)
 	}
-	return r, nil
+	return provider, nil
 }
 
 type policyReconciler struct {
@@ -44,27 +46,16 @@ func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *poli
 	}
 }
 
-func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
-	if in == nil {
-		return nil
-	}
-	out := make([]V, 0, len(in))
-	keys := maps.Keys(in)
-	slices.Sort(keys)
-	for _, key := range keys {
-		out = append(out, in[key])
-	}
-	return out
-}
-
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := ctrl.LoggerFrom(ctx)
+	logger.Info("Reconcile...")
 	var policy v1alpha1.AuthorizationPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
 		r.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {
 			r.lock.Lock()
 			defer r.lock.Unlock()
-			return mapToSortedSlice(r.policies)
+			return utils.ToSortedSlice(r.policies)
 		})
 	}
 	err := r.client.Get(ctx, req.NamespacedName, &policy)
@@ -80,7 +71,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	compiled, errs := r.compiler.Compile(&policy)
 	if len(errs) > 0 {
-		ctrl.LoggerFrom(ctx).Error(errs.ToAggregate(), "policy compilation error", "name", policy.Name)
+		logger.Error(errs.ToAggregate(), "Policy compilation error")
 		// No need to retry it
 		return ctrl.Result{}, nil
 	}

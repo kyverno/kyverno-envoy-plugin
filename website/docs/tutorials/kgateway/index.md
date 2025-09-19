@@ -90,8 +90,6 @@ kind: HTTPRoute
 metadata:
   name: httpbin
   namespace: demo
-  labels:
-    example: httpbin-route
 spec:
   parentRefs:
   - name: http
@@ -147,6 +145,7 @@ helm install kyverno-authz-server \
   --namespace kyverno --create-namespace \
   --wait \
   --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
+  --devel \
   --set service.appProtocol="kubernetes.io/h2c" \
   --set certificates.certManager.issuerRef.group=cert-manager.io \
   --set certificates.certManager.issuerRef.kind=ClusterIssuer \
@@ -199,8 +198,6 @@ spec:
         .Response()
 EOF
 ```
-
-TBC
 
 ## Create a GatewayExtension to delegate auth to the Kyverno Authz Server
 

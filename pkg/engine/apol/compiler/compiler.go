@@ -11,7 +11,9 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -19,15 +21,20 @@ const (
 	ImageDataKey = "image"
 	ObjectKey    = "object"
 	VariablesKey = "variables"
+	ResourceKey  = "resource"
 )
 
 type Compiler = engine.Compiler[*v1alpha1.AuthorizationPolicy]
 
-func NewCompiler() Compiler {
-	return &compiler{}
+func NewCompiler(k8sClient dynamic.Interface) Compiler {
+	return &compiler{
+		k8sClient: k8sClient,
+	}
 }
 
-type compiler struct{}
+type compiler struct {
+	k8sClient dynamic.Interface
+}
 
 func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	var allErrs field.ErrorList
@@ -41,6 +48,7 @@ func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.Compile
 		cel.Variable(ImageDataKey, imagedata.ContextType),
 		cel.Variable(ObjectKey, envoy.CheckRequest),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
+		cel.Variable(ResourceKey, resource.ContextType),
 		cel.CustomTypeProvider(provider),
 	)
 	if err != nil {

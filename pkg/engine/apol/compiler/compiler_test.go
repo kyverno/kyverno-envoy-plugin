@@ -46,7 +46,7 @@ var pol = &v1alpha1.AuthorizationPolicy{
 }
 
 func TestCompiler(t *testing.T) {
-	compiler := compiler.NewCompiler()
+	compiler := compiler.NewCompiler(nil)
 
 	compiled, errList := compiler.Compile(pol)
 	assert.NoError(t, errList.ToAggregate())

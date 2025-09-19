@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -10,7 +9,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
-	"golang.org/x/exp/maps"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,19 +43,6 @@ func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *poli
 	}
 }
 
-func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
-	if in == nil {
-		return nil
-	}
-	out := make([]V, 0, len(in))
-	keys := maps.Keys(in)
-	slices.Sort(keys)
-	for _, key := range keys {
-		out = append(out, in[key])
-	}
-	return out
-}
-
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var policy v1alpha1.AuthorizationPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
@@ -64,7 +50,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		r.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {
 			r.lock.Lock()
 			defer r.lock.Unlock()
-			return mapToSortedSlice(r.policies)
+			return utils.ToSortedSlice(r.policies)
 		})
 	}
 	err := r.client.Get(ctx, req.NamespacedName, &policy)

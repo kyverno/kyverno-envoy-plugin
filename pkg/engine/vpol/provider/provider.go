@@ -82,7 +82,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeEnvoy {
 		compiled, errs := r.compiler.Compile(&policy)
 		if len(errs) > 0 {
-			fmt.Println(errs)
+			ctrl.LoggerFrom(ctx).Error(errs.ToAggregate(), "policy compilation error", "name", policy.Name)
 			// No need to retry it
 			return ctrl.Result{}, nil
 		}

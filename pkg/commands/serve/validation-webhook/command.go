@@ -68,14 +68,14 @@ func Command() *cobra.Command {
 					apolCompiler := apolcompiler.NewCompiler()
 					apolCompileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
 						_, err := apolCompiler.Compile(policy)
-						fmt.Println("authorization policy", policy.Name, err)
+						ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "authorization policy compilation error", "name", policy.Name)
 						return err
 					}
 					// create vpol compiler
 					vpolCompiler := vpolcompiler.NewCompiler()
 					vpolCompileFunc := func(policy *vpol.ValidatingPolicy) field.ErrorList {
 						_, err := vpolCompiler.Compile(policy)
-						fmt.Println("validating policy", policy.Name, err)
+						ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "validating policy compilation error", "name", policy.Name)
 						return err
 					}
 					v := validation.NewValidator(apolCompileFunc, vpolCompileFunc)

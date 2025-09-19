@@ -16,11 +16,14 @@ import (
 )
 
 func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
-	r := newPolicyReconciler(mgr.GetClient(), compiler)
-	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).Complete(r); err != nil {
-		return nil, fmt.Errorf("failed to construct manager: %w", err)
+	provider := newPolicyReconciler(mgr.GetClient(), compiler)
+	builder := ctrl.
+		NewControllerManagedBy(mgr).
+		For(&v1alpha1.AuthorizationPolicy{})
+	if err := builder.Complete(provider); err != nil {
+		return nil, fmt.Errorf("failed to construct controller: %w", err)
 	}
-	return r, nil
+	return provider, nil
 }
 
 type policyReconciler struct {
@@ -44,6 +47,8 @@ func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *poli
 }
 
 func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := ctrl.LoggerFrom(ctx)
+	logger.Info("Reconcile...")
 	var policy v1alpha1.AuthorizationPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
@@ -66,7 +71,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	compiled, errs := r.compiler.Compile(&policy)
 	if len(errs) > 0 {
-		fmt.Println(errs)
+		logger.Error(errs.ToAggregate(), "Policy compilation error")
 		// No need to retry it
 		return ctrl.Result{}, nil
 	}

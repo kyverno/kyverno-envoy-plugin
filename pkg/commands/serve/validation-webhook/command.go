@@ -66,16 +66,17 @@ func Command() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
-					// create apol compiler
-					apolCompiler := apolcompiler.NewCompiler()
-					apolCompileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
-						_, err := apolCompiler.Compile(policy)
-						ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Authorization policy compilation error")
-						return err
-					}
 
 					k8sClient, err := dynamic.NewForConfig(config)
 					if err != nil {
+						return err
+					}
+
+					// create apol compiler
+					apolCompiler := apolcompiler.NewCompiler(k8sClient)
+					apolCompileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
+						_, err := apolCompiler.Compile(policy)
+						ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Authorization policy compilation error")
 						return err
 					}
 

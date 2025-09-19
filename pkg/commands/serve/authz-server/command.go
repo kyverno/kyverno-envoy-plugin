@@ -73,7 +73,7 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 					// create compilers
-					apolCompiler := apolcompiler.NewCompiler()
+					apolCompiler := apolcompiler.NewCompiler(k8sClient)
 					vpolCompiler := vpolcompiler.NewCompiler(k8sClient)
 					// create external providers
 					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, externalPolicySources...)

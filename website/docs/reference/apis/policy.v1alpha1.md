@@ -23,15 +23,6 @@ auto_generated: true
 | `metadata` | [`meta/v1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta) | :white_check_mark: |  | *No description provided.* |
 | `spec` | [`AuthorizationPolicySpec`](#envoy-kyverno-io-v1alpha1-AuthorizationPolicySpec) | :white_check_mark: |  | *No description provided.* |
 
-## AdmissionConfiguration     {#envoy-kyverno-io-v1alpha1-AdmissionConfiguration}
-
-**Appears in:**
-    
-
-| Field | Type | Required | Inline | Description |
-|---|---|---|---|---|
-| `enabled` | `bool` |  |  | <p>Enabled controls if rules are applied during admission. Optional. Default value is "true".</p> |
-
 ## Authorization     {#envoy-kyverno-io-v1alpha1-Authorization}
 
 **Appears in:**
@@ -62,21 +53,5 @@ auto_generated: true
 | `variables` | [`[]admissionregistration/v1.Variable`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#variable-v1-admissionregistration) |  |  | <p>Variables contain definitions of variables that can be used in composition of other expressions. Each variable is defined as a named CEL expression. The variables defined here will be available under `variables` in other expressions of the policy except MatchConditions because MatchConditions are evaluated before the rest of the policy. The expression of a variable can refer to other variables defined earlier in the list but not those after. Thus, Variables must be sorted by the order of first appearance and acyclic.</p> |
 | `deny` | [`[]Authorization`](#envoy-kyverno-io-v1alpha1-Authorization) |  |  | <p>Deny contain CEL expressions which is used to deny a request.</p> |
 | `allow` | [`[]Authorization`](#envoy-kyverno-io-v1alpha1-Authorization) |  |  | <p>Allow contain CEL expressions which is used to allow a request.</p> |
-
-## BackgroundConfiguration     {#envoy-kyverno-io-v1alpha1-BackgroundConfiguration}
-
-**Appears in:**
-    
-
-| Field | Type | Required | Inline | Description |
-|---|---|---|---|---|
-| `enabled` | `bool` |  |  | <p>Enabled controls if rules are applied to existing resources during a background scan. Optional. Default value is "true". The value must be set to "false" if the policy rule uses variables that are only available in the admission review request (e.g. user name).</p> |
-
-## EvaluationMode     {#envoy-kyverno-io-v1alpha1-EvaluationMode}
-
-(Alias of `string`)
-
-**Appears in:**
-    
 
   

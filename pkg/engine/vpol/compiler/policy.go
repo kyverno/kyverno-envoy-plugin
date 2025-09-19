@@ -14,12 +14,15 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apiserver/pkg/cel/lazy"
+	"k8s.io/client-go/dynamic"
 )
 
 type compiledPolicy struct {
+	client          dynamic.Interface
 	failurePolicy   admissionregistrationv1.FailurePolicyType
 	matchConditions []cel.Program
 	variables       map[string]cel.Program
@@ -59,10 +62,13 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 		if err != nil {
 			return nil, err
 		}
+		resourceProvider := variables.NewResourceProvider(p.client)
+
 		vars := lazy.NewMapValue(authzcel.VariablesType)
 		data := map[string]any{
 			HttpKey:      http.Context{ContextInterface: http.NewHTTP(nil)},
 			ImageDataKey: imagedata.Context{ContextInterface: loader},
+			ResourceKey:  resource.Context{ContextInterface: resourceProvider},
 			ObjectKey:    r,
 			VariablesKey: vars,
 		}

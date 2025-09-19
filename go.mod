@@ -22,6 +22,8 @@ require (
 	sigs.k8s.io/kubectl-validate v0.0.5-0.20241223122011-eb064d2f92d5
 )
 
+require github.com/creack/pty v1.1.19 // indirect
+
 require (
 	github.com/lestrrat-go/dsig v1.0.0 // indirect
 	github.com/lestrrat-go/dsig-secp256k1 v1.0.0 // indirect

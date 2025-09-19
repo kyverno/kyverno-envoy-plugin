@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -71,8 +72,14 @@ func Command() *cobra.Command {
 						fmt.Println("authorization policy", policy.Name, err)
 						return err
 					}
+
+					k8sClient, err := dynamic.NewForConfig(config)
+					if err != nil {
+						return err
+					}
+
 					// create vpol compiler
-					vpolCompiler := vpolcompiler.NewCompiler()
+					vpolCompiler := vpolcompiler.NewCompiler(k8sClient)
 					vpolCompileFunc := func(policy *vpol.ValidatingPolicy) field.ErrorList {
 						_, err := vpolCompiler.Compile(policy)
 						fmt.Println("validating policy", policy.Name, err)

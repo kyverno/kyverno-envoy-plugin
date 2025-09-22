@@ -14,7 +14,7 @@ LD_FLAGS                           := "-s -w -X $(PACKAGE)/pkg/version.BuildVers
 else
 LD_FLAGS                           := "-s -w"
 endif
-KIND_IMAGE                         ?= kindest/node:v1.31.1
+KIND_IMAGE                         ?= kindest/node:v1.34.0
 REGISTRY                           ?= ghcr.io
 REPO                               ?= kyverno
 IMAGE                              ?= kyverno-envoy-plugin

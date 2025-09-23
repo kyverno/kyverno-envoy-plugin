@@ -9,11 +9,17 @@ import (
 
 func Command() *cobra.Command {
 	command := &cobra.Command{
-		Use:   "serve",
-		Short: "Run Kyverno Envoy Plugin servers",
+		Use:          "serve",
+		Short:        "Run Kyverno Envoy Plugin servers",
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Help()
+		},
 	}
-	command.AddCommand(authzserver.Command())
-	command.AddCommand(sidecarinjector.Command())
-	command.AddCommand(validationwebhook.Command())
+	command.AddCommand(
+		authzserver.Command(),
+		sidecarinjector.Command(),
+		validationwebhook.Command(),
+	)
 	return command
 }

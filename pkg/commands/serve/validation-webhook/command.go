@@ -60,6 +60,7 @@ func Command() *cobra.Command {
 						Metrics: metricsserver.Options{
 							BindAddress: metricsAddress,
 						},
+						LeaderElection: false,
 					})
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)

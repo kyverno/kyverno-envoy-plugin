@@ -232,6 +232,8 @@ containers:
       - --probes-address=:9080
       - --grpc-address=:9081
       - --metrics-address=:9082
+      - --leader-election=true
+      - --leader-election-id={{ template "kyverno-authz-server.name" . }}
 
 service:
 

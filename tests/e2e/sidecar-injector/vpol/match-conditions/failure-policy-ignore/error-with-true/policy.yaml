@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyverno-authz-server
+  namespace: app
+data:
+  policy.yaml: |
+    apiVersion: policies.kyverno.io/v1alpha1
+    kind: ValidatingPolicy
+    metadata:
+      name: policy
+    spec:
+      evaluation:
+        mode: Envoy
+      failurePolicy: Ignore
+      matchConditions:
+      - name: error
+        expression: '(2 / 0) == 1'
+      - name: 'true'
+        expression: 'true'
+      validations:
+      - expression: >
+          envoy
+            .Denied(403)
+            .WithBody("Unauthorized Request")
+            .Response()

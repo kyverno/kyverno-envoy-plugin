@@ -38,6 +38,8 @@ func Command() *cobra.Command {
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
 	var kubePolicySource bool
+	var leaderElection bool
+	var leaderElectionID string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -95,6 +97,8 @@ func Command() *cobra.Command {
 									},
 								},
 							},
+							LeaderElection:   leaderElection,
+							LeaderElectionID: leaderElectionID,
 						})
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
@@ -148,6 +152,8 @@ func Command() *cobra.Command {
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
+	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
+	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
 	return command
 }
 

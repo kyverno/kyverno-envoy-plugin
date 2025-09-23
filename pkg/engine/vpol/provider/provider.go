@@ -12,15 +12,20 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
 	provider := newPolicyReconciler(mgr.GetClient(), compiler)
 	builder := ctrl.
 		NewControllerManagedBy(mgr).
-		For(&vpol.ValidatingPolicy{})
+		For(&vpol.ValidatingPolicy{}).
+		WithOptions(controller.Options{
+			NeedLeaderElection: ptr.To(false),
+		})
 	if err := builder.Complete(provider); err != nil {
 		return nil, fmt.Errorf("failed to construct controller: %w", err)
 	}

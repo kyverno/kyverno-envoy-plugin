@@ -2,6 +2,7 @@ package sidecar
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func Sidecar(image string, externalPolicySources ...string) corev1.Container {
@@ -28,9 +29,10 @@ func Sidecar(image string, externalPolicySources ...string) corev1.Container {
 			"--external-policy-source=file:///data/kyverno-authz-server",
 		},
 		VolumeMounts: []corev1.VolumeMount{{
-			Name:      "kyverno-authz-server",
-			ReadOnly:  true,
-			MountPath: "/data/kyverno-authz-server",
+			Name:             "kyverno-authz-server",
+			ReadOnly:         true,
+			MountPropagation: ptr.To(corev1.MountPropagationHostToContainer),
+			MountPath:        "/data/kyverno-authz-server",
 		},
 		},
 	}
@@ -55,6 +57,7 @@ func Inject(pod corev1.Pod, container corev1.Container) corev1.Pod {
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: "kyverno-authz-server",
 				},
+				Optional: ptr.To(true),
 			},
 		},
 	})

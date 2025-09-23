@@ -250,7 +250,7 @@ jobs:
         run: |
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
-          KYVERNO_AUTHZ_SERVICE=kyverno-authz-server.local make install-istio
+          KYVERNO_AUTHZ_SERVICE=kyverno-authz-server.local make install-istio install-service-entry
       - name: Setup cert-manager
         run: |
           set -e
@@ -265,6 +265,13 @@ jobs:
           set -e
           export HELM=${{ steps.helm.outputs.helm-path }}
           make deploy-kyverno-sidecar-injector
+      - name: Install sample app
+        run: |
+          set -e
+          kubectl create ns app
+          kubectl label namespace app istio-injection=enabled
+          kubectl label namespace app kyverno-injection=enabled
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.24/samples/httpbin/httpbin.yaml -n app
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e/sidecar-injector
 

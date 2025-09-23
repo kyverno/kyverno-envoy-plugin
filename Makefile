@@ -363,6 +363,13 @@ install-istio: $(HELM)
 		--set meshConfig.extensionProviders[0].envoyExtAuthzGrpc.service=$(KYVERNO_AUTHZ_SERVICE) \
 		--set-string meshConfig.extensionProviders[0].envoyExtAuthzGrpc.port=9081
 
+.PHONY: install-service-entry
+install-service-entry: ## Install istio service entry
+install-service-entry: install-istio
+install-service-entry:
+	@echo Install istio service entry... >&2
+	@kubectl apply -f .manifests/istio/service-entry.yaml
+
 ########
 # VPOL #
 ########

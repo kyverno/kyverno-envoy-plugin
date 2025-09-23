@@ -4,3 +4,5 @@ metadata:
   name: pod
 spec:
   (length(containers)): 1
+status:
+  phase: Running

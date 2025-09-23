@@ -10,3 +10,5 @@ spec:
     - sleep
     - 1d
   - name: kyverno-authz-server
+status:
+  phase: Running

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func TestSidecar(t *testing.T) {
@@ -34,7 +35,14 @@ func TestSidecar(t *testing.T) {
 				"--grpc-address=:9081",
 				"--metrics-address=:9082",
 				"--kube-policy-source=false",
+				"--external-policy-source=file:///data/kyverno-authz-server",
 			},
+			VolumeMounts: []corev1.VolumeMount{{
+				Name:             "kyverno-authz-server",
+				ReadOnly:         true,
+				MountPropagation: ptr.To(corev1.MountPropagationHostToContainer),
+				MountPath:        "/data/kyverno-authz-server",
+			}},
 		},
 	}}
 	for _, tt := range tests {
@@ -61,6 +69,17 @@ func TestInject(t *testing.T) {
 				Containers: []corev1.Container{
 					sidecar,
 				},
+				Volumes: []corev1.Volume{{
+					Name: "kyverno-authz-server",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "kyverno-authz-server",
+							},
+							Optional: ptr.To(true),
+						},
+					},
+				}},
 			},
 		},
 	}, {
@@ -102,6 +121,17 @@ func TestInject(t *testing.T) {
 					},
 					sidecar,
 				},
+				Volumes: []corev1.Volume{{
+					Name: "kyverno-authz-server",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "kyverno-authz-server",
+							},
+							Optional: ptr.To(true),
+						},
+					},
+				}},
 			},
 		},
 	},

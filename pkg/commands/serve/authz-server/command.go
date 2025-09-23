@@ -152,7 +152,7 @@ func Command() *cobra.Command {
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
-	command.Flags().BoolVar(&leaderElection, "leader-election", true, "Enable leader election")
+	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
 	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
 	return command
 }

@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: kyverno-authz-server
+spec:
+  hosts:
+  - kyverno-authz-server.local
+  endpoints:
+  - address: 127.0.0.1
+  ports:
+  - name: grpc
+    number: 9081
+    protocol: GRPC
+  resolution: STATIC

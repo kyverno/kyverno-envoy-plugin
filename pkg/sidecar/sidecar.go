@@ -2,6 +2,7 @@ package sidecar
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func Sidecar(image string, externalPolicySources ...string) corev1.Container {
@@ -25,6 +26,14 @@ func Sidecar(image string, externalPolicySources ...string) corev1.Container {
 			"--grpc-address=:9081",
 			"--metrics-address=:9082",
 			"--kube-policy-source=false",
+			"--external-policy-source=file:///data/kyverno-authz-server",
+		},
+		VolumeMounts: []corev1.VolumeMount{{
+			Name:             "kyverno-authz-server",
+			ReadOnly:         true,
+			MountPropagation: ptr.To(corev1.MountPropagationHostToContainer),
+			MountPath:        "/data/kyverno-authz-server",
+		},
 		},
 	}
 	for _, source := range externalPolicySources {
@@ -41,5 +50,16 @@ func Inject(pod corev1.Pod, container corev1.Container) corev1.Pod {
 		}
 	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+		Name: "kyverno-authz-server",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "kyverno-authz-server",
+				},
+				Optional: ptr.To(true),
+			},
+		},
+	})
 	return pod
 }

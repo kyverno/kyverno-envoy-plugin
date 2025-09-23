@@ -12,6 +12,11 @@ spec:
     try:
     - apply:
         file: policy.yaml
+    - delete:
+        ref:
+          apiVersion: v1
+          kind: Pod
+          namespace: app
   - name: create shell
     use:
       template: ../../../_step-templates/shell.yaml

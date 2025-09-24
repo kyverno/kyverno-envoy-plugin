@@ -113,7 +113,7 @@ helm install kyverno-authz-server \
   --set certificates.certManager.issuerRef.name=selfsigned-issuer
 ```
 
-### Deploy a sample application
+### Deploy the sample application
 
 Httpbin is a well-known application that can be used to test HTTP requests and helps to show quickly how we can play with the request and response attributes.
 

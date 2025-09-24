@@ -116,6 +116,61 @@ kubectl apply \
   -f https://raw.githubusercontent.com/kyverno/kyverno/refs/heads/main/config/crds/policies.kyverno.io/policies.kyverno.io_validatingpolicies.yaml
 ```
 
+### Create the demo Namespace
+
+```bash
+# create the demo namespace
+kubectl create ns demo
+
+# label the namespace to inject the envoy proxy
+kubectl label namespace demo istio-injection=enabled
+
+# label the namespace to inject the authz server sidecar
+kubectl label namespace demo kyverno-injection=enabled
+```
+
+### Deploy a Kyverno ValidatingPolicy
+
+A Kyverno `ValidatingPolicy` defines the rules used by the Kyverno authz server to make a decision based on a given Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest).
+
+It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming `CheckRequest` and is expected to produce an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) in return.
+
+
+!!!note "Sidecar can't talk with API Server"
+    Because the sidecar usually doesn't have the permissions to fetch policies from the API server, we need to provide the policies using an external source.
+    In this example, we use a config map.
+
+```bash
+# deploy kyverno validating policy
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyverno-authz-server
+  namespace: demo
+data:
+  policy.yaml: |
+    apiVersion: policies.kyverno.io/v1alpha1
+    kind: ValidatingPolicy
+    metadata:
+      name: demo
+    spec:
+      failurePolicy: Fail
+      evaluation:
+        mode: Envoy
+      variables:
+      - name: force_authorized
+        expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
+      - name: allowed
+        expression: variables.force_authorized in ["enabled", "true"]
+      validations:
+      - expression: >-
+          !variables.allowed ? envoy.Denied(403).Response() : null
+EOF
+```
+
+This simple policy will deny requests if they don't contain the header `x-force-authorized` with the value `enabled` or `true`.
+
 ### Deploy the Sidecar injector
 
 Now we can deploy the Kyverno Authz Server.
@@ -134,20 +189,11 @@ helm install kyverno-authz-server \
   --set certificates.certManager.issuerRef.name=selfsigned-issuer
 ```
 
-### Deploy a sample application
+### Deploy the sample application
 
 Httpbin is a well-known application that can be used to test HTTP requests and helps to show quickly how we can play with the request and response attributes.
 
 ```bash
-# create the demo namespace
-kubectl create ns demo
-
-# label the namespace to inject the envoy proxy
-kubectl label namespace demo istio-injection=enabled
-
-# label the namespace to inject the authz server sidecar
-kubectl label namespace demo kyverno-injection=enabled
-
 # deploy the httpbin application
 kubectl apply \
   -n demo \
@@ -183,36 +229,6 @@ Notice that in this resource, we define the Kyverno Authz Server `extensionProvi
     name: kyverno-authz-server.local
 [...]
 ```
-
-### Deploy a Kyverno ValidatingPolicy
-
-A Kyverno `ValidatingPolicy` defines the rules used by the Kyverno authz server to make a decision based on a given Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest).
-
-It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming `CheckRequest` and is expected to produce an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) in return.
-
-```bash
-# deploy kyverno validating policy
-kubectl apply -f - <<EOF
-apiVersion: policies.kyverno.io/v1alpha1
-kind: ValidatingPolicy
-metadata:
-  name: demo
-spec:
-  failurePolicy: Fail
-  evaluation:
-    mode: Envoy
-  variables:
-  - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
-  validations:
-  - expression: >-
-      !variables.allowed ? envoy.Denied(403).Response() : null
-EOF
-```
-
-This simple policy will deny requests if they don't contain the header `x-force-authorized` with the value `enabled` or `true`.
 
 ## Testing
 

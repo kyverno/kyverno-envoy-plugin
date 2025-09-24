@@ -18,7 +18,7 @@ Then you will interface [Istio](https://istio.io/latest/), an open source servic
 If you don't have a cluster at hand, you can create a local one with [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation).
 
 ```bash
-KIND_IMAGE=kindest/node:v1.31.1
+KIND_IMAGE=kindest/node:v1.34.0
 
 # create cluster
 kind create cluster --image $KIND_IMAGE --wait 1m

@@ -158,7 +158,7 @@ A Kyverno `ValidatingPolicy` defines the rules used by the Kyverno authz server 
 It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming `CheckRequest` and is expected to produce an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) in return.
 
 ```bash
-# deploy kyverno authorization policy
+# deploy kyverno validating policy
 kubectl apply -f - <<EOF
 apiVersion: policies.kyverno.io/v1alpha1
 kind: ValidatingPolicy

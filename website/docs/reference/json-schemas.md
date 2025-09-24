@@ -2,7 +2,7 @@
 
 JSON schemas for the Kyverno Envoy Plugin are available:
 
-- [AuthorizationPolicy (v1alpha1)](https://github.com/kyverno/kyverno-envoy-plugin/blob/main/.schemas/json/authorizationpolicy-envoy-v1alpha1.json)
+- [ValidatingPolicy (v1alpha1)](https://raw.githubusercontent.com/kyverno/playground/main/schemas/json/v3/validatingpolicy-policies.kyverno.io-v1alpha1.json)
 
 They can be used to enable validation and autocompletion in your IDE.
 
@@ -10,15 +10,17 @@ They can be used to enable validation and autocompletion in your IDE.
 
 In VS code, simply add a comment on top of your YAML resources.
 
-### AuthorizationPolicy
+### ValidatingPolicy
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno-envoy-plugin/main/.schemas/json/authorizationpolicy-envoy-v1alpha1.json
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/playground/main/schemas/json/v3/validatingpolicy-policies.kyverno.io-v1alpha1.json
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
+  evaluation:
+    mode: Envoy
   variables:
   - name: force_authorized
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("") in ["enabled", "true"]
@@ -26,27 +28,26 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
-  deny:
+  validations:
     # if force_unauthenticated -> 401
-  - match: >
+  - expression: >
       variables.force_unauthenticated
-    response: >
-      envoy
-        .Denied(401)
-        .WithBody("Authentication Failed")
-        .Response()
-        .WithMetadata(variables.metadata)
+        ? envoy
+            .Denied(401)
+            .WithBody("Authentication Failed")
+            .Response()
+            .WithMetadata(variables.metadata)
+        : null
     # if not force_authorized -> 403
-  - match: >
+  - expression: >
       !variables.force_authorized
-    response: >
-      envoy
-        .Denied(403)
-        .WithBody("Unauthorized Request")
-        .Response()
-  allow:
+        ? envoy
+            .Denied(403)
+            .WithBody("Unauthorized Request")
+            .Response()
+        : null
     # else -> 200
-  - response: >
+  - expression: >
       envoy
         .Allowed()
         .WithHeader("x-validated-by", "my-security-checkpoint")

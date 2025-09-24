@@ -19,7 +19,8 @@ nav:
   - reference/index.md
   - reference/json-schemas.md
   - APIs:
-    - v1alpha1: reference/apis/policy.v1alpha1.md
+    - policies.kyverno.io/v1alpha1: reference/apis/policies.kyverno.io.v1alpha1.md
+    - envoy.kyverno.io/v1alpha1: reference/apis/envoy.kyverno.io.v1alpha1.md
   - CEL extensions:
     - cel-extensions/index.md
     - cel-extensions/envoy.md

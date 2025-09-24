@@ -83,6 +83,15 @@ EOF
 
 For more certificate management options, refer to [Certificates management](../install/certificates.md).
 
+### Install Kyverno ValidatingPolicy CRD
+
+Before deploying the Kyverno Authz Server, we need to install the Kyverno ValidatingPolicy CRD.
+
+```bash
+kubectl apply \
+  -f https://raw.githubusercontent.com/kyverno/kyverno/refs/heads/main/config/crds/policies.kyverno.io/policies.kyverno.io_validatingpolicies.yaml
+```
+
 ### Deploy the Kyverno Authz Server
 
 Now we can deploy the Kyverno Authz Server.

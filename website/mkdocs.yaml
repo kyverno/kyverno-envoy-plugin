@@ -16,6 +16,11 @@ nav:
   - policies/match-conditions.md
   - policies/variables.md
   - policies/authorization-rules.md
+- Tutorials:
+  - tutorials/index.md
+  - tutorials/istio/index.md
+  - tutorials/envoy-gateway/index.md
+  - tutorials/kgateway/index.md
 - Reference:
   - reference/index.md
   - reference/json-schemas.md
@@ -26,11 +31,6 @@ nav:
     - cel-extensions/index.md
     - cel-extensions/envoy.md
     - cel-extensions/jwt.md
-- Tutorials:
-  - tutorials/index.md
-  - tutorials/istio/index.md
-  - tutorials/envoy-gateway/index.md
-  - tutorials/kgateway/index.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md

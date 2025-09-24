@@ -8,6 +8,7 @@ nav:
   - quick-start/sidecar-injector.md
   - quick-start/next-steps.md
   - Install:
+    - install/crds.md
     - install/certificates.md
 - Policies:
   - policies/index.md

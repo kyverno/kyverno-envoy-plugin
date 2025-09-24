@@ -1,5 +1,5 @@
 ---
-title: policy (v1alpha1)
+title: envoy.kyverno.io (v1alpha1)
 content_type: tool-reference
 package: envoy.kyverno.io/v1alpha1
 auto_generated: true

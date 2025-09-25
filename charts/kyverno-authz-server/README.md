@@ -77,6 +77,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | webhook.objectSelector | string | `nil` | Webhook object selector |
 | webhook.namespaceSelector | object | `{"matchExpressions":[{"key":"kyverno-injection","operator":"In","values":["enabled"]}]}` | Webhook namespace selector |
 | pdb | string | `nil` |  |
+| externalPolicySources | list | `[]` | External policy sources |
 
 ## Source Code
 

@@ -1,6 +1,6 @@
 # Variables
 
-A Kyverno `AuthorizationPolicy` can define `variables` that will be made available to all authorization rules.
+A Kyverno `ValidatingPolicy` can define `variables` that will be made available to all authorization rules.
 
 Variables can be used in composition of other expressions.
 Each variable is defined as a named [CEL](https://github.com/google/cel-spec) expression.
@@ -15,12 +15,14 @@ The expression of a variable can refer to other variables defined earlier in the
 ## Variables
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   failurePolicy: Fail
+  evaluation:
+    mode: Envoy
   variables:
     # `force_authorized` references the 'x-force-authorized' header
     # from the envoy check request (or '' if not present)
@@ -30,10 +32,10 @@ spec:
     # value 'enabled' or 'true'
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  deny:
+  validations:
     # make an authorisation decision based on the value of `variables.allowed`
-  - match: >
+  - expression: >
       !variables.allowed
-    response: >
-      envoy.Denied(403).Response()
+        ? envoy.Denied(403).Response()
+        : null
 ```

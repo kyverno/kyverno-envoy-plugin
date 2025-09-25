@@ -11,17 +11,19 @@ Match conditions are **CEL expressions**. All match conditions must evaluate to 
 ## Example
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   failurePolicy: Fail
+  evaluation:
+    mode: Envoy
   matchConditions:
   - name: has-header
     expression: object.attributes.request.http.headers[?"x-force-deny"].hasValue()
-  deny:
-  - response: >
+  validations:
+  - expression: >
       envoy.Denied(403).Response()
 ```
 

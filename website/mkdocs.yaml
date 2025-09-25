@@ -12,10 +12,15 @@ nav:
     - install/certificates.md
 - Policies:
   - policies/index.md
+  - ValidatingPolicy:
+    - policies/vpol/index.md
+    - policies/vpol/validation-rules.md
+  - AuthorizationPolicy (deprecated):
+    - policies/apol/index.md
+    - policies/apol/authorization-rules.md
   - policies/failure-policy.md
   - policies/match-conditions.md
   - policies/variables.md
-  - policies/authorization-rules.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/istio/index.md

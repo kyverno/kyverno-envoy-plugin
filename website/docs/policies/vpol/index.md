@@ -53,6 +53,7 @@ CEL is an expression language that’s fast, portable, and safe to execute in pe
 
 A Kyverno `ValidatingPolicy` is made of:
 
+- An [evaluation mode](./evaluation-mode.md)
 - A [failure policy](../failure-policy.md)
 - [Match conditions](../match-conditions.md) if needed
 - Eventually some [variables](../variables.md)

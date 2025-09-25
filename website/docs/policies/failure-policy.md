@@ -18,43 +18,47 @@ If not set, the failure policy defaults to `Fail`.
 ## Fail
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   # if something fails the request will be denied
   failurePolicy: Fail
+  evaluation:
+    mode: Envoy
   variables:
   - name: force_authorized
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  deny:
-  - match: >
+  validations:
+  - expression: >
       !variables.allowed
-    response: >
-      envoy.Denied(403).Response()
+        ? envoy.Denied(403).Response()
+        : null
 ```
 
 ## Ignore
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   # if something fails the failure will be ignored and the request will be allowed
   failurePolicy: Ignore
+  evaluation:
+    mode: Envoy
   variables:
   - name: force_authorized
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  deny:
-  - match: >
+  validations:
+  - expression: >
       !variables.allowed
-    response: >
-      envoy.Denied(403).Response()
+        ? envoy.Denied(403).Response()
+        : null
 ```

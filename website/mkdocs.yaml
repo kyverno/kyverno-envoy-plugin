@@ -18,9 +18,10 @@ nav:
   - AuthorizationPolicy (deprecated):
     - policies/apol/index.md
     - policies/apol/authorization-rules.md
-  - policies/failure-policy.md
-  - policies/match-conditions.md
-  - policies/variables.md
+  - Common:
+    - policies/failure-policy.md
+    - policies/match-conditions.md
+    - policies/variables.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/istio/index.md

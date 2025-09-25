@@ -14,6 +14,7 @@ nav:
   - policies/index.md
   - ValidatingPolicy:
     - policies/vpol/index.md
+    - policies/vpol/evaluation-mode.md
     - policies/vpol/validation-rules.md
   - AuthorizationPolicy (deprecated):
     - policies/apol/index.md

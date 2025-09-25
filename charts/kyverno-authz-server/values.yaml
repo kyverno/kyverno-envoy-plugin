@@ -276,3 +276,7 @@ webhook:
         - enabled
 
 pdb:
+
+# -- External policy sources
+externalPolicySources: []
+  # eg: - file:///data/kyverno-authz-server

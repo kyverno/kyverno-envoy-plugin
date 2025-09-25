@@ -151,7 +151,7 @@ Notice that in this resource, we define the Kyverno Authz Server `extensionProvi
 [...]
 ```
 
-## Create a Kyverno AuthorizationPolicy
+## Create a Kyverno ValidatingPolicy
 
 In summary the policy below does the following:
 
@@ -161,12 +161,14 @@ In summary the policy below does the following:
 ```yaml
 # deploy kyverno authorization policy
 kubectl apply -f - <<EOF
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   failurePolicy: Fail
+  evaluation:
+    mode: Envoy
   variables:
   - name: authorization
     expression: object.attributes.request.http.headers[?"authorization"].orValue("").split(" ")
@@ -175,20 +177,19 @@ spec:
       size(variables.authorization) == 2 && variables.authorization[0].lowerAscii() == "bearer"
         ? jwt.Decode(variables.authorization[1], "secret")
         : null
-  deny:
+  validations:
     # request not authenticated -> 401
-  - match: >
+  - expression: >
       variables.token == null || !variables.token.Valid
-    response: >
-      envoy.Denied(401).Response()
+        ? envoy.Denied(401).Response()
+        : null
     # request authenticated but not admin role -> 403
-  - match: >
+  - expression: >
       variables.token.Claims.?role.orValue("") != "admin"
-    response: >
-      envoy.Denied(403).Response()
-  allow:
+        ? envoy.Denied(403).Response()
+        : null
     # request authenticated and admin role -> 200
-  - response: >
+  - expression: >
       envoy.Allowed().Response()
 EOF
 ```

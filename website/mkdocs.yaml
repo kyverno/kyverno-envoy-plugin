@@ -38,6 +38,7 @@ nav:
   - CEL extensions:
     - cel-extensions/index.md
     - cel-extensions/envoy.md
+    - cel-extensions/jwk.md
     - cel-extensions/jwt.md
   - Command Line:
     - reference/commands/kyverno-envoy-plugin.md

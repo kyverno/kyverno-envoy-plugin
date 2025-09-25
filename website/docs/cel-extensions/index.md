@@ -37,4 +37,6 @@ The libraries below are imported from Kubernetes:
 
 ## Kyverno libraries
 
-TODO
+- [HTTP](https://kyverno.io/docs/policy-types/cel-libraries/#http-library)
+- [Image](https://kyverno.io/docs/policy-types/cel-libraries/#image-library)
+- [ImageData](https://kyverno.io/docs/policy-types/cel-libraries/#imagedata-library)

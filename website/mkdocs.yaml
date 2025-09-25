@@ -37,6 +37,13 @@ nav:
     - cel-extensions/index.md
     - cel-extensions/envoy.md
     - cel-extensions/jwt.md
+  - Command Line:
+    - reference/commands/kyverno-envoy-plugin.md
+    - reference/commands/kyverno-envoy-plugin_serve.md
+    - reference/commands/kyverno-envoy-plugin_serve_authz-server.md
+    - reference/commands/kyverno-envoy-plugin_serve_sidecar-injector.md
+    - reference/commands/kyverno-envoy-plugin_serve_validation-webhook.md
+    - reference/commands/kyverno-envoy-plugin_version.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md

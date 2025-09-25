@@ -10,6 +10,7 @@ nav:
   - Install:
     - install/crds.md
     - install/certificates.md
+    - install/external-policy-source.md
 - Policies:
   - policies/index.md
   - ValidatingPolicy:

@@ -41,7 +41,7 @@ spec:
 
 The Kyverno Authz Server implements the [Envoy External Authorization](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter) API.
 
-A Kyverno `ValidatingPolicy` analyses an Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) and can make a decision by returning an [OkResponse](../../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../../cel-extensions/envoy.md#deniedresponse).
+A Kyverno `ValidatingPolicy` analyses an Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) and can make a decision by returning a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
 
 ## CEL language
 

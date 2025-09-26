@@ -5,14 +5,14 @@ An `ValidatingPolicy` main concern is to define `validations` rules to deny or a
 Every validation rule is made of an `expression` statement written in [CEL](https://github.com/google/cel-spec).
 
 The `expression` statement is used to create the response payload returned to the envoy proxy.
-Depending on the rule type, the response is expected to be an [OkResponse](../../cel-extensions/envoy.md#okresponse), a [DeniedResponse](../../cel-extensions/envoy.md#deniedresponse), or `null`.
+Depending on the rule type, the response is expected to be a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse), or `null`.
 
 !!!info
     When an expression returns `null`, the Kyverno Authz Server assumes that the expression doesn't want to make a decision and moves to the next validation rule.
 
 ## CEL envoy extension
 
-Creating an [OkResponse](../../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../../cel-extensions/envoy.md#deniedresponse) can be a tedious task, you need to remember the different types names and format.
+Creating a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) can be a tedious task, you need to remember the different types names and format.
 
 The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../../cel-extensions/index.md) for details.
 

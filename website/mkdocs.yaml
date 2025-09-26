@@ -24,6 +24,11 @@ nav:
     - policies/failure-policy.md
     - policies/match-conditions.md
     - policies/variables.md
+  - CEL extensions:
+    - cel-extensions/index.md
+    - cel-extensions/envoy.md
+    - cel-extensions/jwk.md
+    - cel-extensions/jwt.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/istio/index.md
@@ -35,11 +40,6 @@ nav:
   - APIs:
     - policies.kyverno.io/v1alpha1: reference/apis/policies.kyverno.io.v1alpha1.md
     - envoy.kyverno.io/v1alpha1: reference/apis/envoy.kyverno.io.v1alpha1.md
-  - CEL extensions:
-    - cel-extensions/index.md
-    - cel-extensions/envoy.md
-    - cel-extensions/jwk.md
-    - cel-extensions/jwt.md
   - Command Line:
     - reference/commands/kyverno-envoy-plugin.md
     - reference/commands/kyverno-envoy-plugin_serve.md

@@ -5,9 +5,11 @@ An `AuthorizationPolicy` main concern is to define authorization rules to `deny`
 Every authorization rule is made of an optional `match` statement and a required `response` statement. Both statements are written in [CEL](https://github.com/google/cel-spec).
 
 If the `match` statement is present and evaluates to `true`, the `response` statement is used to create the response payload returned to the envoy proxy.
-Depending on the rule type, the response is expected to be an envoy.OkResponse or envoy.DeniedResponse.
+Depending on the rule type, the response is expected to be a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
 
-Creating an [OkResponse](../../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../../cel-extensions/envoy.md#deniedresponse) can be a tedious task, you need to remember the different types names and format.
+## CEL envoy extension
+
+Creating a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) can be a tedious task, you need to remember the different types names and format.
 
 The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../../cel-extensions/index.md) for details.
 

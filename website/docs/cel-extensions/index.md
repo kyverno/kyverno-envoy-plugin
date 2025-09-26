@@ -5,6 +5,7 @@ The CEL engine used to evaluate variables and authorization rules has been exten
 ## Envoy plugin libraries
 
 - [Envoy](./envoy.md)
+- [Jwk](./jwk.md)
 - [Jwt](./jwt.md)
 
 ## Common libraries
@@ -25,9 +26,19 @@ The libraries below are common CEL extensions enabled in the Kyverno Authz Serve
 
 The libraries below are imported from Kubernetes:
 
-- CIDR
-- Format
-- IP
 - [Lists](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-list-library)
 - [Regex](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-regex-library)
 - [URL](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-url-library)
+- [IP](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-ip-address-library)
+- [CIDR](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-cidr-library)
+- [Format](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-format-library)
+- [Quantity](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-quantity-library)
+- [Semver](https://kubernetes.io/docs/reference/using-api/cel/#kubernetes-semver-library)
+
+## Kyverno libraries
+
+The libraries below are imported from Kyverno:
+
+- [HTTP](https://kyverno.io/docs/policy-types/cel-libraries/#http-library)
+- [Image](https://kyverno.io/docs/policy-types/cel-libraries/#image-library)
+- [ImageData](https://kyverno.io/docs/policy-types/cel-libraries/#imagedata-library)

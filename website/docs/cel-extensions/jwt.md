@@ -11,7 +11,6 @@ Policies have native functionality to decode and verify the contents of JWT toke
 | Field | CEL Type / Proto | Docs |
 |---|---|---|
 | Valid | `bool` | |
-| Header | `google.protobuf.Struct` | [Docs](https://protobuf.dev/reference/protobuf/google.protobuf/#struct) |
 | Claims | `google.protobuf.Struct` | [Docs](https://protobuf.dev/reference/protobuf/google.protobuf/#struct) |
 
 ## Functions
@@ -25,10 +24,12 @@ It accepts two arguments: the token and the secret to verify the signature.
 
 ```
 jwt.Decode(<string> token, <string> key) -> <Token>
+jwt.Decode(<string> token, <jwk.Set> keySet) -> <Token>
 ```
 
 #### Example
 
 ```
 jwt.Decode("eyJhbGciOiJIUzI1NiI....", "secret")
+jwt.Decode("eyJhbGciOiJIUzI1NiI....", jwks.Fetch("https://.../.well-known/jwks.json"))
 ```

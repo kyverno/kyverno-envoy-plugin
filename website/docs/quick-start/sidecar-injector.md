@@ -133,8 +133,7 @@ kubectl label namespace demo kyverno-injection=enabled
 
 A Kyverno `ValidatingPolicy` defines the rules used by the Kyverno authz server to make a decision based on a given Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest).
 
-It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming `CheckRequest` and is expected to produce an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) in return.
-
+It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) and is expected to produce a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) in return.
 
 !!!note "Sidecar can't talk with API Server"
     Because the sidecar usually doesn't have the permissions to fetch policies from the API server, we need to provide the policies using an external source.

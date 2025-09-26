@@ -1,6 +1,6 @@
 # Envoy library
 
-The `envoy` library adds some types and function to simplify the creation of [OkResponse](#okresponse) and [DeniedResponse](#deniedresponse) objects.
+The `envoy` library adds some types and function to simplify the creation of [CheckResponse](#checkresponse) objects.
 
 ## Types
 
@@ -8,25 +8,9 @@ The `envoy` library adds some types and function to simplify the creation of [Ok
 
 *CEL Type / Proto:* [`envoy.service.auth.v3.CheckRequest`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest)
 
-### `<OkResponse>`
+### `<CheckResponse>`
 
-*CEL Type / Proto:* `envoy.OkResponse`
-
-| Field | CEL Type / Proto | Docs |
-|---|---|---|
-| status | `google.rpc.Status` | [Docs](#status) |
-| http_response | `envoy.service.auth.v3.OkHttpResponse` | [Docs](#okhttpresponse) |
-| dynamic_metadata | `google.protobuf.Struct` | [Docs](#metadata) |
-
-### `<DeniedResponse>`
-
-*CEL Type / Proto:* `envoy.DeniedResponse`
-
-| Field | CEL Type / Proto | Docs |
-|---|---|---|
-| status | `google.rpc.Status` | [Docs](#status) |
-| http_response | `envoy.service.auth.v3.DeniedHttpResponse` | [Docs](#deniedhttpresponse) |
-| dynamic_metadata | `google.protobuf.Struct` | [Docs](#metadata) |
+*CEL Type / Proto:* [`envoy.service.auth.v3.CheckResponse`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse)
 
 ### `<OkHttpResponse>`
 
@@ -271,15 +255,15 @@ envoy.Header("foo", "bar").KeepEmptyValue(true)
 
 ### Response
 
-This function creates a `<OkResponse>` / `DeniedResponse` object from an `<OkHttpResponse>` / `<DeniedHttpResponse>`.
+This function creates a `<CheckResponse>` object from an `<OkHttpResponse>` / `<DeniedHttpResponse>`.
 
 #### Signature and overloads
 
 ```
-<OkHttpResponse>.Response() -> <OkResponse>
+<OkHttpResponse>.Response() -> <CheckResponse>
 ```
 ```
-<DeniedHttpResponse>.Response() -> <DeniedResponse>
+<DeniedHttpResponse>.Response() -> <CheckResponse>
 ```
 
 #### Example
@@ -293,15 +277,12 @@ envoy.Denied(401).Response()
 
 ### WithMessage
 
-This function sets the `status.message` field of an `<OkResponse>` / `DeniedResponse` object.
+This function sets the `status.message` field of a `<CheckResponse>` object.
 
 #### Signature and overloads
 
 ```
-<OkResponse>.WithMessage(<string> message) -> <OkResponse>
-```
-```
-<DeniedResponse>.WithMessage(<string> message) -> <DeniedResponse>
+<CheckResponse>.WithMessage(<string> message) -> <CheckResponse>
 ```
 
 #### Example
@@ -315,15 +296,12 @@ envoy.Denied(401).Response().WithMessage("hello world!")
 
 ### WithMetadata
 
-This function sets the `dynamic_metadata` field of an `<OkResponse>` / `DeniedResponse` object.
+This function sets the `dynamic_metadata` field of an `<CheckResponse>` object.
 
 #### Signature and overloads
 
 ```
-<OkResponse>.WithMetadata(<Metadata> metadata) -> <OkResponse>
-```
-```
-<DeniedResponse>.WithMetadata(<Metadata> metadata) -> <DeniedResponse>
+<CheckResponse>.WithMetadata(<Metadata> metadata) -> <CheckResponse>
 ```
 
 #### Example

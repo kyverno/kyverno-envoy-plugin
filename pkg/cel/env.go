@@ -29,12 +29,13 @@ func NewEnv() (*cel.Env, error) {
 		ext.Sets(),
 		ext.Strings(),
 		// register kubernetes libs
-		library.CIDR(),
-		library.Format(),
-		library.IP(),
 		library.Lists(),
 		library.Regex(),
 		library.URLs(),
+		library.IP(),
+		library.CIDR(),
+		library.Quantity(),
+		library.SemverLib(),
 		// register our libs
 		envoy.Lib(),
 		jwt.Lib(),

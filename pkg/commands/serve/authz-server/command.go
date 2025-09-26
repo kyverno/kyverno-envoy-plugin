@@ -3,7 +3,11 @@ package authzserver
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/hairyhenderson/go-fsimpl"
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
@@ -17,12 +21,14 @@ import (
 	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -40,6 +46,8 @@ func Command() *cobra.Command {
 	var kubePolicySource bool
 	var leaderElection bool
 	var leaderElectionID string
+	var imagePullSecrets []string
+	var allowInsecureRegistry bool
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -66,11 +74,38 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
+
+					secrets := make([]string, 0)
+					if len(imagePullSecrets) > 0 {
+						secrets = append(secrets, imagePullSecrets...)
+					}
+
+					// Create kubernetes client
+					kubeclient, err := kubernetes.NewForConfig(config)
+					if err != nil {
+						return err
+					}
+
+					namespace, _, err := kubeConfig.Namespace()
+					if err != nil {
+						return fmt.Errorf("failed to get namespace from kubeconfig: %w", err)
+					}
+					if namespace == "" || namespace == "default" {
+						// Log a warning or require explicit namespace setting
+						log.Printf("Using namespace '%s' - consider setting explicit namespace", namespace)
+					}
+					rOpts, nOpts, err := ocifs.RegistryOpts(kubeclient.CoreV1().Secrets(namespace), allowInsecureRegistry, secrets...)
+
+					if err != nil {
+						log.Fatalf("failed to initialize registry opts: %v", err)
+						os.Exit(1)
+					}
+
 					// create compilers
 					apolCompiler := apolcompiler.NewCompiler()
 					vpolCompiler := vpolcompiler.NewCompiler()
 					// create external providers
-					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, externalPolicySources...)
+					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {
 						return err
 					}
@@ -150,6 +185,8 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
+	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", nil, "Image pull secrets")
+	command.Flags().BoolVar(&allowInsecureRegistry, "allow-insecure-registry", false, "Allow insecure registry")
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
@@ -157,12 +194,17 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
 	// mux.Add(blobfs.FS)
 	mux.Add(gitfs.FS)
+
+	// Create a configured ocifs.FS with registry options
+	configuredOCIFS := ocifs.ConfigureOCIFS(nOpts, rOpts)
+	mux.Add(configuredOCIFS)
+
 	var providers []engine.Provider
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)

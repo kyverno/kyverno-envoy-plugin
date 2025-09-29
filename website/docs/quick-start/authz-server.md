@@ -10,7 +10,6 @@ Then you will interface [Istio](https://istio.io/latest/), an open source servic
 
 - A Kubernetes cluster
 - [Helm](https://helm.sh/) to install the Kyverno Authz Server
-- [istioctl](https://istio.io/latest/docs/setup/getting-started/#download) to configure the mesh
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) to interact with the cluster
 
 ### Setup a cluster (optional)
@@ -29,18 +28,25 @@ kind create cluster --image $KIND_IMAGE --wait 1m
 We need to register the Kyverno Authz Server with Istio.
 
 ```bash
-# configure the mesh
-istioctl install -y -f - <<EOF
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-    extensionProviders:
-    - name: kyverno-authz-server.local
-      envoyExtAuthzGrpc:
-        service: kyverno-authz-server.kyverno.svc.cluster.local
-        port: '9081'
+# install istio base chart
+helm install istio-base \
+  --namespace istio-system --create-namespace \
+  --wait \
+  --repo https://istio-release.storage.googleapis.com/charts base
+
+# install istiod chart
+helm install istiod \
+  --namespace istio-system --create-namespace \
+  --wait \
+  --repo https://istio-release.storage.googleapis.com/charts istiod \
+  --values - <<EOF
+meshConfig:
+  accessLogFile: /dev/stdout
+  extensionProviders:
+  - name: kyverno-authz-server
+    envoyExtAuthzGrpc:
+      service: kyverno-authz-server.kyverno.svc.cluster.local
+      port: 9081
 EOF
 ```
 
@@ -48,11 +54,12 @@ Notice that in the configuration, we define an `extensionProviders` section that
 
 ```yaml
 [...]
-    extensionProviders:
-    - name: kyverno-authz-server.local
-      envoyExtAuthzGrpc:
-        service: kyverno-authz-server.kyverno.svc.cluster.local
-        port: '9081'
+meshConfig:
+  extensionProviders:
+  - name: kyverno-authz-server.local
+    envoyExtAuthzGrpc:
+      service: kyverno-authz-server.kyverno.svc.cluster.local
+      port: '9081'
 [...]
 ```
 

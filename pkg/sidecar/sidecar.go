@@ -1,65 +1,37 @@
 package sidecar
 
 import (
+	"os"
+
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 )
 
-func Sidecar(image string, externalPolicySources ...string) corev1.Container {
-	container := corev1.Container{
-		Name:            "kyverno-authz-server",
-		ImagePullPolicy: corev1.PullIfNotPresent,
-		Image:           image,
-		Ports: []corev1.ContainerPort{{
-			Name:          "http",
-			Protocol:      corev1.ProtocolTCP,
-			ContainerPort: 9080,
-		}, {
-			Name:          "grpc",
-			Protocol:      corev1.ProtocolTCP,
-			ContainerPort: 9081,
-		}},
-		Args: []string{
-			"serve",
-			"authz-server",
-			"--probes-address=:9080",
-			"--grpc-address=:9081",
-			"--metrics-address=:9082",
-			"--kube-policy-source=false",
-			"--external-policy-source=file:///data/kyverno-authz-server",
-		},
-		VolumeMounts: []corev1.VolumeMount{{
-			Name:             "kyverno-authz-server",
-			ReadOnly:         true,
-			MountPropagation: ptr.To(corev1.MountPropagationHostToContainer),
-			MountPath:        "/data/kyverno-authz-server",
-		},
-		},
-	}
-	for _, source := range externalPolicySources {
-		container.Args = append(container.Args, "--external-policy-source="+source)
-	}
-	return container
+type Sidecar struct {
+	InitContainers   []corev1.Container            `json:"initContainers,omitempty"`
+	Containers       []corev1.Container            `json:"containers,omitempty"`
+	Volumes          []corev1.Volume               `json:"volumes,omitempty"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
-func Inject(pod corev1.Pod, container corev1.Container) corev1.Pod {
-	for i, c := range pod.Spec.Containers {
-		if c.Name == container.Name {
-			pod.Spec.Containers[i] = container
-			return pod
-		}
+func Load(file string) (*Sidecar, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
 	}
-	pod.Spec.Containers = append(pod.Spec.Containers, container)
-	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
-		Name: "kyverno-authz-server",
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: "kyverno-authz-server",
-				},
-				Optional: ptr.To(true),
-			},
-		},
-	})
+	var sidecar *Sidecar
+	if err := yaml.UnmarshalStrict(data, &sidecar); err != nil {
+		return nil, err
+	}
+	return sidecar, nil
+}
+
+func Inject(pod corev1.Pod, sidecar *Sidecar) corev1.Pod {
+	if sidecar != nil {
+		pod.Spec.ImagePullSecrets = append(pod.Spec.ImagePullSecrets, sidecar.ImagePullSecrets...)
+		pod.Spec.InitContainers = append(pod.Spec.InitContainers, sidecar.InitContainers...)
+		pod.Spec.Containers = append(pod.Spec.Containers, sidecar.Containers...)
+		pod.Spec.Volumes = append(pod.Spec.Volumes, sidecar.Volumes...)
+	}
 	return pod
 }

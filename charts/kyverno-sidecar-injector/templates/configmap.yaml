@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "sidecar-injector.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
+  labels:
+    {{- include "sidecar-injector.labels" . | nindent 4 }}
+  {{- with .Values.deployment.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+data:
+  sidecar.yaml: |
+    containers:
+    - name: {{ .Values.sidecar.name }}
+      image: {{ include "sidecar-injector.image" .Values.sidecar.image }}
+      imagePullPolicy: {{ .Values.sidecar.image.pullPolicy }}
+      ports:
+      - name: http
+        protocol: TCP
+        containerPort: 9080
+      - name: grpc
+        protocol: TCP
+        containerPort: 9081
+      args:
+      - serve
+      - authz-server
+      - --probes-address=:9080
+      - --grpc-address=:9081
+      - --metrics-address=:9082
+      - --kube-policy-source=false
+      {{- with .Values.sidecar.externalPolicySources }}
+      # external policy sources
+      {{- range . }}
+      - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.sidecar.volumeMounts }}
+      # volume mounts
+      volumeMounts:
+      {{- tpl (toYaml .) $ | nindent 6 }}
+      {{- end }}
+    {{- with .Values.sidecar.volumes }}
+    # volumes
+    volumes:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
+    {{- with .Values.sidecar.imagePullSecrets }}
+    # image pull secrets
+    imagePullSecrets:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}

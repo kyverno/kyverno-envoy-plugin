@@ -66,7 +66,7 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | containers.injector.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.injector.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.injector.ports | list | `[{"containerPort":9443,"name":"https","protocol":"TCP"}]` | Container ports. |
-| containers.injector.args | list | `["serve","sidecar-injector","--address=:9443","--cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt","--key-file=/opt/kubernetes-sidecar-injector/certs/tls.key","--sidecar-image={{ include \"sidecar-injector.image\" .Values.containers.injector.image }}"]` | Container args. |
+| containers.injector.args | list | `["serve","sidecar-injector","--address=:9443","--cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt","--key-file=/opt/kubernetes-sidecar-injector/certs/tls.key","--config-file=/opt/kubernetes-sidecar-injector/config/sidecar.yaml"]` | Container args. |
 | service.port | int | `443` | Service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
@@ -75,7 +75,15 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | webhook.failurePolicy | string | `"Fail"` | Webhook failure policy |
 | webhook.objectSelector | string | `nil` | Webhook object selector |
 | webhook.namespaceSelector | object | `{"matchExpressions":[{"key":"kyverno-injection","operator":"In","values":["enabled"]}]}` | Webhook namespace selector |
-| externalPolicySources | string | `nil` | External policy sources |
+| sidecar.name | string | `"kyverno-authz-server"` | Sidecar container name |
+| sidecar.image.registry | string | `"ghcr.io"` | Image registry |
+| sidecar.image.repository | string | `"kyverno/kyverno-envoy-plugin"` | Image repository |
+| sidecar.image.tag | string | `nil` | Image tag Defaults to appVersion in Chart.yaml if omitted |
+| sidecar.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
+| sidecar.externalPolicySources | list | `[]` | External policy sources |
+| sidecar.volumes | list | `[]` | Additional volumes |
+| sidecar.volumeMounts | list | `[]` | Additional sidecar container volume mounts |
+| sidecar.imagePullSecrets | list | `[]` | Additional image pull secrets |
 
 ## Source Code
 

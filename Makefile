@@ -401,9 +401,13 @@ deploy-kyverno-sidecar-injector: $(HELM)
 		--set containers.injector.image.registry=$(KO_REGISTRY) \
 		--set containers.injector.image.repository=$(PACKAGE) \
 		--set containers.injector.image.tag=$(GIT_SHA) \
-		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set sidecar.image.registry=$(KO_REGISTRY) \
+		--set sidecar.image.repository=$(PACKAGE) \
+		--set sidecar.image.tag=$(GIT_SHA) \
+		--set certificates.certManager.issuerRef.group=cert-manager.io \
 		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
-		--set certificates.certManager.issuerRef.group=cert-manager.io
+		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--values .manifests/sidecar-injector/values.yaml
 
 .PHONY: install-kyverno-sidecar-injector
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart

@@ -104,6 +104,12 @@ func (c *impl) decode_string_set(token ref.Val, set ref.Val) ref.Val {
 				switch value := value.(type) {
 				case time.Time:
 					fields[key] = value.Unix()
+				case []string:
+					var untyped []any
+					for _, v := range value {
+						untyped = append(untyped, v)
+					}
+					fields[key] = untyped
 				default:
 					fields[key] = value
 				}

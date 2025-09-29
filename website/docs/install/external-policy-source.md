@@ -17,6 +17,10 @@ External sources are backed by virtual filesystems. The following schemes are su
   - You can point to a subdirectory or ref depending on your git URL; consult the `gitfs` docs for exact URL options (branch/tag/commit and subpaths).
   - Example: `--external-policy-source=git+https://github.com/acme/policies.git`
 
+- **oci**: OCI container image as a policy source. The server can pull policies from an OCI image registry and mount its contents as a read-only filesystem.
+  - Example: `--external-policy-source=oci://ghcr.io/org/policies:tag`
+
+
 Notes:
 - Each source is mounted read-only and scanned at startup; updates require restarting the server. 
 

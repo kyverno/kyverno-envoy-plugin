@@ -3,17 +3,14 @@ package ocifs
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"log"
 	"net/url"
 	"testing"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/nlepage/go-tarfs"
 )
 
@@ -222,50 +219,4 @@ func TestFetchManifest(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestFS_Implementation(t *testing.T) {
-	var _ fs.FS = (*ociFS)(nil)
-}
-
-type mockImage struct{}
-
-func (m *mockImage) Digest() (v1.Hash, error) {
-	return v1.Hash{}, nil
-}
-
-func (m *mockImage) ConfigFile() (*v1.ConfigFile, error) {
-	return nil, nil
-}
-
-func (m *mockImage) ConfigName() (v1.Hash, error) {
-	return v1.Hash{}, nil
-}
-
-func (m *mockImage) Layers() ([]v1.Layer, error) {
-	return nil, nil
-}
-
-func (m *mockImage) LayerByDigest(v1.Hash) (v1.Layer, error) {
-	return nil, nil
-}
-
-func (m *mockImage) LayerByDiffID(v1.Hash) (v1.Layer, error) {
-	return nil, nil
-}
-
-func (m *mockImage) Manifest() (*v1.Manifest, error) {
-	return nil, nil
-}
-
-func (m *mockImage) MediaType() (types.MediaType, error) {
-	return "", nil
-}
-
-func (m *mockImage) RawManifest() ([]byte, error) {
-	return nil, nil
-}
-
-func (m *mockImage) Size() (int64, error) {
-	return 0, nil
 }

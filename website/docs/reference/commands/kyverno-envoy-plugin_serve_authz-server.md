@@ -15,10 +15,12 @@ kyverno-envoy-plugin serve authz-server [flags]
 ### Options
 
 ```
+      --allow-insecure-registry              Allow insecure registry
       --external-policy-source stringArray   External policy sources
       --grpc-address string                  Address to listen on (default ":9081")
       --grpc-network string                  Network to listen on (default "tcp")
   -h, --help                                 help for authz-server
+      --image-pull-secret stringArray        Image pull secrets
       --kube-as string                       Username to impersonate for the operation
       --kube-as-group stringArray            Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
       --kube-as-uid string                   UID to impersonate for the operation

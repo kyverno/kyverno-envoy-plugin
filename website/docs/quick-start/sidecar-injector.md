@@ -34,7 +34,7 @@ helm install istio-base \
   --wait \
   --repo https://istio-release.storage.googleapis.com/charts base
 
-# install itiod chart
+# install istiod chart
 helm install istiod \
   --namespace istio-system --create-namespace \
   --wait \

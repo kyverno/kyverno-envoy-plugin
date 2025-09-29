@@ -28,7 +28,7 @@ kind create cluster --image $KIND_IMAGE --wait 1m
 We need to register the Kyverno Authz Server with Istio.
 
 ```bash
-# install itio base chart
+# install istio base chart
 helm install istio-base \
   --namespace istio-system --create-namespace \
   --wait \

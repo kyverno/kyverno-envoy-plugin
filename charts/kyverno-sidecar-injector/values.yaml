@@ -229,7 +229,7 @@ containers:
       - --address=:9443
       - --cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt
       - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
-      - --sidecar-image={{ include "sidecar-injector.image" .Values.containers.injector.image }}
+      - --config-file=/opt/kubernetes-sidecar-injector/config/sidecar.yaml
 
 service:
 
@@ -266,7 +266,34 @@ webhook:
         values:
         - enabled
 
-# -- External policy sources
-externalPolicySources:
-# - ...
-# - ...
+sidecar:
+
+  # -- Sidecar container name
+  name: kyverno-authz-server
+
+  image:
+
+    # -- Image registry
+    registry: ghcr.io
+
+    # -- Image repository
+    repository: kyverno/kyverno-envoy-plugin
+
+    # -- (string) Image tag
+    # Defaults to appVersion in Chart.yaml if omitted
+    tag: ~
+
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
+
+  # -- (list) External policy sources
+  externalPolicySources: []
+
+  # -- (list) Additional volumes
+  volumes: []
+
+  # -- (list) Additional sidecar container volume mounts
+  volumeMounts: []
+
+  # -- (list) Additional image pull secrets
+  imagePullSecrets: []

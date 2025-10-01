@@ -99,7 +99,10 @@ helm install cert-manager \
   --namespace cert-manager --create-namespace \
   --wait \
   --repo https://charts.jetstack.io cert-manager \
-  --set crds.enabled=true
+  --values - <<EOF
+crds:
+  enabled: true
+EOF
 
 # create a self-signed cluster issuer
 kubectl apply -f - <<EOF

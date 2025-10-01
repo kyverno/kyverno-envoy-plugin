@@ -99,17 +99,34 @@ kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>
 <span class=s>      - expression: &gt;-</span>
 <span class=s>          !variables.allowed ? envoy.Denied(403).Response() : null</span>
 <span class=s>EOF</span>
-</code></pre></div> <p>This simple policy will deny requests if they don't contain the header <code>x-force-authorized</code> with the value <code>enabled</code> or <code>true</code>.</p> <h3 id=deploy-the-sidecar-injector>Deploy the Sidecar injector<a class=headerlink href=#deploy-the-sidecar-injector title="Permanent link">&para;</a></h3> <p>Now we can deploy the Kyverno Authz Server.</p> <div class=highlight><pre><span></span><code><span class=c1># create the kyverno namespace</span>
-kubectl<span class=w> </span>create<span class=w> </span>ns<span class=w> </span>kyverno
-
-<span class=c1># deploy the kyverno sidecar injector</span>
+</code></pre></div> <p>This simple policy will deny requests if they don't contain the header <code>x-force-authorized</code> with the value <code>enabled</code> or <code>true</code>.</p> <h3 id=deploy-the-sidecar-injector>Deploy the Sidecar injector<a class=headerlink href=#deploy-the-sidecar-injector title="Permanent link">&para;</a></h3> <p>Now we can deploy the Kyverno Authz Server.</p> <div class=highlight><pre><span></span><code><span class=c1># deploy the kyverno sidecar injector</span>
 helm<span class=w> </span>install<span class=w> </span>kyverno-authz-server<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--namespace<span class=w> </span>kyverno<span class=w> </span><span class=se>\</span>
+<span class=w>  </span>--namespace<span class=w> </span>kyverno<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--wait<span class=w>  </span><span class=se>\</span>
 <span class=w>  </span>--repo<span class=w> </span>https://kyverno.github.io/kyverno-envoy-plugin<span class=w> </span>kyverno-sidecar-injector<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.group<span class=o>=</span>cert-manager.io<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.kind<span class=o>=</span>ClusterIssuer<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.name<span class=o>=</span>selfsigned-issuer
+<span class=w>  </span>--values<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+<span class=s>certificates:</span>
+<span class=s>  certManager:</span>
+<span class=s>    issuerRef:</span>
+<span class=s>      group: cert-manager.io</span>
+<span class=s>      kind: ClusterIssuer</span>
+<span class=s>      name: selfsigned-issuer</span>
+<span class=s>sidecar:</span>
+<span class=s>  externalPolicySources:</span>
+<span class=s>    # load policies from the file system</span>
+<span class=s>  - file://data/kyverno-authz-server</span>
+<span class=s>  volumes:</span>
+<span class=s>    # add configmap in the target pod</span>
+<span class=s>  - name: kyverno-authz-server</span>
+<span class=s>    configMap:</span>
+<span class=s>      name: kyverno-authz-server</span>
+<span class=s>      optional: true</span>
+<span class=s>  volumeMounts:</span>
+<span class=s>    # mount the configmap in sidecar container</span>
+<span class=s>  - name: kyverno-authz-server</span>
+<span class=s>    readOnly: true</span>
+<span class=s>    mountPath: /data/kyverno-authz-server</span>
+<span class=s>EOF</span>
 </code></pre></div> <h3 id=deploy-the-sample-application>Deploy the sample application<a class=headerlink href=#deploy-the-sample-application title="Permanent link">&para;</a></h3> <p>Httpbin is a well-known application that can be used to test HTTP requests and helps to show quickly how we can play with the request and response attributes.</p> <div class=highlight><pre><span></span><code><span class=c1># deploy the httpbin application</span>
 kubectl<span class=w> </span>apply<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>-n<span class=w> </span>demo<span class=w> </span><span class=se>\</span>

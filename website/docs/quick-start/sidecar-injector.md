@@ -182,17 +182,34 @@ This simple policy will deny requests if they don't contain the header `x-force-
 Now we can deploy the Kyverno Authz Server.
 
 ```bash
-# create the kyverno namespace
-kubectl create ns kyverno
-
 # deploy the kyverno sidecar injector
 helm install kyverno-authz-server \
-  --namespace kyverno \
+  --namespace kyverno --create-namespace \
   --wait  \
   --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-sidecar-injector \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer
+  --values - <<EOF
+certificates:
+  certManager:
+    issuerRef:
+      group: cert-manager.io
+      kind: ClusterIssuer
+      name: selfsigned-issuer
+sidecar:
+  externalPolicySources:
+    # load policies from the file system
+  - file://data/kyverno-authz-server
+  volumes:
+    # add configmap in the target pod
+  - name: kyverno-authz-server
+    configMap:
+      name: kyverno-authz-server
+      optional: true
+  volumeMounts:
+    # mount the configmap in sidecar container
+  - name: kyverno-authz-server
+    readOnly: true
+    mountPath: /data/kyverno-authz-server
+EOF
 ```
 
 ### Deploy the sample application

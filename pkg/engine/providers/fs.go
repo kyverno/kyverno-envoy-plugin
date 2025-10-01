@@ -11,6 +11,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
 	"github.com/kyverno/pkg/ext/resource/convert"
@@ -54,11 +55,12 @@ func NewFsProvider(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler
 }
 
 func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
-	var policies []engine.CompiledPolicy
 	ldr, err := DefaultLoader()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load CRDs: %w", err)
 	}
+	apols := map[string]*v1alpha1.AuthorizationPolicy{}
+	vpols := map[string]*vpol.ValidatingPolicy{}
 	if err := fs.WalkDir(p.fs, ".", func(path string, entry fs.DirEntry, _err error) error {
 		documents, err := p.getDocuments(ctx, entry)
 		if err != nil {
@@ -75,26 +77,33 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 				if err != nil {
 					return fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
 				}
-				compiled, errs := p.apolCompiler.Compile(typed)
-				if len(errs) > 0 {
-					return fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
-				}
-				policies = append(policies, compiled)
+				apols[typed.Name] = typed
 			case vpolGVK:
 				typed, err := convert.To[vpol.ValidatingPolicy](untyped)
 				if err != nil {
 					return fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
 				}
-				compiled, errs := p.vpolCompiler.Compile(typed)
-				if len(errs) > 0 {
-					return fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
-				}
-				policies = append(policies, compiled)
+				vpols[typed.Name] = typed
 			}
 		}
 		return _err
 	}); err != nil {
 		return nil, err
+	}
+	var policies []engine.CompiledPolicy
+	for _, apol := range utils.ToSortedSlice(apols) {
+		compiled, errs := p.apolCompiler.Compile(apol)
+		if len(errs) > 0 {
+			return nil, fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
+		}
+		policies = append(policies, compiled)
+	}
+	for _, vpol := range utils.ToSortedSlice(vpols) {
+		compiled, errs := p.vpolCompiler.Compile(vpol)
+		if len(errs) > 0 {
+			return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
+		}
+		policies = append(policies, compiled)
 	}
 	return policies, nil
 }

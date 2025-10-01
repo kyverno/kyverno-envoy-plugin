@@ -60,7 +60,10 @@ helm<span class=w> </span>install<span class=w> </span>cert-manager<span class=w
 <span class=w>  </span>--namespace<span class=w> </span>cert-manager<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--wait<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--repo<span class=w> </span>https://charts.jetstack.io<span class=w> </span>cert-manager<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>crds.enabled<span class=o>=</span><span class=nb>true</span>
+<span class=w>  </span>--values<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+<span class=s>crds:</span>
+<span class=s>  enabled: true</span>
+<span class=s>EOF</span>
 
 <span class=c1># create a self-signed cluster issuer</span>
 kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
@@ -76,11 +79,16 @@ helm<span class=w> </span>install<span class=w> </span>kyverno-authz-server<span
 <span class=w>  </span>--namespace<span class=w> </span>kyverno<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--wait<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--repo<span class=w> </span>https://kyverno.github.io/kyverno-envoy-plugin<span class=w> </span>kyverno-authz-server<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--devel<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>service.appProtocol<span class=o>=</span><span class=s2>&quot;kubernetes.io/h2c&quot;</span><span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.group<span class=o>=</span>cert-manager.io<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.kind<span class=o>=</span>ClusterIssuer<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>certificates.certManager.issuerRef.name<span class=o>=</span>selfsigned-issuer
+<span class=w>  </span>--values<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+<span class=s>service:</span>
+<span class=s>  appProtocol: kubernetes.io/h2c</span>
+<span class=s>certificates:</span>
+<span class=s>  certManager:</span>
+<span class=s>    issuerRef:</span>
+<span class=s>      group: cert-manager.io</span>
+<span class=s>      kind: ClusterIssuer</span>
+<span class=s>      name: selfsigned-issuer</span>
+<span class=s>EOF</span>
 </code></pre></div> <h2 id=create-a-kyverno-validatingpolicy>Create a Kyverno ValidatingPolicy<a class=headerlink href=#create-a-kyverno-validatingpolicy title="Permanent link">&para;</a></h2> <p>In summary the policy below does the following:</p> <ul> <li>Checks that the JWT token is valid</li> <li>Checks that the action is allowed based on the token payload <code>role</code> and the request path</li> </ul> <div class=highlight><pre><span></span><code><span class=c1># deploy kyverno authorization policy</span>
 <span class="l l-Scalar l-Scalar-Plain">kubectl apply -f - &lt;&lt;EOF</span>
 <span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class=w> </span><span class="l l-Scalar l-Scalar-Plain">policies.kyverno.io/v1alpha1</span>

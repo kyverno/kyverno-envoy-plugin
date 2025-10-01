@@ -52,7 +52,10 @@ helm<span class=w> </span>install<span class=w> </span>cert-manager<span class=w
 <span class=w>  </span>--namespace<span class=w> </span>cert-manager<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--wait<span class=w> </span><span class=se>\</span>
 <span class=w>  </span>--repo<span class=w> </span>https://charts.jetstack.io<span class=w> </span>cert-manager<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>crds.enabled<span class=o>=</span><span class=nb>true</span>
+<span class=w>  </span>--values<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>
+<span class=s>crds:</span>
+<span class=s>  enabled: true</span>
+<span class=s>EOF</span>
 
 <span class=c1># create a self-signed cluster issuer</span>
 kubectl<span class=w> </span>apply<span class=w> </span>-f<span class=w> </span>-<span class=w> </span><span class=s>&lt;&lt;EOF</span>

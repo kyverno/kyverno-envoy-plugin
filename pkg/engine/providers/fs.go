@@ -55,19 +55,14 @@ func NewFsProvider(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler
 
 func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
 	var policies []engine.CompiledPolicy
-	entries, err := fs.ReadDir(p.fs, ".")
-	if err != nil {
-		return nil, err
-	}
 	ldr, err := DefaultLoader()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load CRDs: %w", err)
 	}
-	for _, entry := range entries {
-		// TODO: recursive loading
+	if err := fs.WalkDir(p.fs, ".", func(path string, entry fs.DirEntry, _err error) error {
 		documents, err := p.getDocuments(ctx, entry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract documents: %w", err)
+			return fmt.Errorf("failed to extract documents: %w", err)
 		}
 		for _, document := range documents {
 			gvk, untyped, err := ldr.Load(document)
@@ -78,30 +73,36 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 			case apolGVK:
 				typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
 				if err != nil {
-					return nil, fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
+					return fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
 				}
 				compiled, errs := p.apolCompiler.Compile(typed)
 				if len(errs) > 0 {
-					return nil, fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
+					return fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
 				}
 				policies = append(policies, compiled)
 			case vpolGVK:
 				typed, err := convert.To[vpol.ValidatingPolicy](untyped)
 				if err != nil {
-					return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
+					return fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
 				}
 				compiled, errs := p.vpolCompiler.Compile(typed)
 				if len(errs) > 0 {
-					return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
+					return fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
 				}
 				policies = append(policies, compiled)
 			}
 		}
+		return _err
+	}); err != nil {
+		return nil, err
 	}
 	return policies, nil
 }
 
-func (p *fsProvider) getDocuments(ctx context.Context, entry fs.DirEntry) ([]document, error) {
+func (p *fsProvider) getDocuments(_ context.Context, entry fs.DirEntry) ([]document, error) {
+	if entry == nil {
+		return nil, nil
+	}
 	// process only files
 	if entry.IsDir() {
 		return nil, nil

@@ -24,6 +24,8 @@ var (
 	vpolGVK = vpol.SchemeGroupVersion.WithKind("ValidatingPolicy")
 )
 
+type document = []byte
+
 func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 	if _fs == nil {
 		_fs = data.Crds
@@ -57,23 +59,15 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 	if err != nil {
 		return nil, err
 	}
+	ldr, err := DefaultLoader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load CRDs: %w", err)
+	}
 	for _, entry := range entries {
 		// TODO: recursive loading
-		// TODO: json support
-		if entry.IsDir() || !file.IsYaml(entry.Name()) {
-			continue
-		}
-		bytes, err := fs.ReadFile(p.fs, entry.Name())
+		documents, err := p.getDocuments(ctx, entry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
-		}
-		documents, err := yaml.SplitDocuments(bytes)
-		if err != nil {
-			return nil, fmt.Errorf("failed to split documents: %w", err)
-		}
-		ldr, err := DefaultLoader()
-		if err != nil {
-			return nil, fmt.Errorf("failed to load CRDs: %w", err)
+			return nil, fmt.Errorf("failed to extract documents: %w", err)
 		}
 		for _, document := range documents {
 			gvk, untyped, err := ldr.Load(document)
@@ -105,4 +99,32 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 		}
 	}
 	return policies, nil
+}
+
+func (p *fsProvider) getDocuments(ctx context.Context, entry fs.DirEntry) ([]document, error) {
+	// process only files
+	if entry.IsDir() {
+		return nil, nil
+	}
+	// if it's a yaml file, it can contain multiple documents
+	if file.IsYaml(entry.Name()) {
+		bytes, err := fs.ReadFile(p.fs, entry.Name())
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
+		}
+		documents, err := yaml.SplitDocuments(bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to split documents: %w", err)
+		}
+		return documents, nil
+	}
+	// if it's a json file, it contains a single document
+	if file.IsJson(entry.Name()) {
+		doc, err := fs.ReadFile(p.fs, entry.Name())
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
+		}
+		return []document{doc}, nil
+	}
+	return nil, nil
 }

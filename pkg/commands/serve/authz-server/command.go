@@ -211,7 +211,10 @@ func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolc
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, genericproviders.NewFsProvider(apolCompiler, vpolCompiler, fsys))
+		providers = append(
+			providers,
+			genericproviders.NewOnceProvider(genericproviders.NewFsProvider(apolCompiler, vpolCompiler, fsys)),
+		)
 	}
 	return providers, nil
 }

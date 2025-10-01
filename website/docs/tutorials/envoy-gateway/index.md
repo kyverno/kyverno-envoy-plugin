@@ -136,7 +136,10 @@ helm install cert-manager \
   --namespace cert-manager --create-namespace \
   --wait \
   --repo https://charts.jetstack.io cert-manager \
-  --set crds.enabled=true
+  --values - <<EOF
+crds:
+  enabled: true
+EOF
 
 # create a self-signed cluster issuer
 kubectl apply -f - <<EOF
@@ -161,9 +164,14 @@ helm install kyverno-authz-server \
   --namespace kyverno --create-namespace \
   --wait \
   --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer
+  --values - <<EOF
+certificates:
+  certManager:
+    issuerRef:
+      group: cert-manager.io
+      kind: ClusterIssuer
+      name: selfsigned-issuer
+EOF
 ```
 
 ## Create a Kyverno ValidatingPolicy

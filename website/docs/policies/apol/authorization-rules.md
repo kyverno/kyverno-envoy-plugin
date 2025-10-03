@@ -5,11 +5,13 @@ An `AuthorizationPolicy` main concern is to define authorization rules to `deny`
 Every authorization rule is made of an optional `match` statement and a required `response` statement. Both statements are written in [CEL](https://github.com/google/cel-spec).
 
 If the `match` statement is present and evaluates to `true`, the `response` statement is used to create the response payload returned to the envoy proxy.
-Depending on the rule type, the response is expected to be an envoy.OkResponse or envoy.DeniedResponse.
+Depending on the rule type, the response is expected to be a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse).
 
-Creating an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) can be a tedious task, you need to remember the different types names and format.
+## CEL envoy extension
 
-The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
+Creating a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) can be a tedious task, you need to remember the different types names and format.
+
+The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../../cel-extensions/index.md) for details.
 
 ## Evaluation order
 
@@ -64,7 +66,7 @@ In this simple rule:
 However, we can do a lot more.
 Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body.
 
-![dynamic metadata](../schemas/dynamic-metadata.png)
+![dynamic metadata](../../schemas/dynamic-metadata.png)
 
 ### The hard way
 
@@ -154,38 +156,38 @@ spec:
 
 Notice this policy uses helper functions:
 
-- [envoy.Allowed](../cel-extensions/envoy.md#envoyallowed)
+- [envoy.Allowed](../../cel-extensions/envoy.md#envoyallowed)
 
     To create an OK http response
 
-- [envoy.Denied](../cel-extensions/envoy.md#envoydenied)
+- [envoy.Denied](../../cel-extensions/envoy.md#envoydenied)
 
     To create a DENIED http response
 
-- [Response](../cel-extensions/envoy.md#response)
+- [Response](../../cel-extensions/envoy.md#response)
 
     To create a check response from an http response
 
-- [WithHeader](../cel-extensions/envoy.md#withheader)
+- [WithHeader](../../cel-extensions/envoy.md#withheader)
 
     To add a request header
 
-- [WithoutHeader](../cel-extensions/envoy.md#withoutheader)
+- [WithoutHeader](../../cel-extensions/envoy.md#withoutheader)
 
     To remove a request header
 
-- [WithResponseHeader](../cel-extensions/envoy.md#withresponseheader)
+- [WithResponseHeader](../../cel-extensions/envoy.md#withresponseheader)
 
     To add a response header
 
-- [WithBody](../cel-extensions/envoy.md#withbody)
+- [WithBody](../../cel-extensions/envoy.md#withbody)
 
     To modify the response body
 
-- [WithMetadata](../cel-extensions/envoy.md#withmetadata)
+- [WithMetadata](../../cel-extensions/envoy.md#withmetadata)
 
     To add dynamic metadata in the envoy filter chain (this is useful when you want to pass data to another filter in the chain or you want to print it in the application logs)
 
 !!!info
 
-    The full documentation of the CEL Envoy library is available [here](../cel-extensions/envoy.md).
+    The full documentation of the CEL Envoy library is available [here](../../cel-extensions/envoy.md).

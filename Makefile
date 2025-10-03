@@ -113,17 +113,6 @@ codegen-crds: $(REGISTER_GEN)
 	@cp $(CRDS_PATH)/envoy.kyverno.io/* pkg/data/crds
 	@cp $(CRDS_PATH)/policies.kyverno.io/* pkg/data/crds
 
-.PHONY: codegen-mkdocs
-codegen-mkdocs: ## Generate mkdocs website
-	@echo Generate mkdocs website... >&2
-	@$(PIP) install -r requirements.txt
-	@mkdocs build -f ./website/mkdocs.yaml
-
-.PHONY: codegen-helm-docs
-codegen-helm-docs: ## Generate helm docs
-	@echo Generate helm docs... >&2
-	@docker run -v ${PWD}/charts:/work -w /work jnorwood/helm-docs:v1.11.0 -s file
-
 .PHONY: codegen-helm-crds
 codegen-helm-crds: codegen-crds ## Generate helm CRDs
 	@echo Generate helm crds... >&2
@@ -152,6 +141,11 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "sidecar-injector.labels" . | nindent 4 }}' \
  		> ./charts/kyverno-sidecar-injector/templates/crds.yaml
 
+.PHONY: codegen-helm-docs
+codegen-helm-docs: ## Generate helm docs
+	@echo Generate helm docs... >&2
+	@docker run -v ${PWD}/charts:/work -w /work jnorwood/helm-docs:v1.11.0 -s file
+
 .PHONY: codegen-api-docs
 codegen-api-docs: ## Generate markdown API docs
 codegen-api-docs: $(REFERENCE_DOCS)
@@ -159,6 +153,20 @@ codegen-api-docs: codegen-crds
 	@echo Generate api docs... >&2
 	@rm -rf ./website/docs/reference/apis
 	@cd ./website/apis && $(REFERENCE_DOCS) -c config.yaml -f markdown -o ../docs/reference/apis
+
+.PHONY: codegen-cli-docs
+codegen-cli-docs: ## Generate markdown CLI docs
+	@echo Generate cli docs... >&2
+	@rm -rf ./website/docs/reference/commands
+	@go run ./website/commands -out ./website/docs/reference/commands -format markdown -frontmatter
+
+.PHONY: codegen-mkdocs
+codegen-mkdocs: ## Generate mkdocs website
+codegen-mkdocs: codegen-api-docs
+codegen-mkdocs: codegen-cli-docs
+	@echo Generate mkdocs website... >&2
+	@$(PIP) install -r requirements.txt
+	@mkdocs build -f ./website/mkdocs.yaml
 
 .PHONY: codegen-schemas-openapi
 codegen-schemas-openapi: ## Generate openapi schemas (v2 and v3)
@@ -190,11 +198,12 @@ codegen-schemas-json: codegen-schemas-openapi
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
-codegen: codegen-mkdocs
 codegen: codegen-crds
 codegen: codegen-helm-crds
 codegen: codegen-helm-docs
 codegen: codegen-api-docs
+codegen: codegen-cli-docs
+codegen: codegen-mkdocs
 codegen: codegen-schemas-openapi
 codegen: codegen-schemas-json
 
@@ -392,9 +401,13 @@ deploy-kyverno-sidecar-injector: $(HELM)
 		--set containers.injector.image.registry=$(KO_REGISTRY) \
 		--set containers.injector.image.repository=$(PACKAGE) \
 		--set containers.injector.image.tag=$(GIT_SHA) \
-		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set sidecar.image.registry=$(KO_REGISTRY) \
+		--set sidecar.image.repository=$(PACKAGE) \
+		--set sidecar.image.tag=$(GIT_SHA) \
+		--set certificates.certManager.issuerRef.group=cert-manager.io \
 		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
-		--set certificates.certManager.issuerRef.group=cert-manager.io
+		--set certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--values .manifests/sidecar-injector/values.yaml
 
 .PHONY: install-kyverno-sidecar-injector
 install-kyverno-sidecar-injector: ## Install kyverno-sidecar-injector chart

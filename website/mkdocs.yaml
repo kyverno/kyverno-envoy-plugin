@@ -10,12 +10,25 @@ nav:
   - Install:
     - install/crds.md
     - install/certificates.md
+    - install/external-policy-source.md
 - Policies:
   - policies/index.md
-  - policies/failure-policy.md
-  - policies/match-conditions.md
-  - policies/variables.md
-  - policies/authorization-rules.md
+  - ValidatingPolicy:
+    - policies/vpol/index.md
+    - policies/vpol/evaluation-mode.md
+    - policies/vpol/validation-rules.md
+  - AuthorizationPolicy (deprecated):
+    - policies/apol/index.md
+    - policies/apol/authorization-rules.md
+  - Common:
+    - policies/failure-policy.md
+    - policies/match-conditions.md
+    - policies/variables.md
+  - CEL extensions:
+    - cel-extensions/index.md
+    - cel-extensions/envoy.md
+    - cel-extensions/jwk.md
+    - cel-extensions/jwt.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/istio/index.md
@@ -27,10 +40,13 @@ nav:
   - APIs:
     - policies.kyverno.io/v1alpha1: reference/apis/policies.kyverno.io.v1alpha1.md
     - envoy.kyverno.io/v1alpha1: reference/apis/envoy.kyverno.io.v1alpha1.md
-  - CEL extensions:
-    - cel-extensions/index.md
-    - cel-extensions/envoy.md
-    - cel-extensions/jwt.md
+  - Command Line:
+    - reference/commands/kyverno-envoy-plugin.md
+    - reference/commands/kyverno-envoy-plugin_serve.md
+    - reference/commands/kyverno-envoy-plugin_serve_authz-server.md
+    - reference/commands/kyverno-envoy-plugin_serve_sidecar-injector.md
+    - reference/commands/kyverno-envoy-plugin_serve_validation-webhook.md
+    - reference/commands/kyverno-envoy-plugin_version.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md

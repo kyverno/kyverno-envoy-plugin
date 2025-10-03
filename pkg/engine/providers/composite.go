@@ -21,6 +21,5 @@ func (p composite) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolic
 		}
 		out = append(out, c...)
 	}
-	// TODO: we probably need to sort policies before returning
 	return out, nil
 }

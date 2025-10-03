@@ -1,0 +1,12 @@
+sidecar:
+  externalPolicySources:
+  - file://data/kyverno-authz-server
+  volumes:
+  - name: kyverno-authz-server
+    configMap:
+      name: kyverno-authz-server
+      optional: true
+  volumeMounts:
+  - name: kyverno-authz-server
+    readOnly: true
+    mountPath: /data/kyverno-authz-server

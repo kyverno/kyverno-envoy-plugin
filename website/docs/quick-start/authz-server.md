@@ -10,7 +10,6 @@ Then you will interface [Istio](https://istio.io/latest/), an open source servic
 
 - A Kubernetes cluster
 - [Helm](https://helm.sh/) to install the Kyverno Authz Server
-- [istioctl](https://istio.io/latest/docs/setup/getting-started/#download) to configure the mesh
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) to interact with the cluster
 
 ### Setup a cluster (optional)
@@ -29,18 +28,25 @@ kind create cluster --image $KIND_IMAGE --wait 1m
 We need to register the Kyverno Authz Server with Istio.
 
 ```bash
-# configure the mesh
-istioctl install -y -f - <<EOF
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-    extensionProviders:
-    - name: kyverno-authz-server.local
-      envoyExtAuthzGrpc:
-        service: kyverno-authz-server.kyverno.svc.cluster.local
-        port: '9081'
+# install istio base chart
+helm install istio-base \
+  --namespace istio-system --create-namespace \
+  --wait \
+  --repo https://istio-release.storage.googleapis.com/charts base
+
+# install istiod chart
+helm install istiod \
+  --namespace istio-system --create-namespace \
+  --wait \
+  --repo https://istio-release.storage.googleapis.com/charts istiod \
+  --values - <<EOF
+meshConfig:
+  accessLogFile: /dev/stdout
+  extensionProviders:
+  - name: kyverno-authz-server
+    envoyExtAuthzGrpc:
+      service: kyverno-authz-server.kyverno.svc.cluster.local
+      port: 9081
 EOF
 ```
 
@@ -48,11 +54,12 @@ Notice that in the configuration, we define an `extensionProviders` section that
 
 ```yaml
 [...]
-    extensionProviders:
-    - name: kyverno-authz-server.local
-      envoyExtAuthzGrpc:
-        service: kyverno-authz-server.kyverno.svc.cluster.local
-        port: '9081'
+meshConfig:
+  extensionProviders:
+  - name: kyverno-authz-server.local
+    envoyExtAuthzGrpc:
+      service: kyverno-authz-server.kyverno.svc.cluster.local
+      port: '9081'
 [...]
 ```
 
@@ -68,7 +75,10 @@ helm install cert-manager \
   --namespace cert-manager --create-namespace \
   --wait \
   --repo https://charts.jetstack.io cert-manager \
-  --set crds.enabled=true
+  --values - <<EOF
+crds:
+  enabled: true
+EOF
 
 # create a self-signed cluster issuer
 kubectl apply -f - <<EOF
@@ -108,9 +118,14 @@ helm install kyverno-authz-server \
   --namespace kyverno \
   --wait  \
   --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer
+  --values - <<EOF
+certificates:
+  certManager:
+    issuerRef:
+      group: cert-manager.io
+      kind: ClusterIssuer
+      name: selfsigned-issuer
+EOF
 ```
 
 ### Deploy the sample application
@@ -164,7 +179,7 @@ Notice that in this resource, we define the Kyverno Authz Server `extensionProvi
 
 A Kyverno `ValidatingPolicy` defines the rules used by the Kyverno authz server to make a decision based on a given Envoy [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest).
 
-It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming `CheckRequest` and is expected to produce an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) in return.
+It uses the [CEL language](https://github.com/google/cel-spec) to analyse the incoming [CheckRequest](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkrequest) and is expected to produce a [CheckResponse](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto#service-auth-v3-checkresponse) in return.
 
 ```bash
 # deploy kyverno validating policy

@@ -29,7 +29,6 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3
 	if err != nil {
 		return nil, err
 	}
-	// TODO: eliminate allocations
 	allow := make([]engine.PolicyFunc, 0, len(policies))
 	deny := make([]engine.PolicyFunc, 0, len(policies))
 	// iterate over policies

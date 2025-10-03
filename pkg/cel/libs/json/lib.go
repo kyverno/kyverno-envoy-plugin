@@ -19,7 +19,7 @@ func Lib(json JsonImpl) cel.EnvOption {
 	})
 }
 
-func (_ *lib) LibraryName() string {
+func (*lib) LibraryName() string {
 	return "kyverno.json"
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/image"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"k8s.io/apiserver/pkg/cel/library"
 )
 
@@ -46,5 +47,6 @@ func NewEnv() (*cel.Env, error) {
 		image.Lib(),
 		imagedata.Lib(),
 		http.Lib(),
+		resource.Lib(),
 	)
 }

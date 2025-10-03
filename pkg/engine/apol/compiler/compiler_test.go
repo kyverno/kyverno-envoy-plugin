@@ -109,7 +109,7 @@ func TestCompiler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allow, deny := compiled.For(test.request)
+		allow, deny := compiled.For(test.request, nil)
 		resp, err := deny()
 		assert.NoError(t, err)
 		if resp == nil {

@@ -11,6 +11,7 @@ import (
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -20,6 +21,7 @@ const (
 	ImageDataKey = "image"
 	ObjectKey    = "object"
 	VariablesKey = "variables"
+	ResourceKey  = "resource"
 )
 
 type Compiler = engine.Compiler[*vpol.ValidatingPolicy]
@@ -42,6 +44,7 @@ func (c *compiler) Compile(policy *vpol.ValidatingPolicy) (engine.CompiledPolicy
 		cel.Variable(ImageDataKey, imagedata.ContextType),
 		cel.Variable(ObjectKey, envoy.CheckRequest),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
+		cel.Variable(ResourceKey, resource.ContextType),
 		cel.CustomTypeProvider(provider),
 	)
 	if err != nil {

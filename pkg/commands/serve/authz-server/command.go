@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -74,18 +75,19 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-
 					secrets := make([]string, 0)
 					if len(imagePullSecrets) > 0 {
 						secrets = append(secrets, imagePullSecrets...)
 					}
-
+					dynclient, err := dynamic.NewForConfig(config)
+					if err != nil {
+						return err
+					}
 					// Create kubernetes client
 					kubeclient, err := kubernetes.NewForConfig(config)
 					if err != nil {
 						return err
 					}
-
 					namespace, _, err := kubeConfig.Namespace()
 					if err != nil {
 						return fmt.Errorf("failed to get namespace from kubeconfig: %w", err)
@@ -95,12 +97,10 @@ func Command() *cobra.Command {
 						log.Printf("Using namespace '%s' - consider setting explicit namespace", namespace)
 					}
 					rOpts, nOpts, err := ocifs.RegistryOpts(kubeclient.CoreV1().Secrets(namespace), allowInsecureRegistry, secrets...)
-
 					if err != nil {
 						log.Fatalf("failed to initialize registry opts: %v", err)
 						os.Exit(1)
 					}
-
 					// create compilers
 					apolCompiler := apolcompiler.NewCompiler()
 					vpolCompiler := vpolcompiler.NewCompiler()
@@ -162,7 +162,7 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
-					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider)
+					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider, dynclient)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end

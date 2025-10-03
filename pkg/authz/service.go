@@ -5,11 +5,13 @@ import (
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type service struct {
-	provider engine.Provider
+	provider  engine.Provider
+	dynclient dynamic.Interface
 }
 
 func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
@@ -34,7 +36,7 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3
 	// iterate over policies
 	for _, policy := range policies {
 		// collect allow/deny
-		a, d := policy.For(r)
+		a, d := policy.For(r, s.dynclient)
 		if a != nil {
 			allow = append(allow, a)
 		}

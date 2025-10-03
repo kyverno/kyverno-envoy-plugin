@@ -14,9 +14,11 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apiserver/pkg/cel/lazy"
+	"k8s.io/client-go/dynamic"
 )
 
 type compiledPolicy struct {
@@ -26,7 +28,7 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
+func (p compiledPolicy) For(r *authv3.CheckRequest, dynclient dynamic.Interface) (engine.PolicyFunc, engine.PolicyFunc) {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,
@@ -64,6 +66,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 			HttpKey:      http.Context{ContextInterface: http.NewHTTP(nil)},
 			ImageDataKey: imagedata.Context{ContextInterface: loader},
 			ObjectKey:    r,
+			ResourceKey:  resource.Context{ContextInterface: variables.NewResourceProvider(dynclient)},
 			VariablesKey: vars,
 		}
 		for name, variable := range p.variables {

@@ -9,15 +9,17 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"k8s.io/client-go/dynamic"
 )
 
-func NewServer(network, addr string, provider engine.Provider) server.ServerFunc {
+func NewServer(network, addr string, provider engine.Provider, dynclient dynamic.Interface) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()
 		// setup our authorization service
 		svc := &service{
-			provider: provider,
+			provider:  provider,
+			dynclient: dynclient,
 		}
 		// register our authorization service
 		authv3.RegisterAuthorizationServer(s, svc)

@@ -7,6 +7,7 @@ The CEL engine used to evaluate variables and authorization rules has been exten
 - [Envoy](./envoy.md)
 - [Jwk](./jwk.md)
 - [Jwt](./jwt.md)
+- [Json](./json.md)
 
 ## Common libraries
 

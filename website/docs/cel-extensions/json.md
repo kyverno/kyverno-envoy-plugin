@@ -11,7 +11,7 @@ The `json` function parses a JSON-encoded string and returns the corresponding C
 #### Signature
 
 ```
-json.Unmarshal(<string> jsonString) -> Map[string][any]
+json.Unmarshal(<string> jsonString) -> any
 ```
 
 ### Example

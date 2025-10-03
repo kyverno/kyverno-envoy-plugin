@@ -14,11 +14,9 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
-	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apiserver/pkg/cel/lazy"
-	"k8s.io/client-go/dynamic"
 )
 
 type authorizationProgram struct {
@@ -32,7 +30,6 @@ type compiledPolicy struct {
 	variables       map[string]cel.Program
 	allow           []authorizationProgram
 	deny            []authorizationProgram
-	k8sClient       dynamic.Interface
 }
 
 func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.PolicyFunc) {
@@ -65,7 +62,6 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 	})
 	variables := sync.OnceValues(func() (map[string]any, error) {
 		loader, err := variables.ImageData(nil)
-		resourceProvider := variables.NewResourceProvider(p.k8sClient)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +71,6 @@ func (p compiledPolicy) For(r *authv3.CheckRequest) (engine.PolicyFunc, engine.P
 			ImageDataKey: imagedata.Context{ContextInterface: loader},
 			ObjectKey:    r,
 			VariablesKey: vars,
-			ResourceKey:  resource.Context{ContextInterface: resourceProvider},
 		}
 		for name, variable := range p.variables {
 			vars.Append(name, func(*lazy.MapValue) ref.Val {

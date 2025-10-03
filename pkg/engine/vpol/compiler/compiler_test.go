@@ -42,7 +42,7 @@ var pol = &vpol.ValidatingPolicy{
 }
 
 func TestCompiler(t *testing.T) {
-	compiler := compiler.NewCompiler(nil)
+	compiler := compiler.NewCompiler()
 
 	compiled, errList := compiler.Compile(pol)
 	assert.NoError(t, errList.ToAggregate())

@@ -14,7 +14,6 @@ import (
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -27,15 +26,11 @@ const (
 
 type Compiler = engine.Compiler[*vpol.ValidatingPolicy]
 
-func NewCompiler(client dynamic.Interface) Compiler {
-	return &compiler{
-		client: client,
-	}
+func NewCompiler() Compiler {
+	return &compiler{}
 }
 
-type compiler struct {
-	client dynamic.Interface
-}
+type compiler struct{}
 
 func (c *compiler) Compile(policy *vpol.ValidatingPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	var allErrs field.ErrorList
@@ -105,7 +100,6 @@ func (c *compiler) Compile(policy *vpol.ValidatingPolicy) (engine.CompiledPolicy
 		}
 	}
 	return compiledPolicy{
-		client:          c.client,
 		failurePolicy:   policy.GetFailurePolicy(),
 		matchConditions: matchConditions,
 		variables:       variables,

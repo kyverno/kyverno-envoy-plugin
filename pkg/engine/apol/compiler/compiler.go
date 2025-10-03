@@ -13,7 +13,6 @@ import (
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -26,15 +25,11 @@ const (
 
 type Compiler = engine.Compiler[*v1alpha1.AuthorizationPolicy]
 
-func NewCompiler(k8sClient dynamic.Interface) Compiler {
-	return &compiler{
-		k8sClient: k8sClient,
-	}
+func NewCompiler() Compiler {
+	return &compiler{}
 }
 
-type compiler struct {
-	k8sClient dynamic.Interface
-}
+type compiler struct{}
 
 func (c *compiler) Compile(policy *v1alpha1.AuthorizationPolicy) (engine.CompiledPolicy, field.ErrorList) {
 	var allErrs field.ErrorList

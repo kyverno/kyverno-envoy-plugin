@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,11 +66,10 @@ func Command() *cobra.Command {
 					if err != nil {
 						return err
 					}
-
-					k8sClient, err := dynamic.NewForConfig(config)
-					if err != nil {
-						return err
-					}
+					// k8sClient, err := dynamic.NewForConfig(config)
+					// if err != nil {
+					// 	return err
+					// }
 					// create a cancellable context
 					ctx, cancel := context.WithCancel(ctx)
 					// cancel context at the end
@@ -108,8 +106,8 @@ func Command() *cobra.Command {
 					}
 
 					// create compilers
-					apolCompiler := apolcompiler.NewCompiler(k8sClient)
-					vpolCompiler := vpolcompiler.NewCompiler(k8sClient)
+					apolCompiler := apolcompiler.NewCompiler()
+					vpolCompiler := vpolcompiler.NewCompiler()
 					// create external providers
 					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {

@@ -43,7 +43,7 @@ func (l *lib) ProgramOptions() []cel.ProgramOption {
 	}
 }
 
-func (_ *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
+func (*lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	// get env type adapter
 	adapter := env.CELTypeAdapter()
 	// create implementation with adapter

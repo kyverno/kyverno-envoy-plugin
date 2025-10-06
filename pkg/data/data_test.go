@@ -11,7 +11,7 @@ func TestCrds(t *testing.T) {
 	data, err := Crds()
 	assert.NoError(t, err)
 	files := []string{
-		"envoy.kyverno.io_authorizationpolicies.yaml",
+		"policies.kyverno.io_validatingpolicies.yaml",
 	}
 	for _, file := range files {
 		file, err := fs.Stat(data, file)

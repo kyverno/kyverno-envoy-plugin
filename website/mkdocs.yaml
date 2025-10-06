@@ -17,9 +17,6 @@ nav:
     - policies/vpol/index.md
     - policies/vpol/evaluation-mode.md
     - policies/vpol/validation-rules.md
-  - AuthorizationPolicy (deprecated):
-    - policies/apol/index.md
-    - policies/apol/authorization-rules.md
   - Common:
     - policies/failure-policy.md
     - policies/match-conditions.md
@@ -39,7 +36,6 @@ nav:
   - reference/json-schemas.md
   - APIs:
     - policies.kyverno.io/v1alpha1: reference/apis/policies.kyverno.io.v1alpha1.md
-    - envoy.kyverno.io/v1alpha1: reference/apis/envoy.kyverno.io.v1alpha1.md
   - Command Line:
     - reference/commands/kyverno-envoy-plugin.md
     - reference/commands/kyverno-envoy-plugin_serve.md

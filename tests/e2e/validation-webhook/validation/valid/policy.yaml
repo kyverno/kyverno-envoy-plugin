@@ -1,14 +1,15 @@
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
-  name: invalid-output-type
+  name: valid
 spec:
-  evaluation:
-    mode: Envoy
-  matchConditions:
-  - name: bad
-    expression: >
-      'flop'
+  variables:
+  - name: force_authorized
+    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("") in ["enabled", "true"]
+  - name: force_unauthenticated
+    expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
+  - name: metadata
+    expression: '{"my-new-metadata": "my-new-value"}'
   validations:
   - expression: | 
       variables.force_unauthenticated ? 

@@ -1,7 +1,7 @@
 apiVersion: policies.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: valid
+  name: demo-policy.example.com
 spec:
   evaluation:
     mode: Envoy

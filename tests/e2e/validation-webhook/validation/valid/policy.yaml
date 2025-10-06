@@ -4,8 +4,6 @@ kind: ValidatingPolicy
 metadata:
   name: valid
 spec:
-  evaluation:
-    mode: Envoy
   variables:
   - name: force_authorized
     expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("") in ["enabled", "true"]
@@ -13,10 +11,6 @@ spec:
     expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
   - name: metadata
     expression: '{"my-new-metadata": "my-new-value"}'
-  matchConditions:
-    - name: never
-      expression: >
-        false
   validations:
   - expression: | 
       variables.force_unauthenticated ? 

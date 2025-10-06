@@ -1,28 +1,10 @@
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: invalid-output-type
 spec:
   evaluation:
     mode: Envoy
-  matchConditions:
-  - name: bad
-    expression: >
-      'flop'
   validations:
-  - expression: | 
-      variables.force_unauthenticated ? 
-        envoy.Denied(401)
-          .WithBody("Authentication Failed")
-          .Response() :
-        envoy.Denied(403)
-          .WithBody("Unauthorized Request")
-          .Response()
-  - expression: |
-      envoy
-        .Allowed()
-        .WithHeader("x-validated-by", "my-security-checkpoint")
-        .WithoutHeader("x-force-authorized")
-        .WithResponseHeader("x-add-custom-response-header", "added")
-        .Response()
-        .WithMetadata(variables.metadata)
+  - expression: >
+      'bye'

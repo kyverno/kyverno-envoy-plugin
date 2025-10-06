@@ -2,11 +2,10 @@
 apiVersion: policies.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
-  name: policy
+  name: compilation-failure
 spec:
   evaluation:
     mode: Envoy
   validations:
   - expression: >
-      envoy
-        .Allowed().Response()
+      envoy.Allowed() + 1

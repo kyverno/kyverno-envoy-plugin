@@ -32,4 +32,3 @@ webhooks:
     apiVersions: [v1alpha1]
     resources: [validatingpolicies]
     operations: [CREATE, UPDATE]
-

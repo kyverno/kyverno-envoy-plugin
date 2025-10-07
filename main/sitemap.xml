@@ -125,10 +125,6 @@
          <lastmod>2025-10-07</lastmod>
     </url>
     <url>
-         <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/reference/apis/envoy.kyverno.io.v1alpha1/</loc>
-         <lastmod>2025-10-07</lastmod>
-    </url>
-    <url>
          <loc>https://kyverno.github.io/kyverno-envoy-plugin/main/reference/apis/policies.kyverno.io.v1alpha1/</loc>
          <lastmod>2025-10-07</lastmod>
     </url>

@@ -6,10 +6,8 @@ import (
 	"io/fs"
 	"sync"
 
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/data"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
@@ -21,7 +19,6 @@ import (
 )
 
 var (
-	apolGVK = v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy")
 	vpolGVK = vpol.SchemeGroupVersion.WithKind("ValidatingPolicy")
 )
 
@@ -41,14 +38,12 @@ func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
 
 type fsProvider struct {
-	apolCompiler apolcompiler.Compiler
 	vpolCompiler vpolcompiler.Compiler
 	fs           fs.FS
 }
 
-func NewFsProvider(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
+func NewFsProvider(vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
 	return &fsProvider{
-		apolCompiler: apolCompiler,
 		vpolCompiler: vpolCompiler,
 		fs:           fs,
 	}
@@ -59,7 +54,6 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 	if err != nil {
 		return nil, fmt.Errorf("failed to load CRDs: %w", err)
 	}
-	apols := map[string]*v1alpha1.AuthorizationPolicy{}
 	vpols := map[string]*vpol.ValidatingPolicy{}
 	if err := fs.WalkDir(p.fs, ".", func(path string, entry fs.DirEntry, _err error) error {
 		documents, err := p.getDocuments(ctx, entry)
@@ -72,12 +66,6 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 				continue
 			}
 			switch gvk {
-			case apolGVK:
-				typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
-				if err != nil {
-					return fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
-				}
-				apols[typed.Name] = typed
 			case vpolGVK:
 				typed, err := convert.To[vpol.ValidatingPolicy](untyped)
 				if err != nil {
@@ -91,13 +79,6 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 		return nil, err
 	}
 	var policies []engine.CompiledPolicy
-	for _, apol := range utils.ToSortedSlice(apols) {
-		compiled, errs := p.apolCompiler.Compile(apol)
-		if len(errs) > 0 {
-			return nil, fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
-		}
-		policies = append(policies, compiled)
-	}
 	for _, vpol := range utils.ToSortedSlice(vpols) {
 		compiled, errs := p.vpolCompiler.Compile(vpol)
 		if len(errs) > 0 {

@@ -11,6 +11,6 @@ spec:
         expect:
         - check:
             ($error): |-
-              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.envoy.kyverno.io "policy" is invalid: spec.matchConditions[0].expression: Invalid value: "variables.foo": ERROR: <input>:1:10: undefined field 'foo'
+              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "policy" is invalid: spec.matchConditions[0].expression: Invalid value: "variables.foo": ERROR: <input>:1:10: undefined field 'foo'
                | variables.foo
                | .........^

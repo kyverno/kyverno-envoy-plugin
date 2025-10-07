@@ -17,9 +17,6 @@ nav:
     - policies/vpol/index.md
     - policies/vpol/evaluation-mode.md
     - policies/vpol/validation-rules.md
-  - AuthorizationPolicy (deprecated):
-    - policies/apol/index.md
-    - policies/apol/authorization-rules.md
   - Common:
     - policies/failure-policy.md
     - policies/match-conditions.md

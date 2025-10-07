@@ -30,9 +30,6 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 |-----|------|---------|-------------|
 | nameOverride | string | `nil` | Override the name of the chart |
 | fullnameOverride | string | `nil` | Override the expanded name of the chart |
-| crds.install | bool | `true` | Whether to have Helm install the CRDs, if the CRDs are not installed by Helm, they must be added before policies can be created |
-| crds.annotations | object | `{}` | Additional CRDs annotations |
-| crds.labels | object | `{}` | Additional CRDs labels |
 | rbac.create | bool | `true` | Create RBAC resources |
 | rbac.serviceAccount.name | string | `nil` | The ServiceAccount name |
 | rbac.serviceAccount.annotations | object | `{}` | Annotations for the ServiceAccount |

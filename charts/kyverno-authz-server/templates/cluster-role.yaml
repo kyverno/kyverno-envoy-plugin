@@ -8,14 +8,6 @@ metadata:
     {{- include "kyverno-authz-server.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-  - envoy.kyverno.io
-  resources:
-  - authorizationpolicies
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
   - policies.kyverno.io
   resources:
   - validatingpolicies

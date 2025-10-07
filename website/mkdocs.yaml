@@ -39,7 +39,6 @@ nav:
   - reference/json-schemas.md
   - APIs:
     - policies.kyverno.io/v1alpha1: reference/apis/policies.kyverno.io.v1alpha1.md
-    - envoy.kyverno.io/v1alpha1: reference/apis/envoy.kyverno.io.v1alpha1.md
   - Command Line:
     - reference/commands/kyverno-envoy-plugin.md
     - reference/commands/kyverno-envoy-plugin_serve.md

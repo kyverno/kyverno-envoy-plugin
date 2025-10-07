@@ -26,7 +26,6 @@ Notes:
 
 ### What files are expected
 From each source directory, the server loads non-recursively all YAML files and parses embedded documents:
-- `envoy.kyverno.io/v1alpha1` `AuthorizationPolicy`
 - `policies.kyverno.io/v1alpha1` `ValidatingPolicy`
 
 Invalid or non-policy documents are skipped. Compilation errors will make startup fail.

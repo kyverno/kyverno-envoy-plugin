@@ -28,7 +28,7 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest, dynclient dynamic.Interface) (engine.PolicyFunc, engine.PolicyFunc) {
+func (p compiledPolicy) For(r *authv3.CheckRequest, dynclient dynamic.Interface) engine.PolicyFunc {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,
@@ -116,7 +116,7 @@ func (p compiledPolicy) For(r *authv3.CheckRequest, dynclient dynamic.Interface)
 			return response, nil
 		}
 	}
-	return failurePolicy(rules), nil
+	return failurePolicy(rules)
 }
 
 func evaluateRule(rule cel.Program, data map[string]any) (*authv3.CheckResponse, error) {

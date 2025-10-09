@@ -8,5 +8,5 @@ import (
 type PolicyFunc func() (*authv3.CheckResponse, error)
 
 type CompiledPolicy interface {
-	For(*authv3.CheckRequest, dynamic.Interface) (PolicyFunc, PolicyFunc)
+	For(*authv3.CheckRequest, dynamic.Interface) PolicyFunc
 }

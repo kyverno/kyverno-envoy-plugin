@@ -31,36 +31,19 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3
 	if err != nil {
 		return nil, err
 	}
-	allow := make([]engine.PolicyFunc, 0, len(policies))
-	deny := make([]engine.PolicyFunc, 0, len(policies))
+	validations := make([]engine.PolicyFunc, 0, len(policies))
 	// iterate over policies
 	for _, policy := range policies {
 		// collect allow/deny
-		a, d := policy.For(r, s.dynclient)
-		if a != nil {
-			allow = append(allow, a)
-		}
-		if d != nil {
-			deny = append(deny, d)
+		v := policy.For(r, s.dynclient)
+		if v != nil {
+			validations = append(validations, v)
 		}
 	}
-	// check deny first
-	for _, deny := range deny {
+	// check validations
+	for _, validation := range validations {
 		// execute rule
-		response, err := deny()
-		// return error if any
-		if err != nil {
-			return nil, err
-		}
-		// if the reponse returned by the rule evaluation was not nil, return
-		if response != nil {
-			return response, nil
-		}
-	}
-	// check allow
-	for _, allow := range allow {
-		// execute rule
-		response, err := allow()
+		response, err := validation()
 		// return error if any
 		if err != nil {
 			return nil, err

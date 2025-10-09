@@ -105,9 +105,7 @@ func TestCompiler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		validations := compiled.For(test.request, nil)
-		assert.NotNil(t, validations)
-		resp, err := validations()
+		resp, err := compiled.Evaluate(test.request, nil)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 

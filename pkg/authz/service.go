@@ -31,19 +31,10 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3
 	if err != nil {
 		return nil, err
 	}
-	validations := make([]engine.PolicyFunc, 0, len(policies))
-	// iterate over policies
-	for _, policy := range policies {
-		// collect allow/deny
-		v := policy.For(r, s.dynclient)
-		if v != nil {
-			validations = append(validations, v)
-		}
-	}
 	// check validations
-	for _, validation := range validations {
+	for _, policy := range policies {
 		// execute rule
-		response, err := validation()
+		response, err := policy.Evaluate(r, s.dynclient)
 		// return error if any
 		if err != nil {
 			return nil, err

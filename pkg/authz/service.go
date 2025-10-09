@@ -26,50 +26,36 @@ func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 }
 
 func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3.CheckResponse, _err error) {
-	// fetch compiled policies
 	policies, err := s.provider.CompiledPolicies(ctx)
+
 	if err != nil {
 		return nil, err
 	}
-	allow := make([]engine.PolicyFunc, 0, len(policies))
-	deny := make([]engine.PolicyFunc, 0, len(policies))
-	// iterate over policies
+
+	allow := make([]*authv3.CheckResponse, 0, len(policies))
+	deny := make([]*authv3.CheckResponse, 0, len(policies))
+
 	for _, policy := range policies {
-		// collect allow/deny
-		a, d := policy.For(r, s.dynclient)
-		if a != nil {
-			allow = append(allow, a)
+		response, err := policy.Evaluate(r, s.dynclient)
+		if err != nil {
+			return nil, err
 		}
-		if d != nil {
-			deny = append(deny, d)
+
+		if response.GetOkResponse() != nil {
+			allow = append(allow, response)
+		}
+		if response.GetDeniedResponse() != nil {
+			deny = append(deny, response)
 		}
 	}
-	// check deny first
+
 	for _, deny := range deny {
-		// execute rule
-		response, err := deny()
-		// return error if any
-		if err != nil {
-			return nil, err
-		}
-		// if the reponse returned by the rule evaluation was not nil, return
-		if response != nil {
-			return response, nil
-		}
+		return deny, nil
 	}
-	// check allow
+
 	for _, allow := range allow {
-		// execute rule
-		response, err := allow()
-		// return error if any
-		if err != nil {
-			return nil, err
-		}
-		// if the reponse returned by the rule evaluation was not nil, return
-		if response != nil {
-			return response, nil
-		}
+		return allow, nil
 	}
-	// we didn't have a response
+
 	return &authv3.CheckResponse{}, nil
 }

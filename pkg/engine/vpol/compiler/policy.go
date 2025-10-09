@@ -10,7 +10,6 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
@@ -28,7 +27,7 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) For(r *authv3.CheckRequest, dynclient dynamic.Interface) (engine.PolicyFunc, engine.PolicyFunc) {
+func (p compiledPolicy) Evaluate(r *authv3.CheckRequest, dynclient dynamic.Interface) (*authv3.CheckResponse, error) {
 	match := sync.OnceValues(func() (bool, error) {
 		data := map[string]any{
 			ObjectKey: r,
@@ -83,40 +82,30 @@ func (p compiledPolicy) For(r *authv3.CheckRequest, dynclient dynamic.Interface)
 		}
 		return data, nil
 	})
-	rules := func() (*authv3.CheckResponse, error) {
-		if match, err := match(); err != nil {
-			return nil, err
-		} else if !match {
-			return nil, nil
-		}
-		data, err := variables()
+
+	if match, err := match(); err != nil {
+		return nil, err
+	} else if !match {
+		return nil, nil
+	}
+	data, err := variables()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, rule := range p.rules {
+		// evaluate the rule
+		response, err := evaluateRule(rule, data)
+		// check error
 		if err != nil {
 			return nil, err
 		}
-		for _, rule := range p.rules {
-			// evaluate the rule
-			response, err := evaluateRule(rule, data)
-			// check error
-			if err != nil {
-				return nil, err
-			}
-			if response != nil {
-				// no error and evaluation result is not nil, return
-				return response, nil
-			}
-		}
-		return nil, nil
-	}
-	failurePolicy := func(inner func() (*authv3.CheckResponse, error)) func() (*authv3.CheckResponse, error) {
-		return func() (*authv3.CheckResponse, error) {
-			response, err := inner()
-			if err != nil && p.failurePolicy == admissionregistrationv1.Fail {
-				return nil, err
-			}
+		if response != nil {
+			// no error and evaluation result is not nil, return
 			return response, nil
 		}
 	}
-	return failurePolicy(rules), nil
+	return nil, nil
 }
 
 func evaluateRule(rule cel.Program, data map[string]any) (*authv3.CheckResponse, error) {

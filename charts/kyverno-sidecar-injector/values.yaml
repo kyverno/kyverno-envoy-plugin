@@ -284,3 +284,6 @@ sidecar:
 
   # -- (list) Additional image pull secrets
   imagePullSecrets: []
+
+crds:
+  install: true

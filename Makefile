@@ -96,6 +96,9 @@ codegen-crds: $(REGISTER_GEN)
 	@echo Generate CRDs... >&2
 	@rm -rf .crds && mkdir -p .crds
 	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
+	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... \
+		crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false \
+		output:dir=$(CRDS_PATH)/authz.kyverno.io
 	@$(CONTROLLER_GEN) paths=github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1/... \
 		crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false \
 		output:dir=$(CRDS_PATH)/policies.kyverno.io
@@ -108,6 +111,34 @@ codegen-crds: $(REGISTER_GEN)
 	@echo Copy generated CRDs to embed in the binary... >&2
 	@rm -rf pkg/data/crds && mkdir -p pkg/data/crds
 	@cp $(CRDS_PATH)/policies.kyverno.io/* pkg/data/crds
+
+.PHONY: codegen-helm-crds
+codegen-helm-crds: codegen-crds ## Generate helm CRDs
+	@echo Generate helm crds... >&2
+	@cat $(CRDS_PATH)/authz.kyverno.io/* \
+		| $(SED) -e '1i{{- if .Values.crds.install }}' \
+		| $(SED) -e '$$a{{- end }}' \
+		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
+ 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
+		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
+ 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
+ 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
+ 		> ./charts/kyverno-authz-server/templates/crds.yaml
+	@cat $(CRDS_PATH)/authz.kyverno.io/* \
+		| $(SED) -e '1i{{- if .Values.crds.install }}' \
+		| $(SED) -e '$$a{{- end }}' \
+		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
+ 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
+		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
+ 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
+ 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
+		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "sidecar-injector.labels" . | nindent 4 }}' \
+ 		> ./charts/kyverno-sidecar-injector/templates/crds.yaml
 
 .PHONY: codegen-helm-docs
 codegen-helm-docs: ## Generate helm docs
@@ -136,13 +167,44 @@ codegen-mkdocs: codegen-cli-docs
 	@$(PIP) install -r requirements.txt
 	@mkdocs build -f ./website/mkdocs.yaml
 
+.PHONY: codegen-schemas-openapi
+codegen-schemas-openapi: ## Generate openapi schemas (v2 and v3)
+codegen-schemas-openapi: CURRENT_CONTEXT = $(shell kubectl config current-context)
+codegen-schemas-openapi: codegen-crds
+codegen-schemas-openapi: $(KIND)
+	@echo Generate openapi schema... >&2
+	@rm -rf ./.temp/.schemas
+	@mkdir -p ./.temp/.schemas/openapi/v2
+	@mkdir -p ./.temp/.schemas/openapi/v3/apis/authz.kyverno.io
+	@$(KIND) create cluster --name schema --image $(KIND_IMAGE)
+	@kubectl create -f $(CRDS_PATH)/authz.kyverno.io
+	@sleep 15
+	@kubectl get --raw /openapi/v2 > ./.temp/.schemas/openapi/v2/schema.json
+	@kubectl get --raw /openapi/v3/apis/authz.kyverno.io/v1alpha1 > ./.temp/.schemas/openapi/v3/apis/authz.kyverno.io/v1alpha1.json
+	@$(KIND) delete cluster --name schema
+	@kubectl config use-context $(CURRENT_CONTEXT) || true
+
+.PHONY: codegen-schemas-json
+codegen-schemas-json: ## Generate json schemas
+codegen-schemas-json: codegen-schemas-openapi
+	@echo Generate json schema... >&2
+	@$(PIP) install -r requirements.txt
+	@rm -rf ./.temp/.schemas/json
+	@rm -rf ./.schemas/json
+	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/authz.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
+	@mkdir -p ./.schemas/json
+	@cp ./.temp/.schemas/json/backend-authz-*.json ./.schemas/json
+
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
 codegen: codegen-crds
+codegen: codegen-helm-crds
 codegen: codegen-helm-docs
 codegen: codegen-api-docs
 codegen: codegen-cli-docs
 codegen: codegen-mkdocs
+codegen: codegen-schemas-openapi
+codegen: codegen-schemas-json
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date

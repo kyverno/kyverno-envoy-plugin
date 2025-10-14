@@ -1,0 +1,173 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: backends.authz.kyverno.io
+spec:
+  group: authz.kyverno.io
+  names:
+    categories:
+    - kyverno
+    kind: Backend
+    listKind: BackendList
+    plural: backends
+    singular: backend
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Backend is a resource that represents a new kyverno authorization
+          backend.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackendSpec defines the spec of a backend.
+            properties:
+              sources:
+                description: BackendSource contains all the sources of policies for
+                  the backend.
+                items:
+                  description: BackendSource represents where the backend will get
+                    its policies from.
+                  maxProperties: 1
+                  minProperties: 1
+                  properties:
+                    external:
+                      description: ExternalSource defines an external policy source.
+                      properties:
+                        url:
+                          description: |-
+                            URL is the URL of the external policy source
+                            Supported schemes are: file://, oci://, https://, etc
+                          type: string
+                      required:
+                      - url
+                      type: object
+                    kubernetes:
+                      description: |-
+                        KubernetesSource defines a Kubernetes-based policy source.
+                        KubernetesPolicySource defines a reference to a Kubernetes policy resource.
+                      enum:
+                      - Ignore
+                      - Fail
+                      properties:
+                        policyRef:
+                          description: PolicyObjectReference represents a reference
+                            to a policy resource.
+                          properties:
+                            group:
+                              default: policies.kyverno.io
+                              description: |-
+                                Group refers to a Kubernetes Group. It must either be an empty string or a
+                                RFC 1123 subdomain.
+
+                                This validation is based off of the corresponding Kubernetes validation:
+                                https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208
+
+                                Valid values include:
+
+                                * "" - empty string implies core Kubernetes API group
+                                * "authz.kyverno.io"
+                                * "policies.kyverno.io"
+
+                                Invalid values include:
+
+                                * "example.com/bar" - "/" is an invalid character
+                              maxLength: 253
+                              pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                              type: string
+                            kind:
+                              default: ValidatingPolicy
+                              description: Kind is the kind of the referent. For example,
+                                "ValidatingPolicy".
+                              maxLength: 63
+                              minLength: 1
+                              pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                              type: string
+                            name:
+                              description: |-
+                                Name is the name of the referent.
+                                Mutually exclusive with Selector.
+                              maxLength: 253
+                              minLength: 1
+                              type: string
+                            selector:
+                              description: |-
+                                Selector is a label selector to select the Kubernetes policy resource.
+                                Mutually exclusive with Name.
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label
+                                    selector requirements. The requirements are ANDed.
+                                  items:
+                                    description: |-
+                                      A label selector requirement is a selector that contains values, a key, and an operator that
+                                      relates the key and values.
+                                    properties:
+                                      key:
+                                        description: key is the label key that the
+                                          selector applies to.
+                                        type: string
+                                      operator:
+                                        description: |-
+                                          operator represents a key's relationship to a set of values.
+                                          Valid operators are In, NotIn, Exists and DoesNotExist.
+                                        type: string
+                                      values:
+                                        description: |-
+                                          values is an array of string values. If the operator is In or NotIn,
+                                          the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                          the values array must be empty. This array is replaced during a strategic
+                                          merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: |-
+                                    matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                    map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                    operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                  type: object
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                          x-kubernetes-validations:
+                          - message: either name or selector must be specified
+                            rule: has(self.name) || has(self.selector)
+                          - message: name and selector are mutually exclusive
+                            rule: '!(has(self.name) && has(self.selector))'
+                      type: object
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true

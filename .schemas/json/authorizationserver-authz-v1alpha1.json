@@ -1,5 +1,5 @@
 {
-  "description": "Backend is a resource that represents a new kyverno authorization backend.",
+  "description": "AuthorizationServer is a resource that represents a new kyverno authorization server.",
   "type": "object",
   "properties": {
     "apiVersion": {
@@ -19,7 +19,7 @@
         "null"
       ],
       "enum": [
-        "Backend"
+        "AuthorizationServer"
       ]
     },
     "metadata": {
@@ -318,20 +318,20 @@
       ]
     },
     "spec": {
-      "description": "BackendSpec defines the spec of a backend.",
+      "description": "AuthorizationServerSpec defines the spec of a authorization server.",
       "type": [
         "object",
         "null"
       ],
       "properties": {
         "sources": {
-          "description": "BackendSource contains all the sources of policies for the backend.",
+          "description": "AuthorizationServerPolicySource contains all the sources of policies for the authorization server.",
           "type": [
             "array",
             "null"
           ],
           "items": {
-            "description": "BackendSource represents where the backend will get its policies from.",
+            "description": "AuthorizationServerPolicySource represents where the authorization server will get its policies from.",
             "type": [
               "object",
               "null"
@@ -499,7 +499,7 @@
   "x-kubernetes-group-version-kind": [
     {
       "group": "authz.kyverno.io",
-      "kind": "Backend",
+      "kind": "AuthorizationServer",
       "version": "v1alpha1"
     }
   ],

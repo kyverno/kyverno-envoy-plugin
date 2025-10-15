@@ -193,7 +193,7 @@ codegen-schemas-json: codegen-schemas-openapi
 	@rm -rf ./.schemas/json
 	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/authz.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
 	@mkdir -p ./.schemas/json
-	@cp ./.temp/.schemas/json/authorization-server-authz-*.json ./.schemas/json
+	@cp ./.temp/.schemas/json/authorizationserver-authz-*.json ./.schemas/json
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs

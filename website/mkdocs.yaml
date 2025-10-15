@@ -24,6 +24,7 @@ nav:
   - CEL extensions:
     - cel-extensions/index.md
     - cel-extensions/envoy.md
+    - cel-extensions/json.md
     - cel-extensions/jwk.md
     - cel-extensions/jwt.md
 - Tutorials:
@@ -36,6 +37,7 @@ nav:
   - reference/json-schemas.md
   - APIs:
     - policies.kyverno.io/v1alpha1: reference/apis/policies.kyverno.io.v1alpha1.md
+    - authz.kyverno.io/v1alpha1: reference/apis/authz.kyverno.io.v1alpha1.md
   - Command Line:
     - reference/commands/kyverno-envoy-plugin.md
     - reference/commands/kyverno-envoy-plugin_serve.md

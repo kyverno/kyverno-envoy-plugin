@@ -13,23 +13,23 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: backends.authz.kyverno.io
+  name: authorizationservers.authz.kyverno.io
 spec:
   group: authz.kyverno.io
   names:
     categories:
     - kyverno
-    kind: Backend
-    listKind: BackendList
-    plural: backends
-    singular: backend
+    kind: AuthorizationServer
+    listKind: AuthorizationServerList
+    plural: authorizationservers
+    singular: authorizationserver
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Backend is a resource that represents a new kyverno authorization
-          backend.
+        description: AuthorizationServer is a resource that represents a new kyverno
+          authorization server.
         properties:
           apiVersion:
             description: |-
@@ -49,14 +49,15 @@ spec:
           metadata:
             type: object
           spec:
-            description: BackendSpec defines the spec of a backend.
+            description: AuthorizationServerSpec defines the spec of a authorization
+              server.
             properties:
               sources:
-                description: BackendSource contains all the sources of policies for
-                  the backend.
+                description: AuthorizationServerPolicySource contains all the sources
+                  of policies for the authorization server.
                 items:
-                  description: BackendSource represents where the backend will get
-                    its policies from.
+                  description: AuthorizationServerPolicySource represents where the
+                    authorization server will get its policies from.
                   maxProperties: 1
                   minProperties: 1
                   properties:

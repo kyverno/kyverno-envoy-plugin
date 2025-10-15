@@ -7,23 +7,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestBackendSpec(t *testing.T) {
+func TestAuthorizationServerSpec(t *testing.T) {
 	testCases := []struct {
 		name   string
-		spec   BackendSpec
-		expect BackendSpec
+		spec   AuthorizationServerSpec
+		expect AuthorizationServerSpec
 	}{
 		{
 			name: "Empty sources",
-			spec: BackendSpec{},
-			expect: BackendSpec{
+			spec: AuthorizationServerSpec{},
+			expect: AuthorizationServerSpec{
 				Sources: nil,
 			},
 		},
 		{
 			name: "With single source",
-			spec: BackendSpec{
-				Sources: []BackendPolicySource{
+			spec: AuthorizationServerSpec{
+				Sources: []AuthorizationServerPolicySource{
 					{
 						KubernetesPolicySource: KubernetesPolicySource{
 							PolicyRef: PolicyObjectReference{
@@ -35,8 +35,8 @@ func TestBackendSpec(t *testing.T) {
 					},
 				},
 			},
-			expect: BackendSpec{
-				Sources: []BackendPolicySource{
+			expect: AuthorizationServerSpec{
+				Sources: []AuthorizationServerPolicySource{
 					{
 						KubernetesPolicySource: KubernetesPolicySource{
 							PolicyRef: PolicyObjectReference{
@@ -51,8 +51,8 @@ func TestBackendSpec(t *testing.T) {
 		},
 		{
 			name: "With external policy source",
-			spec: BackendSpec{
-				Sources: []BackendPolicySource{
+			spec: AuthorizationServerSpec{
+				Sources: []AuthorizationServerPolicySource{
 					{
 						ExternalPolicySource: ExternalPolicySource{
 							URL: "https://example.com/policy.bundle",
@@ -60,8 +60,8 @@ func TestBackendSpec(t *testing.T) {
 					},
 				},
 			},
-			expect: BackendSpec{
-				Sources: []BackendPolicySource{
+			expect: AuthorizationServerSpec{
+				Sources: []AuthorizationServerPolicySource{
 					{
 						ExternalPolicySource: ExternalPolicySource{
 							URL: "https://example.com/policy.bundle",
@@ -80,21 +80,21 @@ func TestBackendSpec(t *testing.T) {
 	}
 }
 
-func TestBackendRoundTrip(t *testing.T) {
-	backend := Backend{
+func TestAuthorizationServerRoundTrip(t *testing.T) {
+	AuthorizationServer := AuthorizationServer{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Backend",
+			Kind:       "AuthorizationServer",
 			APIVersion: "authz.kyverno.io/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-backend",
+			Name:      "test-AuthorizationServer",
 			Namespace: "default",
 			Labels: map[string]string{
-				"kyverno.io/test": "backend",
+				"kyverno.io/test": "AuthorizationServer",
 			},
 		},
-		Spec: BackendSpec{
-			Sources: []BackendPolicySource{
+		Spec: AuthorizationServerSpec{
+			Sources: []AuthorizationServerPolicySource{
 				{
 					KubernetesPolicySource: KubernetesPolicySource{
 						PolicyRef: PolicyObjectReference{
@@ -113,13 +113,13 @@ func TestBackendRoundTrip(t *testing.T) {
 		},
 	}
 
-	if backend.Kind != "Backend" {
-		t.Errorf("unexpected Kind: %s", backend.Kind)
+	if AuthorizationServer.Kind != "AuthorizationServer" {
+		t.Errorf("unexpected Kind: %s", AuthorizationServer.Kind)
 	}
-	if backend.Name != "test-backend" {
-		t.Errorf("unexpected Name: %s", backend.Name)
+	if AuthorizationServer.Name != "test-AuthorizationServer" {
+		t.Errorf("unexpected Name: %s", AuthorizationServer.Name)
 	}
-	if backend.Spec.Sources == nil || len(backend.Spec.Sources) != 2 {
+	if AuthorizationServer.Spec.Sources == nil || len(AuthorizationServer.Spec.Sources) != 2 {
 		t.Errorf("missing or unexpected spec.sources")
 	}
 }

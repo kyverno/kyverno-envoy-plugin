@@ -8,23 +8,23 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced,categories=kyverno
 
-// Backend is a resource that represents a new kyverno authorization backend.
-type Backend struct {
+// AuthorizationServer is a resource that represents a new kyverno authorization server.
+type AuthorizationServer struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              BackendSpec `json:"spec,omitempty"`
+	Spec              AuthorizationServerSpec `json:"spec,omitempty"`
 }
 
-// BackendSpec defines the spec of a backend.
-type BackendSpec struct {
-	// BackendSource contains all the sources of policies for the backend.
-	Sources []BackendPolicySource `json:"sources,omitempty"`
+// AuthorizationServerSpec defines the spec of a authorization server.
+type AuthorizationServerSpec struct {
+	// AuthorizationServerPolicySource contains all the sources of policies for the authorization server.
+	Sources []AuthorizationServerPolicySource `json:"sources,omitempty"`
 }
 
-// BackendSource represents where the backend will get its policies from.
+// AuthorizationServerPolicySource represents where the authorization server will get its policies from.
 // +kubebuilder:validation:MinProperties=1
 // +kubebuilder:validation:MaxProperties=1
-type BackendPolicySource struct {
+type AuthorizationServerPolicySource struct {
 	KubernetesPolicySource `json:"kubernetes,omitempty"`
 	ExternalPolicySource   `json:"external,omitempty"`
 }
@@ -79,8 +79,8 @@ type ExternalPolicySource struct {
 
 // +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type BackendList struct {
+type AuthorizationServerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Backend `json:"items,omitempty"`
+	Items           []AuthorizationServer `json:"items,omitempty"`
 }

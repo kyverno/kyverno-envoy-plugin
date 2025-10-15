@@ -39,8 +39,8 @@ stripPrefix:
   - github.com/tengqm/kubeconfig/config/bootstraptoken/v1.
 
 apis:
-  - name: envoy.kyverno.io
-    title: envoy.kyverno.io (v1alpha1)
+  - name: authz.kyverno.io
+    title: authz.kyverno.io (v1alpha1)
     package: github.com/kyverno/kyverno-envoy-plugin
     path: apis/v1alpha1
   - name: policies.kyverno.io

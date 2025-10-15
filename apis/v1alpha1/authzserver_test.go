@@ -80,6 +80,155 @@ func TestAuthorizationServerSpec(t *testing.T) {
 	}
 }
 
+func TestAuthorizationServerTypeField(t *testing.T) {
+	tests := []struct {
+		name   string
+		typ    AuthorizationServerType
+		expect func(t *testing.T, typ AuthorizationServerType)
+	}{
+		{
+			name: "Envoy type set",
+			typ: AuthorizationServerType{
+				Envoy: &EnvoyAuthorizationServer{
+					Port: 8080,
+					Modifiers: &Modifiers{
+						Request:  "req-mod",
+						Response: "resp-mod",
+					},
+				},
+			},
+			expect: func(t *testing.T, typ AuthorizationServerType) {
+				if typ.Envoy == nil {
+					t.Errorf("Envoy should not be nil")
+				}
+				if typ.HTTP != nil {
+					t.Errorf("HTTP should be nil when Envoy is set")
+				}
+				if typ.Envoy.Port != 8080 {
+					t.Errorf("unexpected Port: %d", typ.Envoy.Port)
+				}
+				if typ.Envoy.Modifiers == nil || typ.Envoy.Modifiers.Request != "req-mod" || typ.Envoy.Modifiers.Response != "resp-mod" {
+					t.Errorf("unexpected Modifiers: %+v", typ.Envoy.Modifiers)
+				}
+			},
+		},
+		{
+			name: "HTTP type set",
+			typ: AuthorizationServerType{
+				HTTP: &HTTPAuthorizationServer{
+					Port: 9090,
+					Modifiers: &Modifiers{
+						Request:  "req-script",
+						Response: "resp-script",
+					},
+				},
+			},
+			expect: func(t *testing.T, typ AuthorizationServerType) {
+				if typ.HTTP == nil {
+					t.Errorf("HTTP should not be nil")
+				}
+				if typ.Envoy != nil {
+					t.Errorf("Envoy should be nil when HTTP is set")
+				}
+				if typ.HTTP.Port != 9090 {
+					t.Errorf("unexpected Port: %d", typ.HTTP.Port)
+				}
+				if typ.HTTP.Modifiers == nil || typ.HTTP.Modifiers.Request != "req-script" || typ.HTTP.Modifiers.Response != "resp-script" {
+					t.Errorf("unexpected Modifiers: %+v", typ.HTTP.Modifiers)
+				}
+			},
+		},
+		{
+			name: "Neither type set (invalid case)",
+			typ:  AuthorizationServerType{},
+			expect: func(t *testing.T, typ AuthorizationServerType) {
+				if typ.Envoy != nil || typ.HTTP != nil {
+					t.Errorf("Both Envoy and HTTP should be nil for empty struct")
+				}
+			},
+		},
+		{
+			name: "Both types set (invalid config)",
+			typ: AuthorizationServerType{
+				Envoy: &EnvoyAuthorizationServer{
+					Port: 8888,
+				},
+				HTTP: &HTTPAuthorizationServer{
+					Port: 9999,
+				},
+			},
+			expect: func(t *testing.T, typ AuthorizationServerType) {
+				if typ.Envoy == nil || typ.HTTP == nil {
+					t.Errorf("Both Envoy and HTTP should be set")
+				}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.expect(t, tc.typ)
+		})
+	}
+}
+
+func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
+	envoyType := AuthorizationServerType{
+		Envoy: &EnvoyAuthorizationServer{
+			Port: 8000,
+		},
+	}
+	httpType := AuthorizationServerType{
+		HTTP: &HTTPAuthorizationServer{
+			Port: 9000,
+		},
+	}
+
+	specEnvoy := AuthorizationServerSpec{
+		Type: envoyType,
+		Sources: []AuthorizationServerPolicySource{
+			{
+				KubernetesPolicySource: KubernetesPolicySource{
+					PolicyRef: PolicyObjectReference{
+						Group: ptrGroup("policies.kyverno.io"),
+						Kind:  ptrKind("ValidatingPolicy"),
+						Name:  ptrObjectName("e-policy"),
+					},
+				},
+			},
+		},
+	}
+	if specEnvoy.Type.Envoy == nil {
+		t.Errorf("Envoy field should be set in Type")
+	}
+	if specEnvoy.Type.HTTP != nil {
+		t.Errorf("HTTP field should not be set in Type")
+	}
+	if specEnvoy.Type.Envoy.Port != 8000 {
+		t.Errorf("unexpected Envoy Port: %d", specEnvoy.Type.Envoy.Port)
+	}
+
+	specHTTP := AuthorizationServerSpec{
+		Type: httpType,
+		Sources: []AuthorizationServerPolicySource{
+			{
+				ExternalPolicySource: ExternalPolicySource{
+					URL: "https://host.net/policy",
+				},
+			},
+		},
+	}
+	if specHTTP.Type.HTTP == nil {
+		t.Errorf("HTTP field should be set in Type")
+	}
+	if specHTTP.Type.Envoy != nil {
+		t.Errorf("Envoy field should not be set in Type")
+	}
+	if specHTTP.Type.HTTP.Port != 9000 {
+		t.Errorf("unexpected HTTP Port: %d", specHTTP.Type.HTTP.Port)
+	}
+}
+
 func TestAuthorizationServerRoundTrip(t *testing.T) {
 	AuthorizationServer := AuthorizationServer{
 		TypeMeta: metav1.TypeMeta{

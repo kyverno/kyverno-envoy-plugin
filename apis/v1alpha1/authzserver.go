@@ -17,8 +17,54 @@ type AuthorizationServer struct {
 
 // AuthorizationServerSpec defines the spec of a authorization server.
 type AuthorizationServerSpec struct {
+	// Type defines the type of authorization server.
+	Type AuthorizationServerType `json:"type,omitempty"`
+
 	// AuthorizationServerPolicySource contains all the sources of policies for the authorization server.
 	Sources []AuthorizationServerPolicySource `json:"sources,omitempty"`
+}
+
+// AuthorizationServerType defines the type of authorization server.
+// Only one of the fields should be set at a time (mutually exclusive).
+// +kubebuilder:validation:MinProperties=1
+// +kubebuilder:validation:MaxProperties=1
+type AuthorizationServerType struct {
+	// Envoy configures an Envoy-based authorization server.
+	// +optional
+	Envoy *EnvoyAuthorizationServer `json:"envoy,omitempty"`
+	// HTTP configures a custom HTTP authorization server.
+	// +optional
+	HTTP *HTTPAuthorizationServer `json:"http,omitempty"`
+}
+
+// EnvoyAuthorizationServer defines the Envoy authorization server configuration.
+type EnvoyAuthorizationServer struct {
+	// Port is the port the server listens on.
+	Port int `json:"port,omitempty"`
+
+	// Modifiers to apply to requests and responses.
+	// +optional
+	Modifiers *Modifiers `json:"modifiers,omitempty"`
+}
+
+// HTTPAuthorizationServer defines the HTTP authorization server configuration.
+type HTTPAuthorizationServer struct {
+	// Port is the port the server listens on.
+	Port int `json:"port,omitempty"`
+
+	// Modifiers to apply to requests and responses.
+	// +optional
+	Modifiers *Modifiers `json:"modifiers,omitempty"`
+}
+
+// Modifiers defines the request/response modifiers for the authorization server.
+type Modifiers struct {
+	// Request is a script or expression for modifying the incoming request.
+	// +optional
+	Request string `json:"request,omitempty"`
+	// Response is a script or expression for modifying the outgoing response.
+	// +optional
+	Response string `json:"response,omitempty"`
 }
 
 // AuthorizationServerPolicySource represents where the authorization server will get its policies from.
@@ -58,8 +104,6 @@ type PolicyObjectReference struct {
 	Selector *metav1.LabelSelector `json:"selector,omitempty"`
 }
 
-// KubernetesSource defines a Kubernetes-based policy source.
-// +kubebuilder:validation:Enum=Ignore;Fail
 // KubernetesPolicySource defines a reference to a Kubernetes policy resource.
 type KubernetesPolicySource struct {
 	// PolicyRef is a reference to Kubernetes policy resources.

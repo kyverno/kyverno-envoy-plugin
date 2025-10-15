@@ -64,12 +64,8 @@ spec:
                       - url
                       type: object
                     kubernetes:
-                      description: |-
-                        KubernetesSource defines a Kubernetes-based policy source.
-                        KubernetesPolicySource defines a reference to a Kubernetes policy resource.
-                      enum:
-                      - Ignore
-                      - Fail
+                      description: KubernetesPolicySource defines a reference to a
+                        Kubernetes policy resource.
                       properties:
                         policyRef:
                           description: PolicyObjectReference represents a reference
@@ -168,6 +164,50 @@ spec:
                       type: object
                   type: object
                 type: array
+              type:
+                description: Type defines the type of authorization server.
+                maxProperties: 1
+                minProperties: 1
+                properties:
+                  envoy:
+                    description: Envoy configures an Envoy-based authorization server.
+                    properties:
+                      modifiers:
+                        description: Modifiers to apply to requests and responses.
+                        properties:
+                          request:
+                            description: Request is a script or expression for modifying
+                              the incoming request.
+                            type: string
+                          response:
+                            description: Response is a script or expression for modifying
+                              the outgoing response.
+                            type: string
+                        type: object
+                      port:
+                        description: Port is the port the server listens on.
+                        type: integer
+                    type: object
+                  http:
+                    description: HTTP configures a custom HTTP authorization server.
+                    properties:
+                      modifiers:
+                        description: Modifiers to apply to requests and responses.
+                        properties:
+                          request:
+                            description: Request is a script or expression for modifying
+                              the incoming request.
+                            type: string
+                          response:
+                            description: Response is a script or expression for modifying
+                              the outgoing response.
+                            type: string
+                        type: object
+                      port:
+                        description: Port is the port the server listens on.
+                        type: integer
+                    type: object
+                type: object
             type: object
         type: object
     served: true

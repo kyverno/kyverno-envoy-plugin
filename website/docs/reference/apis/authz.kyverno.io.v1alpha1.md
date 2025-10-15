@@ -48,7 +48,37 @@ auto_generated: true
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
+| `type` | [`AuthorizationServerType`](#authz-kyverno-io-v1alpha1-AuthorizationServerType) | :white_check_mark: |  | <p>Type defines the type of authorization server.</p> |
 | `sources` | [`[]AuthorizationServerPolicySource`](#authz-kyverno-io-v1alpha1-AuthorizationServerPolicySource) | :white_check_mark: |  | <p>AuthorizationServerPolicySource contains all the sources of policies for the authorization server.</p> |
+
+## AuthorizationServerType     {#authz-kyverno-io-v1alpha1-AuthorizationServerType}
+
+**Appears in:**
+    
+- [AuthorizationServerSpec](#authz-kyverno-io-v1alpha1-AuthorizationServerSpec)
+
+<p>AuthorizationServerType defines the type of authorization server.
+Only one of the fields should be set at a time (mutually exclusive).</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `envoy` | [`EnvoyAuthorizationServer`](#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer) |  |  | <p>Envoy configures an Envoy-based authorization server.</p> |
+| `http` | [`HTTPAuthorizationServer`](#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer) |  |  | <p>HTTP configures a custom HTTP authorization server.</p> |
+
+## EnvoyAuthorizationServer     {#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer}
+
+**Appears in:**
+    
+- [AuthorizationServerType](#authz-kyverno-io-v1alpha1-AuthorizationServerType)
+
+<p>EnvoyAuthorizationServer defines the Envoy authorization server configuration.</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
+| `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) |  |  | <p>Modifiers to apply to requests and responses.</p> |
 
 ## ExternalPolicySource     {#authz-kyverno-io-v1alpha1-ExternalPolicySource}
 
@@ -87,6 +117,20 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 </ul>
 
 
+## HTTPAuthorizationServer     {#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer}
+
+**Appears in:**
+    
+- [AuthorizationServerType](#authz-kyverno-io-v1alpha1-AuthorizationServerType)
+
+<p>HTTPAuthorizationServer defines the HTTP authorization server configuration.</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
+| `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) |  |  | <p>Modifiers to apply to requests and responses.</p> |
+
 ## Kind     {#authz-kyverno-io-v1alpha1-Kind}
 
 (Alias of `string`)
@@ -113,13 +157,27 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
     
 - [AuthorizationServerPolicySource](#authz-kyverno-io-v1alpha1-AuthorizationServerPolicySource)
 
-<p>KubernetesSource defines a Kubernetes-based policy source.
-KubernetesPolicySource defines a reference to a Kubernetes policy resource.</p>
+<p>KubernetesPolicySource defines a reference to a Kubernetes policy resource.</p>
 
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `policyRef` | [`PolicyObjectReference`](#authz-kyverno-io-v1alpha1-PolicyObjectReference) |  |  | *No description provided.* |
+
+## Modifiers     {#authz-kyverno-io-v1alpha1-Modifiers}
+
+**Appears in:**
+    
+- [EnvoyAuthorizationServer](#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer)
+- [HTTPAuthorizationServer](#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer)
+
+<p>Modifiers defines the request/response modifiers for the authorization server.</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `request` | `string` |  |  | <p>Request is a script or expression for modifying the incoming request.</p> |
+| `response` | `string` |  |  | <p>Response is a script or expression for modifying the outgoing response.</p> |
 
 ## ObjectName     {#authz-kyverno-io-v1alpha1-ObjectName}
 

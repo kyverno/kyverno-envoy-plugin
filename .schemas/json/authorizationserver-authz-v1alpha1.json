@@ -357,14 +357,10 @@
                 "additionalProperties": false
               },
               "kubernetes": {
-                "description": "KubernetesSource defines a Kubernetes-based policy source.\nKubernetesPolicySource defines a reference to a Kubernetes policy resource.",
+                "description": "KubernetesPolicySource defines a reference to a Kubernetes policy resource.",
                 "type": [
                   "object",
                   "null"
-                ],
-                "enum": [
-                  "Ignore",
-                  "Fail"
                 ],
                 "properties": {
                   "policyRef": {
@@ -491,6 +487,100 @@
             },
             "additionalProperties": false
           }
+        },
+        "type": {
+          "description": "Type defines the type of authorization server.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "maxProperties": 1,
+          "minProperties": 1,
+          "properties": {
+            "envoy": {
+              "description": "Envoy configures an Envoy-based authorization server.",
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "modifiers": {
+                  "description": "Modifiers to apply to requests and responses.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "request": {
+                      "description": "Request is a script or expression for modifying the incoming request.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "response": {
+                      "description": "Response is a script or expression for modifying the outgoing response.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "port": {
+                  "description": "Port is the port the server listens on.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "http": {
+              "description": "HTTP configures a custom HTTP authorization server.",
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "modifiers": {
+                  "description": "Modifiers to apply to requests and responses.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "request": {
+                      "description": "Request is a script or expression for modifying the incoming request.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "response": {
+                      "description": "Response is a script or expression for modifying the outgoing response.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "port": {
+                  "description": "Port is the port the server listens on.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

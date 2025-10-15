@@ -2,15 +2,13 @@ package core
 
 import "context"
 
-// TODO: result collector ?
-
 type Resulter[
 	POLICY any,
 	IN any,
 	OUT any,
 	RESULT any,
 ] interface {
-	Compute(context.Context, POLICY, IN, OUT)
+	Collector[POLICY, IN, OUT]
 	Result() RESULT
 }
 

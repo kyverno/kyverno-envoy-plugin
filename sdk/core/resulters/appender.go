@@ -14,7 +14,7 @@ type appender[
 	result []OUT
 }
 
-func (r *appender[POLICY, IN, OUT]) Compute(_ context.Context, _ POLICY, _ IN, out OUT) {
+func (r *appender[POLICY, IN, OUT]) Collect(_ context.Context, _ POLICY, _ IN, out OUT) {
 	r.result = append(r.result, out)
 }
 

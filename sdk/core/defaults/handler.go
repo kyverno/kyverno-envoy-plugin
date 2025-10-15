@@ -12,7 +12,7 @@ func Handler[
 	DATA any,
 ](
 	evaluator core.EvaluatorFactory[POLICY, IN, OUT, DATA],
-) core.HandlerFactory[POLICY, IN, []PolicyResult[POLICY, IN, OUT], DATA] {
+) core.HandlerFactory[POLICY, IN, Result[POLICY, IN, OUT, DATA], DATA] {
 	return handlers.Handler(
 		Dispatcher(evaluator),
 		Resulter[POLICY, IN, OUT, DATA](),

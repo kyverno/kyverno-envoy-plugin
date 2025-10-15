@@ -28,7 +28,7 @@ func Appender[
 	OUT any,
 	DATA any,
 ]() core.ResulterFactory[POLICY, IN, OUT, DATA, []OUT] {
-	return func(_ context.Context, data DATA) core.Resulter[POLICY, IN, OUT, []OUT] {
+	return func(_ context.Context, data DATA, policies []POLICY, err error) core.Resulter[POLICY, IN, OUT, []OUT] {
 		return &appender[POLICY, IN, OUT]{}
 	}
 }

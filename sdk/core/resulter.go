@@ -18,7 +18,7 @@ type ResulterFactory[
 	OUT any,
 	DATA any,
 	RESULT any,
-] = func(context.Context, DATA) Resulter[POLICY, IN, OUT, RESULT]
+] = func(context.Context, DATA, []POLICY, error) Resulter[POLICY, IN, OUT, RESULT]
 
 func MakeResulterFactory[
 	POLICY any,
@@ -26,6 +26,6 @@ func MakeResulterFactory[
 	OUT any,
 	DATA any,
 	RESULT any,
-](f func(context.Context, DATA) Resulter[POLICY, IN, OUT, RESULT]) ResulterFactory[POLICY, IN, OUT, DATA, RESULT] {
+](f func(context.Context, DATA, []POLICY, error) Resulter[POLICY, IN, OUT, RESULT]) ResulterFactory[POLICY, IN, OUT, DATA, RESULT] {
 	return f
 }

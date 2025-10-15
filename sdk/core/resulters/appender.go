@@ -2,8 +2,6 @@ package resulters
 
 import (
 	"context"
-
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 )
 
 type appender[
@@ -22,13 +20,10 @@ func (r *appender[POLICY, IN, OUT]) Result() []OUT {
 	return r.result
 }
 
-func Appender[
+func NewAppender[
 	POLICY any,
 	IN any,
 	OUT any,
-	DATA any,
-]() core.ResulterFactory[POLICY, IN, OUT, DATA, []OUT] {
-	return func(_ context.Context, data DATA, policies []POLICY, err error) core.Resulter[POLICY, IN, OUT, []OUT] {
-		return &appender[POLICY, IN, OUT]{}
-	}
+]() *appender[POLICY, IN, OUT] {
+	return &appender[POLICY, IN, OUT]{}
 }

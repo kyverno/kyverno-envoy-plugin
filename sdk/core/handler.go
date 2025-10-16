@@ -14,14 +14,14 @@ type HandlerFunc[
 	OUT any,
 ] func(context.Context, IN) OUT
 
-func (f HandlerFunc[IN, OUT]) Handle(ctx context.Context, input IN) OUT {
-	return f(ctx, input)
+func (f HandlerFunc[IN, OUT]) Handle(ctx context.Context, in IN) OUT {
+	return f(ctx, in)
 }
 
 func MakeHandlerFunc[
 	IN any,
 	OUT any,
-](f func(ctx context.Context, input IN) OUT) HandlerFunc[IN, OUT] {
+](f func(ctx context.Context, in IN) OUT) HandlerFunc[IN, OUT] {
 	return f
 }
 

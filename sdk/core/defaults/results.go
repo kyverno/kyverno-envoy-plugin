@@ -26,10 +26,10 @@ func MakePolicyResult[
 	POLICY any,
 	IN any,
 	OUT any,
-](policy POLICY, input IN, out OUT) PolicyResult[POLICY, IN, OUT] {
+](policy POLICY, in IN, out OUT) PolicyResult[POLICY, IN, OUT] {
 	return PolicyResult[POLICY, IN, OUT]{
 		Policy: policy,
-		Input:  input,
+		Input:  in,
 		Out:    out,
 	}
 }
@@ -51,9 +51,9 @@ func MakeResult[
 	DATA any,
 	IN any,
 	OUT any,
-](input IN, data DATA) Result[POLICY, DATA, IN, OUT] {
+](in IN, data DATA) Result[POLICY, DATA, IN, OUT] {
 	return Result[POLICY, DATA, IN, OUT]{
-		Input: input,
+		Input: in,
 		Data:  data,
 	}
 }

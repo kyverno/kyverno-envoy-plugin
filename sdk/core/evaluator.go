@@ -16,8 +16,8 @@ type EvaluatorFunc[
 	OUT any,
 ] func(context.Context, POLICY, IN) OUT
 
-func (f EvaluatorFunc[POLICY, IN, OUT]) Evaluate(ctx context.Context, policy POLICY, input IN) OUT {
-	return f(ctx, policy, input)
+func (f EvaluatorFunc[POLICY, IN, OUT]) Evaluate(ctx context.Context, policy POLICY, in IN) OUT {
+	return f(ctx, policy, in)
 }
 
 func MakeEvaluatorFunc[

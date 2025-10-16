@@ -16,15 +16,15 @@ type BreakerFunc[
 	OUT any,
 ] func(context.Context, POLICY, IN, OUT) bool
 
-func (f BreakerFunc[POLICY, IN, OUT]) Break(ctx context.Context, policy POLICY, input IN, out OUT) bool {
-	return f(ctx, policy, input, out)
+func (f BreakerFunc[POLICY, IN, OUT]) Break(ctx context.Context, policy POLICY, in IN, out OUT) bool {
+	return f(ctx, policy, in, out)
 }
 
 func MakeBreakerFunc[
 	POLICY any,
 	IN any,
 	OUT any,
-](f func(ctx context.Context, policy POLICY, input IN, out OUT) bool) BreakerFunc[POLICY, IN, OUT] {
+](f func(ctx context.Context, policy POLICY, in IN, out OUT) bool) BreakerFunc[POLICY, IN, OUT] {
 	return f
 }
 

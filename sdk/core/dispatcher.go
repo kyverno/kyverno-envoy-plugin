@@ -12,13 +12,13 @@ type DispatcherFunc[
 	IN any,
 ] func(context.Context, IN)
 
-func (f DispatcherFunc[IN]) Dispatch(ctx context.Context, input IN) {
-	f(ctx, input)
+func (f DispatcherFunc[IN]) Dispatch(ctx context.Context, in IN) {
+	f(ctx, in)
 }
 
 func MakeDispatcherFunc[
 	IN any,
-](f func(ctx context.Context, input IN)) DispatcherFunc[IN] {
+](f func(ctx context.Context, in IN)) DispatcherFunc[IN] {
 	return f
 }
 

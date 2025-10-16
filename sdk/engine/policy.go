@@ -18,8 +18,8 @@ type PolicyFunc[
 	OUT any,
 ] func(context.Context, DATA, IN) (OUT, error)
 
-func (f PolicyFunc[DATA, IN, OUT]) Evaluate(ctx context.Context, runtime DATA, input IN) (OUT, error) {
-	return f(ctx, runtime, input)
+func (f PolicyFunc[DATA, IN, OUT]) Evaluate(ctx context.Context, data DATA, in IN) (OUT, error) {
+	return f(ctx, data, in)
 }
 
 func MakePolicyFunc[

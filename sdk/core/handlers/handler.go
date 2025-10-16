@@ -19,8 +19,8 @@ func Handler[
 	return func(ctx context.Context, fctx core.FactoryContext[POLICY, DATA, IN]) core.Handler[IN, RESULT] {
 		resulter := resulter(ctx, fctx)
 		dispatcher := dispatcher(ctx, fctx, resulter)
-		return core.MakeHandlerFunc(func(ctx context.Context, input IN) RESULT {
-			dispatcher.Dispatch(ctx, input)
+		return core.MakeHandlerFunc(func(ctx context.Context, in IN) RESULT {
+			dispatcher.Dispatch(ctx, in)
 			return resulter.Result()
 		})
 	}

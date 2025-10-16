@@ -51,9 +51,11 @@ func MakeResult[
 	DATA any,
 	IN any,
 	OUT any,
-](in IN, data DATA) Result[POLICY, DATA, IN, OUT] {
+](source SourceResult[POLICY], in IN, data DATA, policies []PolicyResult[POLICY, IN, OUT]) Result[POLICY, DATA, IN, OUT] {
 	return Result[POLICY, DATA, IN, OUT]{
-		Input: in,
-		Data:  data,
+		Source:   source,
+		Input:    in,
+		Data:     data,
+		Policies: policies,
 	}
 }

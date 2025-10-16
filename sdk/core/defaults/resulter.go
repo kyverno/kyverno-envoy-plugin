@@ -19,11 +19,12 @@ func Resulter[
 				return MakePolicyResult(policy, in, out)
 			},
 			func(results []PolicyResult[POLICY, IN, OUT]) Result[POLICY, DATA, IN, OUT] {
-				return Result[POLICY, DATA, IN, OUT]{
-					Data:     fctx.Data,
-					Source:   MakeSourceResult(fctx.Source.Data, fctx.Source.Error),
-					Policies: results,
-				}
+				return MakeResult(
+					MakeSourceResult(fctx.Source.Data, fctx.Source.Error),
+					fctx.Input,
+					fctx.Data,
+					results,
+				)
 			},
 			resulters.NewAppender[POLICY, IN, PolicyResult[POLICY, IN, OUT]](),
 		)

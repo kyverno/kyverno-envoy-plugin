@@ -3,21 +3,21 @@ package core
 import "context"
 
 type Engine[
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 ] interface {
-	Handle(context.Context, IN, DATA) OUT
+	Handle(context.Context, DATA, IN) OUT
 }
 
 type engine[
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-] func(context.Context, IN, DATA) OUT
+] func(context.Context, DATA, IN) OUT
 
-func (e engine[IN, OUT, DATA]) Handle(ctx context.Context, in IN, data DATA) OUT {
-	return e(ctx, in, data)
+func (e engine[DATA, IN, OUT]) Handle(ctx context.Context, data DATA, in IN) OUT {
+	return e(ctx, data, in)
 }
 
 func NewEngine[
@@ -28,8 +28,8 @@ func NewEngine[
 ](
 	source Source[POLICY],
 	handler HandlerFactory[POLICY, DATA, IN, OUT],
-) engine[IN, OUT, DATA] {
-	return func(ctx context.Context, in IN, data DATA) OUT {
+) engine[DATA, IN, OUT] {
+	return func(ctx context.Context, data DATA, in IN) OUT {
 		policies, err := source.Load(ctx)
 		sctx := MakeSourceContext(policies, err)
 		fctx := MakeFactoryContext(sctx, data, in)

@@ -8,9 +8,9 @@ import (
 
 func Dispatcher[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 ](
 	evaluator core.EvaluatorFactory[POLICY, DATA, IN, OUT],
 ) core.DispatcherFactory[POLICY, DATA, IN, OUT] {

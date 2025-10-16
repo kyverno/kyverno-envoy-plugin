@@ -6,13 +6,13 @@ import (
 )
 
 func NewEngine[
-	POLICY Policy[IN, OUT, DATA],
+	POLICY Policy[DATA, IN, OUT],
 	DATA any,
 	IN any,
 	OUT any,
 ](
 	source core.Source[POLICY],
-) core.Engine[IN, defaults.Result[POLICY, DATA, IN, Evaluation[OUT]], DATA] {
+) core.Engine[DATA, IN, defaults.Result[POLICY, DATA, IN, Evaluation[OUT]]] {
 	return core.NewEngine(
 		source,
 		defaults.Handler(EvaluatorFactory[POLICY]()),

@@ -5,27 +5,27 @@ import (
 )
 
 type Policy[
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 ] interface {
-	Evaluate(context.Context, IN, DATA) (OUT, error)
+	Evaluate(context.Context, DATA, IN) (OUT, error)
 }
 
 type PolicyFunc[
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-] func(context.Context, IN, DATA) (OUT, error)
+] func(context.Context, DATA, IN) (OUT, error)
 
-func (f PolicyFunc[IN, OUT, DATA]) Evaluate(ctx context.Context, input IN, runtime DATA) (OUT, error) {
-	return f(ctx, input, runtime)
+func (f PolicyFunc[DATA, IN, OUT]) Evaluate(ctx context.Context, runtime DATA, input IN) (OUT, error) {
+	return f(ctx, runtime, input)
 }
 
 func MakePolicyFunc[
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-](f func(context.Context, IN, DATA) (OUT, error)) PolicyFunc[IN, OUT, DATA] {
+](f func(context.Context, DATA, IN) (OUT, error)) PolicyFunc[DATA, IN, OUT] {
 	return f
 }

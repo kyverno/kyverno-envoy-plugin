@@ -184,7 +184,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]engine.Provider, error) {
+func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]engine.Source, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -195,7 +195,7 @@ func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Optio
 	configuredOCIFS := ocifs.ConfigureOCIFS(nOpts, rOpts)
 	mux.Add(configuredOCIFS)
 
-	var providers []engine.Provider
+	var providers []engine.Source
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {

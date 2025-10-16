@@ -6,16 +6,16 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 )
 
-type composite []engine.Provider
+type composite []engine.Source
 
-func NewComposite(providers ...engine.Provider) engine.Provider {
+func NewComposite(providers ...engine.Source) engine.Source {
 	return composite(providers)
 }
 
-func (p composite) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
+func (p composite) Load(ctx context.Context) ([]engine.CompiledPolicy, error) {
 	var out []engine.CompiledPolicy
 	for _, provider := range p {
-		c, err := provider.CompiledPolicies(ctx)
+		c, err := provider.Load(ctx)
 		if err != nil {
 			return nil, err
 		}

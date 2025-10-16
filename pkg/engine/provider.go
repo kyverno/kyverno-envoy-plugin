@@ -4,6 +4,6 @@ import (
 	"context"
 )
 
-type Provider interface {
-	CompiledPolicies(context.Context) ([]CompiledPolicy, error)
+type Source interface {
+	Load(context.Context) ([]CompiledPolicy, error)
 }

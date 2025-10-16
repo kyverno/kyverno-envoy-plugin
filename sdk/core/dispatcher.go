@@ -24,16 +24,7 @@ func MakeDispatcherFunc[
 
 type DispatcherFactory[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-] = func(context.Context, DATA, []POLICY, Collector[POLICY, IN, OUT]) Dispatcher[IN]
-
-func MakeDispatcherFactory[
-	POLICY any,
-	IN any,
-	OUT any,
-	DATA any,
-](f func(context.Context, DATA, []POLICY, Collector[POLICY, IN, OUT]) Dispatcher[IN]) DispatcherFactory[POLICY, IN, OUT, DATA] {
-	return f
-}
+] = func(context.Context, FactoryContext[POLICY, DATA, IN], Collector[POLICY, IN, OUT]) Dispatcher[IN]

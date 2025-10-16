@@ -12,7 +12,7 @@ func NewEngine[
 	OUT any,
 ](
 	source core.Source[POLICY],
-) core.Engine[IN, defaults.Result[POLICY, IN, Evaluation[OUT], DATA], DATA] {
+) core.Engine[IN, defaults.Result[POLICY, DATA, IN, Evaluation[OUT]], DATA] {
 	return core.NewEngine(
 		source,
 		defaults.Handler(EvaluatorFactory[POLICY]()),

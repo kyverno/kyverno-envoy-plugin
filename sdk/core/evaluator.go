@@ -30,29 +30,7 @@ func MakeEvaluatorFunc[
 
 type EvaluatorFactory[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-] = func(context.Context, DATA) Evaluator[POLICY, IN, OUT]
-
-func MakeEvaluatorFactory[
-	POLICY any,
-	IN any,
-	OUT any,
-	DATA any,
-](f func(context.Context, DATA) Evaluator[POLICY, IN, OUT]) EvaluatorFactory[POLICY, IN, OUT, DATA] {
-	return f
-}
-
-func MakeEvaluatorFactoryFunc[
-	POLICY any,
-	IN any,
-	OUT any,
-	DATA any,
-](f func(context.Context, POLICY, IN, DATA) OUT) EvaluatorFactory[POLICY, IN, OUT, DATA] {
-	return MakeEvaluatorFactory(func(_ context.Context, data DATA) Evaluator[POLICY, IN, OUT] {
-		return MakeEvaluatorFunc(func(ctx context.Context, policy POLICY, input IN) OUT {
-			return f(ctx, policy, input, data)
-		})
-	})
-}
+] = Factory[POLICY, DATA, IN, Evaluator[POLICY, IN, OUT]]

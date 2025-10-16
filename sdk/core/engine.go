@@ -27,11 +27,13 @@ func NewEngine[
 	OUT any,
 ](
 	source Source[POLICY],
-	handler HandlerFactory[POLICY, IN, OUT, DATA],
+	handler HandlerFactory[POLICY, DATA, IN, OUT],
 ) engine[IN, OUT, DATA] {
 	return func(ctx context.Context, in IN, data DATA) OUT {
 		policies, err := source.Load(ctx)
-		handler := handler(ctx, data, policies, err)
+		sctx := MakeSourceContext(policies, err)
+		fctx := MakeFactoryContext(sctx, data, in)
+		handler := handler(ctx, fctx)
 		return handler.Handle(ctx, in)
 	}
 }

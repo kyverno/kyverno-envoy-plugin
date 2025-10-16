@@ -9,19 +9,19 @@ import (
 
 func Resulter[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-]() core.ResulterFactory[POLICY, IN, OUT, DATA, Result[POLICY, IN, OUT, DATA]] {
-	return func(ctx context.Context, data DATA, policies []POLICY, err error) core.Resulter[POLICY, IN, OUT, Result[POLICY, IN, OUT, DATA]] {
+]() core.ResulterFactory[POLICY, DATA, IN, OUT, Result[POLICY, DATA, IN, OUT]] {
+	return func(ctx context.Context, fctx core.FactoryContext[POLICY, DATA, IN]) core.Resulter[POLICY, IN, OUT, Result[POLICY, DATA, IN, OUT]] {
 		return resulters.NewTransformer(
 			func(policy POLICY, in IN, out OUT) PolicyResult[POLICY, IN, OUT] {
 				return MakePolicyResult(policy, in, out)
 			},
-			func(results []PolicyResult[POLICY, IN, OUT]) Result[POLICY, IN, OUT, DATA] {
-				return Result[POLICY, IN, OUT, DATA]{
-					Data:     data,
-					Source:   MakeSourceResult(policies, err),
+			func(results []PolicyResult[POLICY, IN, OUT]) Result[POLICY, DATA, IN, OUT] {
+				return Result[POLICY, DATA, IN, OUT]{
+					Data:     fctx.Data,
+					Source:   MakeSourceResult(fctx.Source.Data, fctx.Source.Error),
 					Policies: results,
 				}
 			},

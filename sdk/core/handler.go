@@ -2,8 +2,6 @@ package core
 
 import "context"
 
-// TODO: should return the resulter ?
-
 type Handler[
 	IN any,
 	OUT any,
@@ -29,16 +27,7 @@ func MakeHandlerFunc[
 
 type HandlerFactory[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-] = func(context.Context, DATA, []POLICY, error) Handler[IN, OUT]
-
-func MakeHandlerFactory[
-	POLICY any,
-	IN any,
-	OUT any,
-	DATA any,
-](f func(context.Context, DATA, []POLICY, error) Handler[IN, OUT]) HandlerFactory[POLICY, IN, OUT, DATA] {
-	return f
-}
+] = Factory[POLICY, DATA, IN, Handler[IN, OUT]]

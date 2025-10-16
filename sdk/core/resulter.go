@@ -2,6 +2,14 @@ package core
 
 import "context"
 
+type Collector[
+	POLICY any,
+	IN any,
+	OUT any,
+] interface {
+	Collect(context.Context, POLICY, IN, OUT)
+}
+
 type Resulter[
 	POLICY any,
 	IN any,
@@ -14,18 +22,8 @@ type Resulter[
 
 type ResulterFactory[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 	RESULT any,
-] = func(context.Context, DATA, []POLICY, error) Resulter[POLICY, IN, OUT, RESULT]
-
-func MakeResulterFactory[
-	POLICY any,
-	IN any,
-	OUT any,
-	DATA any,
-	RESULT any,
-](f func(context.Context, DATA, []POLICY, error) Resulter[POLICY, IN, OUT, RESULT]) ResulterFactory[POLICY, IN, OUT, DATA, RESULT] {
-	return f
-}
+] = Factory[POLICY, DATA, IN, Resulter[POLICY, IN, OUT, RESULT]]

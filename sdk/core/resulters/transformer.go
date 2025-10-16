@@ -6,6 +6,19 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 )
 
+type transformer[
+	POLICY any,
+	IN any,
+	OUT any,
+	TRANSFO any,
+	RESULT any,
+	TRANSFORESULT any,
+] struct {
+	collect func(POLICY, IN, OUT) TRANSFO
+	result  func(RESULT) TRANSFORESULT
+	inner   core.Resulter[POLICY, IN, TRANSFO, RESULT]
+}
+
 func NewTransformer[
 	POLICY any,
 	IN any,
@@ -23,19 +36,6 @@ func NewTransformer[
 		result:  result,
 		inner:   inner,
 	}
-}
-
-type transformer[
-	POLICY any,
-	IN any,
-	OUT any,
-	TRANSFO any,
-	RESULT any,
-	TRANSFORESULT any,
-] struct {
-	collect func(POLICY, IN, OUT) TRANSFO
-	result  func(RESULT) TRANSFORESULT
-	inner   core.Resulter[POLICY, IN, TRANSFO, RESULT]
 }
 
 func (r *transformer[POLICY, IN, OUT, TRANFO, RESULT, TRANSFORESULT]) Collect(ctx context.Context, policy POLICY, in IN, out OUT) {

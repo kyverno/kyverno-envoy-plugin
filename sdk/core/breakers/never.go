@@ -26,11 +26,11 @@ func Never[
 
 func NeverFactory[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-]() core.BreakerFactory[POLICY, IN, OUT, DATA] {
-	return func(_ context.Context, data DATA) core.Breaker[POLICY, IN, OUT] {
+]() core.BreakerFactory[POLICY, DATA, IN, OUT] {
+	return func(context.Context, core.FactoryContext[POLICY, DATA, IN]) core.Breaker[POLICY, IN, OUT] {
 		return Never[POLICY, IN, OUT]()
 	}
 }

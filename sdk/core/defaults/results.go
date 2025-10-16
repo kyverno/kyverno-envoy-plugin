@@ -36,23 +36,23 @@ func MakePolicyResult[
 
 type Result[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 ] struct {
-	Input    IN
-	Data     DATA
 	Source   SourceResult[POLICY]
+	Data     DATA
+	Input    IN
 	Policies []PolicyResult[POLICY, IN, OUT]
 }
 
 func MakeResult[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-](input IN, data DATA) Result[POLICY, IN, OUT, DATA] {
-	return Result[POLICY, IN, OUT, DATA]{
+](input IN, data DATA) Result[POLICY, DATA, IN, OUT] {
+	return Result[POLICY, DATA, IN, OUT]{
 		Input: input,
 		Data:  data,
 	}

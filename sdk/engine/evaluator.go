@@ -8,14 +8,14 @@ import (
 
 func EvaluatorFactory[
 	POLICY Policy[IN, OUT, DATA],
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-]() core.EvaluatorFactory[POLICY, IN, Evaluation[OUT], DATA] {
-	return core.MakeEvaluatorFactory(func(ctx context.Context, data DATA) core.Evaluator[POLICY, IN, Evaluation[OUT]] {
+]() core.EvaluatorFactory[POLICY, DATA, IN, Evaluation[OUT]] {
+	return func(ctx context.Context, fctx core.FactoryContext[POLICY, DATA, IN]) core.Evaluator[POLICY, IN, Evaluation[OUT]] {
 		return core.MakeEvaluatorFunc(func(ctx context.Context, policy POLICY, in IN) Evaluation[OUT] {
-			out, err := policy.Evaluate(ctx, in, data)
+			out, err := policy.Evaluate(ctx, in, fctx.Data)
 			return MakeEvaluation(out, err)
 		})
-	})
+	}
 }

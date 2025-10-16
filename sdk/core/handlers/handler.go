@@ -8,17 +8,17 @@ import (
 
 func Handler[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 	RESULT any,
 ](
-	dispatcher core.DispatcherFactory[POLICY, IN, OUT, DATA],
-	resulter core.ResulterFactory[POLICY, IN, OUT, DATA, RESULT],
-) core.HandlerFactory[POLICY, IN, RESULT, DATA] {
-	return func(ctx context.Context, data DATA, policies []POLICY, err error) core.Handler[IN, RESULT] {
-		resulter := resulter(ctx, data, policies, err)
-		dispatcher := dispatcher(ctx, data, policies, resulter)
+	dispatcher core.DispatcherFactory[POLICY, DATA, IN, OUT],
+	resulter core.ResulterFactory[POLICY, DATA, IN, OUT, RESULT],
+) core.HandlerFactory[POLICY, DATA, IN, RESULT] {
+	return func(ctx context.Context, fctx core.FactoryContext[POLICY, DATA, IN]) core.Handler[IN, RESULT] {
+		resulter := resulter(ctx, fctx)
+		dispatcher := dispatcher(ctx, fctx, resulter)
 		return core.MakeHandlerFunc(func(ctx context.Context, input IN) RESULT {
 			dispatcher.Dispatch(ctx, input)
 			return resulter.Result()

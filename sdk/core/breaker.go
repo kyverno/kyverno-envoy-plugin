@@ -30,16 +30,7 @@ func MakeBreakerFunc[
 
 type BreakerFactory[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
-] = func(context.Context, DATA) Breaker[POLICY, IN, OUT]
-
-func MakeBreakerFactory[
-	POLICY any,
-	IN any,
-	OUT any,
-	DATA any,
-](f func(context.Context, DATA) Breaker[POLICY, IN, OUT]) BreakerFactory[POLICY, IN, OUT, DATA] {
-	return f
-}
+] = Factory[POLICY, DATA, IN, Breaker[POLICY, IN, OUT]]

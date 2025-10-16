@@ -12,10 +12,10 @@ func Dispatcher[
 	OUT any,
 	DATA any,
 ](
-	evaluator core.EvaluatorFactory[POLICY, IN, OUT, DATA],
-) core.DispatcherFactory[POLICY, IN, OUT, DATA] {
+	evaluator core.EvaluatorFactory[POLICY, DATA, IN, OUT],
+) core.DispatcherFactory[POLICY, DATA, IN, OUT] {
 	return dispatchers.Sequential(
 		evaluator,
-		breakers.NeverFactory[POLICY, IN, OUT, DATA](),
+		breakers.NeverFactory[POLICY, DATA, IN, OUT](),
 	)
 }

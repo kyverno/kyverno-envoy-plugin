@@ -13,17 +13,17 @@ func Sequential[
 	OUT any,
 	DATA any,
 ](
-	evaluator core.EvaluatorFactory[POLICY, IN, OUT, DATA],
-	breaker core.BreakerFactory[POLICY, IN, OUT, DATA],
-) core.DispatcherFactory[POLICY, IN, OUT, DATA] {
+	evaluator core.EvaluatorFactory[POLICY, DATA, IN, OUT],
+	breaker core.BreakerFactory[POLICY, DATA, IN, OUT],
+) core.DispatcherFactory[POLICY, DATA, IN, OUT] {
 	if breaker == nil {
-		breaker = breakers.NeverFactory[POLICY, IN, OUT, DATA]()
+		breaker = breakers.NeverFactory[POLICY, DATA, IN, OUT]()
 	}
-	return core.MakeDispatcherFactory(func(ctx context.Context, data DATA, policies []POLICY, collector core.Collector[POLICY, IN, OUT]) core.Dispatcher[IN] {
-		evaluator := evaluator(ctx, data)
-		breaker := breaker(ctx, data)
+	return func(ctx context.Context, fctx core.FactoryContext[POLICY, DATA, IN], collector core.Collector[POLICY, IN, OUT]) core.Dispatcher[IN] {
+		evaluator := evaluator(ctx, fctx)
+		breaker := breaker(ctx, fctx)
 		return core.MakeDispatcherFunc(func(ctx context.Context, input IN) {
-			for _, policy := range policies {
+			for _, policy := range fctx.Source.Data {
 				out := evaluator.Evaluate(ctx, policy, input)
 				collector.Collect(ctx, policy, input, out)
 				if breaker.Break(ctx, policy, input, out) {
@@ -31,5 +31,5 @@ func Sequential[
 				}
 			}
 		})
-	})
+	}
 }

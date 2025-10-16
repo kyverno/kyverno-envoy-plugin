@@ -7,14 +7,14 @@ import (
 
 func Handler[
 	POLICY any,
+	DATA any,
 	IN any,
 	OUT any,
-	DATA any,
 ](
-	evaluator core.EvaluatorFactory[POLICY, IN, OUT, DATA],
-) core.HandlerFactory[POLICY, IN, Result[POLICY, IN, OUT, DATA], DATA] {
+	evaluator core.EvaluatorFactory[POLICY, DATA, IN, OUT],
+) core.HandlerFactory[POLICY, DATA, IN, Result[POLICY, DATA, IN, OUT]] {
 	return handlers.Handler(
 		Dispatcher(evaluator),
-		Resulter[POLICY, IN, OUT, DATA](),
+		Resulter[POLICY, DATA, IN, OUT](),
 	)
 }

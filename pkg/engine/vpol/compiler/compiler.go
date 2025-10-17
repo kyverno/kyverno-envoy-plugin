@@ -32,7 +32,7 @@ func NewCompiler() Compiler {
 
 type compiler struct{}
 
-func (c *compiler) Compile(policy *vpol.ValidatingPolicy) (engine.CompiledPolicy, field.ErrorList) {
+func (c *compiler) Compile(policy *vpol.ValidatingPolicy) (engine.Policy, field.ErrorList) {
 	var allErrs field.ErrorList
 	base, err := authzcel.NewEnv()
 	if err != nil {

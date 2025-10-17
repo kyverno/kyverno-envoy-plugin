@@ -1,6 +1,7 @@
 package compiler_test
 
 import (
+	"context"
 	"testing"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -105,7 +106,7 @@ func TestCompiler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		resp, err := compiled.Evaluate(test.request, nil)
+		resp, err := compiled.Evaluate(context.TODO(), nil, test.request)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 

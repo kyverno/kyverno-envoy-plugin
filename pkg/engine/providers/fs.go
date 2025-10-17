@@ -8,7 +8,7 @@ import (
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/data"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"

@@ -2,7 +2,7 @@ package vpol
 
 import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	controllerruntime "github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/controller-runtime"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"

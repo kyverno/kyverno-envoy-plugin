@@ -26,7 +26,7 @@ const (
 
 type Compiler = engine.Compiler[*vpol.ValidatingPolicy]
 
-func NewCompiler() Compiler {
+func NewCompiler() *compiler {
 	return &compiler{}
 }
 

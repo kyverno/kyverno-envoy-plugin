@@ -267,3 +267,7 @@ pdb:
 # -- External policy sources
 externalPolicySources: []
   # eg: - file:///data/kyverno-authz-server
+
+
+crds:
+  install: true

@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-func NewServer(network, addr string, provider engine.Provider, dynclient dynamic.Interface) server.ServerFunc {
+func NewServer(network, addr string, provider engine.Source, dynclient dynamic.Interface) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()

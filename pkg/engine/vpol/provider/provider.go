@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
+func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Source, error) {
 	provider := newPolicyReconciler(mgr.GetClient(), compiler)
 	builder := ctrl.
 		NewControllerManagedBy(mgr).
@@ -90,6 +90,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	return ctrl.Result{}, nil
 }
 
-func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
+func (r *policyReconciler) Load(ctx context.Context) ([]engine.CompiledPolicy, error) {
 	return slices.Clone(r.sortPolicies()), nil
 }

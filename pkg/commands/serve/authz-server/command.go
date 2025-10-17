@@ -203,7 +203,7 @@ func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Optio
 		}
 		providers = append(
 			providers,
-			sdksources.NewOnce(sources.NewFsProvider(vpolCompiler, fsys)),
+			sdksources.NewOnce(sources.NewFs(vpolCompiler, fsys)),
 		)
 	}
 	return providers, nil

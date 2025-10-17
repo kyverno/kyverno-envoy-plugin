@@ -8,30 +8,42 @@ import (
 	"go.uber.org/multierr"
 )
 
-// NewFs creates a new core.Source[string] that enumerates files within an fs.FS
-// filesystem based on a user-provided filtering predicate.
+// FsEntry represents a single entry (file or directory) within a filesystem.
 //
-// The resulting source yields a list of file paths (as strings) that satisfy
-// the given predicate. It leverages fs.WalkDir to traverse the filesystem
-// starting from the root (".").
+// It includes the relative path of the entry within the fs.FS hierarchy and its
+// associated fs.DirEntry metadata. FsEntry values are returned by filesystem-based
+// core.Source implementations like NewFs and NewFsErr.
+type FsEntry struct {
+	Path     string      // Relative path of the entry within the fs.FS
+	DirEntry fs.DirEntry // Metadata describing the entry (file type, name, etc.)
+}
+
+// NewFs constructs a new core.Source[FsEntry] that lists files and directories
+// from a given fs.FS, applying a boolean predicate to determine which entries
+// to include in the output.
+//
+// This function performs a recursive traversal of the provided fs.FS using
+// fs.WalkDir starting at the root path ".". For each visited entry, it calls
+// the supplied predicate function. If predicate(path, entry) returns true,
+// the entry is included in the result.
 //
 // Parameters:
 //
-//	f         — an fs.FS filesystem implementation (e.g., os.DirFS, embed.FS, etc.)
-//	predicate — a filter function that determines whether a file or directory
-//	            path should be included in the output. It receives both the
-//	            path (relative to root) and the corresponding fs.DirEntry.
+//	f         — an implementation of fs.FS (e.g., os.DirFS("."), embed.FS, etc.).
+//	predicate — a function that determines whether to include a given entry. It
+//	            receives the entry's relative path and its fs.DirEntry.
 //
 // Returns:
 //
-//	core.Source[string] — a data source that lists all matching file paths
-//	error               — any error encountered during directory traversal
+//	core.Source[FsEntry] — a composable data source of filesystem entries that
+//	                       satisfy the predicate.
 //
 // Behavior:
-//   - All paths are relative to the provided fs.FS root.
+//   - Recursively traverses the fs.FS starting from the root (".").
+//   - The predicate is evaluated for every file and directory encountered.
+//   - Only entries for which predicate(path, entry) returns true are included.
 //   - If fs.WalkDir encounters an error, traversal stops and the error is returned.
-//   - The predicate is applied to every visited entry (files and directories).
-//   - Only paths for which predicate(path, entry) returns true are included.
+//   - All returned paths are relative to the fs.FS root.
 //
 // Example:
 //
@@ -44,102 +56,118 @@ import (
 //	)
 //
 //	func main() {
-//	    // Create a filesystem source rooted at the current directory.
+//	    // Define a filesystem source that includes only Go source files.
 //	    src := sources.NewFs(os.DirFS("."), func(path string, entry fs.DirEntry) bool {
-//	        // Include only Go source files.
 //	        return !entry.IsDir() && strings.HasSuffix(path, ".go")
 //	    })
 //
-//	    // Load all matching file paths.
-//	    files, err := src.Load(context.Background())
+//	    // Load matching entries from the source.
+//	    entries, err := src.Load(context.Background())
 //	    if err != nil {
 //	        panic(err)
 //	    }
 //
-//	    for _, f := range files {
-//	        fmt.Println("Go file:", f)
+//	    for _, e := range entries {
+//	        fmt.Println("Go file:", e.Path)
 //	    }
 //	}
-func NewFs(f fs.FS, predicate func(string, fs.DirEntry) bool) core.Source[string] {
-	return core.MakeSourceFunc(func(ctx context.Context) ([]string, error) {
-		var out []string
+func NewFs(f fs.FS, predicate func(string, fs.DirEntry) bool) core.Source[FsEntry] {
+	return core.MakeSourceFunc(func(ctx context.Context) ([]FsEntry, error) {
+		var out []FsEntry
 
-		// Walk the filesystem rooted at "." (the fs.FS root)
+		// Recursively walk the filesystem starting at the fs.FS root (".").
 		err := fs.WalkDir(f, ".", func(path string, entry fs.DirEntry, walkErr error) error {
-			// Apply the predicate — include the path if it matches
+			// Apply the predicate — include only matching entries.
 			if predicate(path, entry) {
-				out = append(out, path)
+				out = append(out, FsEntry{
+					Path:     path,
+					DirEntry: entry,
+				})
 			}
-			// Return the traversal error (if any) so WalkDir can handle it
+			// Propagate traversal errors (e.g., permission denied, fs.SkipDir).
 			return walkErr
 		})
 
+		// Return the collected entries and any traversal error.
 		return out, err
 	})
 }
 
-// NewFsErr creates a core.Source[string] that walks an fs.FS filesystem
-// and filters entries using a predicate that can return an error.
+// NewFsErr constructs a new core.Source[FsEntry] that traverses an fs.FS and
+// filters entries using a predicate that may also return an error.
 //
-// It recursively visits all files and directories under the root ("."),
-// invoking the predicate for each entry. If the predicate returns an error,
-// it is aggregated using go.uber.org/multierr but traversal continues.
+// This function behaves like NewFs but provides more flexibility: the predicate
+// can signal both inclusion and diagnostic errors. All errors returned by the
+// predicate and the traversal itself are aggregated using go.uber.org/multierr,
+// ensuring traversal continues even when individual predicate calls fail.
 //
 // Parameters:
 //
-//	f         — an fs.FS filesystem (e.g., os.DirFS("."), embed.FS, etc.)
-//	predicate — a function called for each visited path and entry:
-//	             (include, error):
-//	               • include = true → include path in output
-//	               • error != nil   → append to aggregated error list
+//	f         — an fs.FS implementation (e.g., os.DirFS("."), embed.FS, etc.).
+//	predicate — a function called for each visited entry that returns:
+//	             (include, err):
+//	               • include = true → include entry in output
+//	               • err != nil    → append to aggregated error list
 //
 // Returns:
 //
-//	core.Source[string] — a composable data source of file paths
+//	core.Source[FsEntry] — a composable data source of entries that match the predicate.
 //
 // Behavior:
-//   - Walks the fs.FS recursively using fs.WalkDir starting at the root.
-//   - Calls predicate(path, entry) for every visited item.
-//   - Includes paths where predicate returns true.
-//   - Aggregates all predicate and WalkDir errors via multierr.Append.
-//   - Continues traversal even if predicate returns errors.
+//   - Traverses the filesystem recursively from the root using fs.WalkDir.
+//   - For each entry, predicate(path, entry) is invoked.
+//   - Includes entries where include == true.
+//   - Collects all predicate and traversal errors via multierr.Append.
+//   - Continues traversal even when predicate returns an error.
+//   - Returns both results and the aggregated error at the end.
 //
 // Example:
 //
 //	src := sources.NewFsErr(os.DirFS("."), func(path string, entry fs.DirEntry) (bool, error) {
 //	    if entry.IsDir() {
-//	        return false, nil
+//	        return false, nil // Skip directories
 //	    }
 //	    if strings.HasSuffix(path, ".yaml") {
-//	        return true, nil
+//	        return true, nil // Include YAML files
 //	    }
 //	    return false, nil
 //	})
 //
 //	files, err := src.Load(context.Background())
 //	if err != nil {
-//	    log.Println("Errors:", err)
+//	    log.Println("Errors encountered:", err)
 //	}
-//	fmt.Println("YAML files:", files)
-func NewFsErr(f fs.FS, predicate func(string, fs.DirEntry) (bool, error)) core.Source[string] {
-	return core.MakeSourceFunc(func(ctx context.Context) ([]string, error) {
-		var out []string
+//	for _, e := range files {
+//	    fmt.Println("YAML file:", e.Path)
+//	}
+func NewFsErr(f fs.FS, predicate func(string, fs.DirEntry) (bool, error)) core.Source[FsEntry] {
+	return core.MakeSourceFunc(func(ctx context.Context) ([]FsEntry, error) {
+		var out []FsEntry
 		var errs error
 
-		// WalkDir visits each file/directory recursively starting at the fs root
-		err := fs.WalkDir(f, ".", func(path string, entry fs.DirEntry, _err error) error {
-			// Evaluate predicate — include only if ok == true
+		// WalkDir recursively visits each file and directory in the filesystem.
+		err := fs.WalkDir(f, ".", func(path string, entry fs.DirEntry, walkErr error) error {
+			// Evaluate predicate for current entry; may produce inclusion flag and/or error.
 			ok, err := predicate(path, entry)
+
+			// Aggregate predicate errors but continue traversal.
 			if err != nil {
 				errs = multierr.Append(errs, err)
 			}
+
+			// Include entry in output only if predicate returned ok == true.
 			if ok {
-				out = append(out, path)
+				out = append(out, FsEntry{
+					Path:     path,
+					DirEntry: entry,
+				})
 			}
-			return _err // propagate WalkDir-level control (e.g., fs.SkipDir)
+
+			// Return traversal error (if any), preserving WalkDir semantics (e.g., fs.SkipDir).
+			return walkErr
 		})
 
-		// Combine WalkDir-level error (if any) with predicate-level ones
+		// Merge traversal-level error with all predicate-level errors.
 		errs = multierr.Append(errs, err)
 		return out, errs
 	})

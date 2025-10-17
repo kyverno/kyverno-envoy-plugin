@@ -81,6 +81,7 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | sidecar.volumes | list | `[]` | Additional volumes |
 | sidecar.volumeMounts | list | `[]` | Additional sidecar container volume mounts |
 | sidecar.imagePullSecrets | list | `[]` | Additional image pull secrets |
+| crds.install | bool | `true` |  |
 
 ## Source Code
 

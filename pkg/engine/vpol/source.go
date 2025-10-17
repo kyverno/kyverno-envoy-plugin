@@ -15,7 +15,7 @@ func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Sourc
 	options := controller.Options{
 		NeedLeaderElection: ptr.To(false),
 	}
-	apis, err := controllerruntime.NewApiSource[*v1alpha1.ValidatingPolicy](mgr, options)
+	apis, err := controllerruntime.NewApiSource[v1alpha1.ValidatingPolicy](mgr, options)
 	if err != nil {
 		return nil, err
 	}

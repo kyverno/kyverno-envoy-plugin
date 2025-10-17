@@ -4,13 +4,14 @@ import (
 	"context"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type service struct {
-	provider  engine.Source
+	engine    core.Engine[dynamic.Interface, *authv3.CheckRequest, policy.Evaluation[*authv3.CheckResponse]]
 	dynclient dynamic.Interface
 }
 
@@ -26,24 +27,11 @@ func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 }
 
 func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3.CheckResponse, _err error) {
-	// fetch compiled policies
-	policies, err := s.provider.Load(ctx)
-	if err != nil {
-		return nil, err
+	// invoke engine
+	response := s.engine.Handle(ctx, s.dynclient, r)
+	if response.Result == nil {
+		// we didn't have a response
+		return &authv3.CheckResponse{}, response.Error
 	}
-	// check validations
-	for _, policy := range policies {
-		// execute rule
-		response, err := policy.Evaluate(ctx, s.dynclient, r)
-		// return error if any
-		if err != nil {
-			return nil, err
-		}
-		// if the reponse returned by the rule evaluation was not nil, return
-		if response != nil {
-			return response, nil
-		}
-	}
-	// we didn't have a response
-	return &authv3.CheckResponse{}, nil
+	return response.Result, nil
 }

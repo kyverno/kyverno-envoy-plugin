@@ -10,7 +10,7 @@ import (
 )
 
 type service struct {
-	provider  engine.Provider
+	provider  engine.Source
 	dynclient dynamic.Interface
 }
 
@@ -27,14 +27,14 @@ func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.Ch
 
 func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3.CheckResponse, _err error) {
 	// fetch compiled policies
-	policies, err := s.provider.CompiledPolicies(ctx)
+	policies, err := s.provider.Load(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// check validations
 	for _, policy := range policies {
 		// execute rule
-		response, err := policy.Evaluate(r, s.dynclient)
+		response, err := policy.Evaluate(ctx, s.dynclient, r)
 		// return error if any
 		if err != nil {
 			return nil, err

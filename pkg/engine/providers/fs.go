@@ -42,14 +42,14 @@ type fsProvider struct {
 	fs           fs.FS
 }
 
-func NewFsProvider(vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
+func NewFsProvider(vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Source {
 	return &fsProvider{
 		vpolCompiler: vpolCompiler,
 		fs:           fs,
 	}
 }
 
-func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
+func (p *fsProvider) Load(ctx context.Context) ([]engine.Policy, error) {
 	ldr, err := DefaultLoader()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load CRDs: %w", err)
@@ -78,7 +78,7 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 	}); err != nil {
 		return nil, err
 	}
-	var policies []engine.CompiledPolicy
+	var policies []engine.Policy
 	for _, vpol := range utils.ToSortedSlice(vpols) {
 		compiled, errs := p.vpolCompiler.Compile(vpol)
 		if len(errs) > 0 {

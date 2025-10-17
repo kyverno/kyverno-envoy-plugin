@@ -5,5 +5,5 @@ import (
 )
 
 type Compiler[T any] interface {
-	Compile(T) (CompiledPolicy, field.ErrorList)
+	Compile(T) (Policy, field.ErrorList)
 }

@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
+func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Source, error) {
 	provider := newPolicyReconciler(mgr.GetClient(), compiler)
 	builder := ctrl.
 		NewControllerManagedBy(mgr).
@@ -36,8 +36,8 @@ type policyReconciler struct {
 	client       client.Client
 	compiler     compiler.Compiler
 	lock         *sync.Mutex
-	policies     map[string]engine.CompiledPolicy
-	sortPolicies func() []engine.CompiledPolicy
+	policies     map[string]engine.Policy
+	sortPolicies func() []engine.Policy
 }
 
 func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *policyReconciler {
@@ -45,8 +45,8 @@ func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *poli
 		client:   client,
 		compiler: compiler,
 		lock:     &sync.Mutex{},
-		policies: map[string]engine.CompiledPolicy{},
-		sortPolicies: func() []engine.CompiledPolicy {
+		policies: map[string]engine.Policy{},
+		sortPolicies: func() []engine.Policy {
 			return nil
 		},
 	}
@@ -58,7 +58,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	var policy vpol.ValidatingPolicy
 	// Reset the sorted func on every reconcile so the policies get resorted in next call
 	resetSortPolicies := func() {
-		r.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {
+		r.sortPolicies = sync.OnceValue(func() []engine.Policy {
 			r.lock.Lock()
 			defer r.lock.Unlock()
 			return utils.ToSortedSlice(r.policies)
@@ -90,6 +90,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	return ctrl.Result{}, nil
 }
 
-func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
+func (r *policyReconciler) Load(ctx context.Context) ([]engine.Policy, error) {
 	return slices.Clone(r.sortPolicies()), nil
 }

@@ -1,4 +1,4 @@
-package providers_test
+package sources_test
 
 // import (
 // 	"context"

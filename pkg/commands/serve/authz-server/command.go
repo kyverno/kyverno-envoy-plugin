@@ -15,13 +15,13 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
-	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
-	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
+	vpolv1alpha1 "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/fields"
@@ -112,7 +112,7 @@ func Command() *cobra.Command {
 					if kubePolicySource {
 						// create a controller manager
 						scheme := runtime.NewScheme()
-						if err := vpol.Install(scheme); err != nil {
+						if err := vpolv1alpha1.Install(scheme); err != nil {
 							return err
 						}
 						mgr, err := ctrl.NewManager(config, ctrl.Options{
@@ -122,7 +122,7 @@ func Command() *cobra.Command {
 							},
 							Cache: cache.Options{
 								ByObject: map[client.Object]cache.ByObject{
-									&vpol.ValidatingPolicy{}: {
+									&vpolv1alpha1.ValidatingPolicy{}: {
 										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeEnvoy)),
 									},
 								},
@@ -134,7 +134,7 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create kube providers
-						vpolProvider, err := vpolprovider.NewKubeProvider(mgr, vpolCompiler)
+						vpolProvider, err := vpol.NewKubeProvider(mgr, vpolCompiler)
 						if err != nil {
 							return err
 						}

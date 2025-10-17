@@ -15,12 +15,11 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
-	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
+	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	vpolv1alpha1 "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
@@ -107,7 +106,7 @@ func Command() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					provider := sources.NewComposite(externalProviders...)
+					provider := sdksources.NewComposite(externalProviders...)
 					// if kube policy source is enabled
 					if kubePolicySource {
 						// create a controller manager
@@ -134,12 +133,12 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create kube providers
-						vpolProvider, err := vpol.NewKubeProvider(mgr, vpolCompiler)
+						vpolProvider, err := sources.NewKube(mgr, vpolCompiler)
 						if err != nil {
 							return err
 						}
 						// create final provider
-						provider = sources.NewComposite(vpolProvider, provider)
+						provider = sdksources.NewComposite(vpolProvider, provider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -204,7 +203,7 @@ func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Optio
 		}
 		providers = append(
 			providers,
-			sources.NewOnce(genericproviders.NewFsProvider(vpolCompiler, fsys)),
+			sdksources.NewOnce(sources.NewFsProvider(vpolCompiler, fsys)),
 		)
 	}
 	return providers, nil

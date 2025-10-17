@@ -1,4 +1,4 @@
-package vpol
+package sources
 
 import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Source, error) {
+func NewKube(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Source, error) {
 	options := controller.Options{
 		NeedLeaderElection: ptr.To(false),
 	}

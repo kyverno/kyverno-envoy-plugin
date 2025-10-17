@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"context"
 	"errors"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -26,7 +27,7 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) Evaluate(r *authv3.CheckRequest, dynclient dynamic.Interface) (*authv3.CheckResponse, error) {
+func (p compiledPolicy) Evaluate(ctx context.Context, dynclient dynamic.Interface, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
 	response, err := p.evaluateRules(r, dynclient)
 	if err != nil && p.failurePolicy == admissionregistrationv1.Fail {
 		return nil, err

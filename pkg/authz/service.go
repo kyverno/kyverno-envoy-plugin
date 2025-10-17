@@ -34,7 +34,7 @@ func (s *service) check(ctx context.Context, r *authv3.CheckRequest) (_r *authv3
 	// check validations
 	for _, policy := range policies {
 		// execute rule
-		response, err := policy.Evaluate(r, s.dynclient)
+		response, err := policy.Evaluate(ctx, s.dynclient, r)
 		// return error if any
 		if err != nil {
 			return nil, err

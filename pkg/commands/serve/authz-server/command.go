@@ -179,15 +179,14 @@ func Command() *cobra.Command {
 						}
 					}
 					// create http and grpc servers
-					http := probes.NewServer(probesAddress)
-					authorizer := httpauth.NewAuthorizer(dynclient, httpProvider, nestedRequest, logger)
-					httpAuthServer := httpauth.NewServer(httpAuthAddress, authorizer)
+					probesServer := probes.NewServer(probesAddress)
+					httpAuthServer := httpauth.NewServer(httpAuthAddress, dynclient, httpProvider, nestedRequest, logger)
 					grpc := authz.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient, nil)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
 						defer cancel()
-						probesErr = http.Run(ctx)
+						probesErr = probesServer.Run(ctx)
 					})
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// grpc auth server

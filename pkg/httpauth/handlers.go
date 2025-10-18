@@ -8,20 +8,19 @@ import (
 
 	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/dynamic"
 )
 
 type authorizer struct {
-	provider      core.Source[policy.Policy[dynamic.Interface, *httpcel.Request, *httpcel.Response]]
+	provider      engine.HTTPSource
 	logger        *logrus.Logger
 	dyn           dynamic.Interface
 	nestedRequest bool
 }
 
-func NewAuthorizer(dyn dynamic.Interface, p core.Source[policy.Policy[dynamic.Interface, *httpcel.Request, *httpcel.Response]], nestedRequest bool, logger *logrus.Logger) *authorizer {
+func NewAuthorizer(dyn dynamic.Interface, p engine.HTTPSource, nestedRequest bool, logger *logrus.Logger) *authorizer {
 	return &authorizer{
 		provider:      p,
 		logger:        logger,

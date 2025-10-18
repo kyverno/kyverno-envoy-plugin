@@ -14,7 +14,7 @@ metadata:
     {{- end }}
   {{- end }}
 webhooks:
-- name: {{ printf "%s-validatingpolicy.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
+- name: {{ printf "%s.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
   clientConfig:
     service:
       name: {{ template "validation-webhook.name" . }}
@@ -32,4 +32,3 @@ webhooks:
     apiVersions: [v1alpha1]
     resources: [validatingpolicies]
     operations: [CREATE, UPDATE]
-

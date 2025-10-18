@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kyverno-authz-server-control-plane.name" . }}
+  namespace: {{ template "kyverno.lib.namespace" . }}
+  labels:
+    {{- include "kyverno-authz-server-control-plane.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - name: grpc
+    port: {{ .Values.service.port }}
+    protocol: TCP
+    targetPort: grpc
+    {{- if and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePort)) }}
+    nodePort: {{ .Values.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "kyverno-authz-server-control-plane.labels.selector" . | nindent 4 }}

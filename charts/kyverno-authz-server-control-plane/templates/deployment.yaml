@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "kyverno-authz-server.name" . }}
+  name: {{ template "kyverno-http-authorizer-control-plane.name" . }}
   namespace: {{ template "kyverno.lib.namespace" . }}
   labels:
-    {{- include "kyverno-authz-server.labels" . | nindent 4 }}
+    {{- include "kyverno-http-authorizer-control-plane.labels" . | nindent 4 }}
   {{- with .Values.deployment.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
@@ -20,11 +20,11 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kyverno-authz-server.labels.selector" . | nindent 6 }}
+      {{- include "kyverno-http-authorizer-control-plane.labels.selector" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "kyverno-authz-server.labels" . | nindent 8 }}
+        {{- include "kyverno-http-authorizer-control-plane.labels" . | nindent 8 }}
         {{- with .Values.pod.labels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
@@ -74,11 +74,11 @@ spec:
         nodeAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-      serviceAccountName: {{ template "kyverno-authz-server.service-account.name" . }}
+      serviceAccountName: {{ template "kyverno-http-authorizer-control-plane.service-account.name" . }}
       containers:
         {{- with .Values.containers.server }}
         - name: server
-          image: {{ include "kyverno-authz-server.image" (mustMerge .image (dict "tag" (default $.Chart.Version $.Chart.AppVersion))) }}
+          image: {{ include "kyverno-http-authorizer-control-plane.image" (mustMerge .image (dict "tag" (default $.Chart.Version $.Chart.AppVersion))) }}
           imagePullPolicy: {{ .image.pullPolicy }}
           {{- with .resources }}
           resources:
@@ -104,11 +104,24 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
-            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- with .args }}
+            {{- range . }}
+            - {{ tpl . $ | quote }}
+            {{- end }}
           {{- end }}
-          {{- range $.Values.externalPolicySources }}
-            - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
+          {{- with $.Values.controlPlane }}
+            - {{ printf "--probes-address=%s" .probesAddress | quote }}
+            - {{ printf "--grpc-address=%s" .grpcAddress | quote }}
+            - {{ printf "--grpc-network=%s" .grpcNetwork | quote }}
+            - {{ printf "--metrics-address=%s" .metricsAddress | quote }}
+            - {{ printf "--initial-send-wait=%s" .initialSendWait | quote }}
+            - {{ printf "--max-send-interval=%s" .maxSendInterval | quote }}
+            - {{ printf "--client-flush-interval=%s" .clientFlushInterval | quote }}
+            - {{ printf "--max-client-inactive-duration=%s" .maxClientInactiveDuration | quote }}
+            - {{ printf "--kube-policy-source=%t" .kubePolicySource | quote }}
+            {{- range .externalPolicySources }}
+            - {{ printf "--external-policy-source=%s" . | quote }}
+            {{- end }}
           {{- end }}
         {{- end }}

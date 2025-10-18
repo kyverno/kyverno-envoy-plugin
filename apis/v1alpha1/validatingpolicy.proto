@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package kyverno.http.v1alpha1;
+
+option go_package = "github.com/kyverno/kyverno-envoy-plugin/apis/proto/v1alpha1";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+// ValidatingPolicySpec defines the desired behavior of the ValidatingPolicy.
+message ValidatingPolicySpec {
+  // CEL expressions for validation. At least one validation or audit annotation is required.
+  repeated Validation validations = 2;
+
+  // How to handle policy failures. Defaults to Fail.
+  optional string failure_policy = 3;
+
+  // Conditions that must be met for validation. Maximum 64 conditions.
+  repeated MatchCondition match_conditions = 5;
+
+  // Variable definitions available in policy expressions (except MatchConditions).
+  repeated Variable variables = 6;
+
+  // Actions to take when validation fails. Required.
+  string validation_actions = 8;
+
+  // Evaluation mode for policy
+  string evaluation_mode = 9;
+}
+
+
+// Validation represents a validation rule
+message Validation {
+  // CEL expression to evaluate. See: https://github.com/google/cel-spec
+  string expression = 1;
+
+  // Failure message. Required if expression contains line breaks.
+  optional string message = 2;
+
+  // Machine-readable failure reason. Must be valid HTTP error reason.
+  optional string reason = 3;
+
+  // CEL expression for dynamic failure messages. Takes precedence over message.
+  optional string message_expression = 4;
+}
+
+// MatchCondition represents a condition that must be met for a request to be validated
+message MatchCondition {
+  // Qualified identifier for the condition.
+  string name = 1;
+
+  // CEL expression that must evaluate to bool.
+  string expression = 2;
+}
+
+// Variable represents a variable definition
+message Variable {
+  // Unique CEL identifier. Accessible as `variables.{name}`.
+  string name = 1;
+
+  // CEL expression defining the variable value.
+  string expression = 2;
+}
+
+// Request message for validating policy operations
+message ValidatingPolicy {
+  string name = 1;
+  bool delete = 2;
+  ValidatingPolicySpec spec = 3;
+}
+
+message ValidatingPolicyStreamRequest {
+  string client_address = 1;
+}
+
+message HealthCheckRequest {
+  string client_address = 1;
+  google.protobuf.Timestamp time = 2;
+}
+
+message HealthCheckResponse {}
+
+// ValidatingPolicyService provides bidirectional communication for validating policies
+service ValidatingPolicyService {
+  rpc ValidatingPoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}

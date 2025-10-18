@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/hairyhenderson/go-fsimpl"
@@ -13,14 +14,20 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/httpauth"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpolv1alpha1 "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/fields"
@@ -47,6 +54,8 @@ func Command() *cobra.Command {
 	var leaderElectionID string
 	var imagePullSecrets []string
 	var allowInsecureRegistry bool
+	var nestedRequest bool
+	var httpAuthAddress string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -54,7 +63,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var httpErr, grpcErr, mgrErr error
+				var probesErr, httpAuthErr, grpcErr, mgrErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -77,6 +86,7 @@ func Command() *cobra.Command {
 					if len(imagePullSecrets) > 0 {
 						secrets = append(secrets, imagePullSecrets...)
 					}
+					logger := logrus.New()
 					dynclient, err := dynamic.NewForConfig(config)
 					if err != nil {
 						return err
@@ -100,13 +110,20 @@ func Command() *cobra.Command {
 						os.Exit(1)
 					}
 
-					vpolCompiler := vpolcompiler.NewCompiler()
-					// create external providers
-					externalProviders, err := getExternalProviders(vpolCompiler, nOpts, rOpts, externalPolicySources...)
+					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
+					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *http.Request, *http.Response]()
+
+					extForEnvoy, err := getExternalProviders(envoyCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {
 						return err
 					}
-					provider := sdksources.NewComposite(externalProviders...)
+					extForHTTP, err := getExternalProviders(httpCompiler, nOpts, rOpts, externalPolicySources...)
+					if err != nil {
+						return err
+					}
+
+					envoyProvider := sdksources.NewComposite(extForEnvoy...)
+					httpProvider := sdksources.NewComposite(extForHTTP...)
 					// if kube policy source is enabled
 					if kubePolicySource {
 						// create a controller manager
@@ -132,13 +149,15 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						// create kube providers
-						vpolProvider, err := sources.NewKube(mgr, vpolCompiler)
-						if err != nil {
-							return err
+						envoyProcessor := processor.NewPolicyAccessor(envoyCompiler, logger)
+						httpProcessor := processor.NewPolicyAccessor(httpCompiler, logger)
+
+						r := sources.NewPolicyReconciler(mgr.GetClient(), nil, []processor.Processor{httpProcessor, envoyProcessor})
+						if err := ctrl.NewControllerManagedBy(mgr).For(&vpolv1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
+							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
-						// create final provider
-						provider = sdksources.NewComposite(vpolProvider, provider)
+						envoyProvider = sdksources.NewComposite(envoyProcessor, envoyProvider)
+						httpProvider = sdksources.NewComposite(httpProcessor, httpProvider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -152,21 +171,27 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
-					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider, dynclient)
+					authorizer := httpauth.NewAuthorizer(dynclient, httpProvider, nestedRequest, logger)
+					httpAuthServer := httpauth.NewServer(httpAuthAddress, authorizer)
+					grpc := authz.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient, nil)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
+						// probes
 						defer cancel()
-						httpErr = http.Run(ctx)
+						probesErr = http.Run(ctx)
 					})
 					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
+						// grpc auth server
 						defer cancel()
 						grpcErr = grpc.Run(ctx)
 					})
+					group.StartWithContext(ctx, func(ctx context.Context) {
+						defer cancel()
+						httpAuthErr = httpAuthServer.Run(ctx)
+					})
 					return nil
 				}(ctx)
-				return multierr.Combine(err, httpErr, grpcErr, mgrErr)
+				return multierr.Combine(err, probesErr, httpAuthErr, grpcErr, mgrErr)
 			})
 		},
 	}
@@ -181,10 +206,12 @@ func Command() *cobra.Command {
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
 	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
+	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
+	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
 	return command
 }
 
-func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]engine.Source, error) {
+func getExternalProviders[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, IN, OUT], nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]core.Source[policy.Policy[DATA, IN, OUT]], error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -195,7 +222,7 @@ func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Optio
 	configuredOCIFS := ocifs.ConfigureOCIFS(nOpts, rOpts)
 	mux.Add(configuredOCIFS)
 
-	var providers []engine.Source
+	var providers []core.Source[policy.Policy[DATA, IN, OUT]]
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {
@@ -203,7 +230,7 @@ func getExternalProviders(vpolCompiler vpolcompiler.Compiler, nOpts []name.Optio
 		}
 		providers = append(
 			providers,
-			sdksources.NewOnce(sources.NewFs(vpolCompiler, fsys)),
+			sdksources.NewOnce(sources.NewFsProvider(vpolCompiler, fsys)),
 		)
 	}
 	return providers, nil

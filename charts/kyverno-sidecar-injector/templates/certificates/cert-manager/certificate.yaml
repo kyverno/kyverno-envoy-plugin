@@ -8,8 +8,6 @@ metadata:
     {{- include "sidecar-injector.labels" . | nindent 4 }}
 spec:
   secretName: {{ template "sidecar-injector.name" . }}
-  privateKey:
-    rotationPolicy: Always
   dnsNames:
     - {{ printf "%s.%s.svc" (include "sidecar-injector.name" .) (include "kyverno.lib.namespace" .) }}
   {{- with .Values.certificates.certManager.issuerRef }}

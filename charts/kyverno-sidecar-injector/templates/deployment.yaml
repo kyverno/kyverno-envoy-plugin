@@ -79,9 +79,6 @@ spec:
         - name: certs
           secret:
             secretName: {{ template "sidecar-injector.name" . }}
-        - name: config
-          configMap:
-            name: {{ template "sidecar-injector.name" . }}
       containers:
         {{- with .Values.containers.injector }}
         - name: injector
@@ -111,15 +108,14 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
-            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- with .args }}
+            {{- range . }}
+            - {{ tpl . $ | quote }}
+            {{- end }}
           {{- end }}
           volumeMounts:
             - name: certs
               mountPath: /opt/kubernetes-sidecar-injector/certs
-              readOnly: true
-            - name: config
-              mountPath: /opt/kubernetes-sidecar-injector/config
               readOnly: true
         {{- end }}

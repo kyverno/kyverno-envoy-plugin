@@ -11,6 +11,19 @@ nameOverride: ~
 # -- (string) Override the expanded name of the chart
 fullnameOverride: ~
 
+crds:
+
+  # -- Whether to have Helm install the CRDs, if the CRDs are not installed by Helm, they must be added before policies can be created
+  install: true
+
+  # -- Additional CRDs annotations
+  annotations: {}
+    # argocd.argoproj.io/sync-options: Replace=true
+    # strategy.spinnaker.io/replace: 'true'
+
+  # -- Additional CRDs labels
+  labels: {}
+
 rbac:
 
   # -- Create RBAC resources
@@ -128,7 +141,7 @@ containers:
       registry: ghcr.io
 
       # -- Image repository
-      repository: kyverno/kyverno-envoy-plugin
+      repository: kyverno/kyverno-http-authorizer
 
       # -- (string) Image tag
       # Defaults to appVersion in Chart.yaml if omitted
@@ -215,12 +228,7 @@ containers:
     # -- Container args.
     args:
       - serve
-      - authz-server
-      - --probes-address=:9080
-      - --grpc-address=:9081
-      - --metrics-address=:9082
-      - --leader-election=true
-      - --leader-election-id={{ template "kyverno-authz-server.name" . }}
+      - control-plane
 
 service:
 
@@ -271,3 +279,82 @@ externalPolicySources: []
 
 crds:
   install: true
+# -- Control plane configuration
+controlPlane:
+  
+  # -- Duration to wait before retrying a send to a client
+  initialSendWait: "5s"
+  
+  # -- Duration to wait before stopping attempts of sending a policy to a client
+  maxSendInterval: "10s"
+  
+  # -- Interval for how often to remove dead client connections
+  clientFlushInterval: "180s"
+  
+  # -- Duration to wait before declaring a client as inactive
+  maxClientInactiveDuration: "240s"
+  
+  # -- Address to listen on for health checks
+  probesAddress: ":9080"
+  
+  # -- Address to listen on for gRPC
+  grpcAddress: ":9081"
+  
+  # -- Network to listen on for gRPC
+  grpcNetwork: "tcp"
+  
+  # -- Address to listen on for metrics
+  metricsAddress: ":9082"
+  
+  # -- Enable in-cluster kubernetes policy source
+  kubePolicySource: true
+  
+  # -- External policy sources
+  externalPolicySources: []
+    # - "http://example.com/policies"
+    # - "file:///path/to/policies"
+
+# -- Kubernetes configuration overrides
+kubeConfig:
+  
+  # -- Override kubeconfig context
+  context: ""
+  
+  # -- Override kubeconfig cluster
+  cluster: ""
+  
+  # -- Override kubeconfig user
+  user: ""
+  
+  # -- Override kubeconfig namespace
+  namespace: ""
+  
+  # -- Override kubeconfig server
+  server: ""
+  
+  # -- Override kubeconfig certificate authority
+  certificateAuthority: ""
+  
+  # -- Override kubeconfig certificate authority data
+  certificateAuthorityData: ""
+  
+  # -- Override kubeconfig client certificate
+  clientCertificate: ""
+  
+  # -- Override kubeconfig client certificate data
+  clientCertificateData: ""
+  
+  # -- Override kubeconfig client key
+  clientKey: ""
+  
+  # -- Override kubeconfig client key data
+  clientKeyData: ""
+  
+  # -- Override kubeconfig token
+  token: ""
+  
+  # -- Override kubeconfig username
+  username: ""
+  
+  # -- Override kubeconfig password
+  password: ""

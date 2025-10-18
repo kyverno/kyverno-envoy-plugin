@@ -211,6 +211,12 @@ containers:
     - containerPort: 9081
       name: grpc
       protocol: TCP
+    - containerPort: 9082
+      name: metrics
+      protocol: TCP
+    - containerPort: 9083
+      name: http-auth
+      protocol: TCP
 
     # -- Container args.
     args:
@@ -218,9 +224,14 @@ containers:
       - authz-server
       - --probes-address=:9080
       - --grpc-address=:9081
+      - --grpc-network={{ .Values.config.grpcNetwork }}
       - --metrics-address=:9082
+      - --http-auth-server-address={{ .Values.config.httpAuthServerAddress }}
       - --leader-election=true
       - --leader-election-id={{ template "kyverno-authz-server.name" . }}
+      - --kube-policy-source={{ .Values.config.kubePolicySource }}
+      - --allow-insecure-registry={{ .Values.config.allowInsecureRegistry }}
+      - --nested-request={{ .Values.config.nestedRequest }}
 
 service:
 
@@ -268,6 +279,39 @@ pdb:
 externalPolicySources: []
   # eg: - file:///data/kyverno-authz-server
 
+config:
+  # -- GRPC network type (tcp, unix, etc.)
+  grpcNetwork: tcp
+
+  # -- HTTP authorization server address
+  httpAuthServerAddress: ":9083"
+
+  # -- Enable in-cluster kubernetes policy source
+  kubePolicySource: true
+
+  # -- Allow insecure registry for pulling policy images
+  allowInsecureRegistry: false
+
+  # -- Expect the requests to validate to be in the body of the original request
+  nestedRequest: false
+
+  # -- Image pull secrets for fetching policies from OCI registries
+  imagePullSecrets: []
+    # - secret-name
+
+  # Control plane settings (for sidecar mode)
+  controlPlane:
+    # -- Control plane address (leave empty for standalone mode)
+    address: ""
+
+    # -- Duration to wait before retrying connecting to the control plane
+    reconnectWait: 3s
+
+    # -- Duration to wait before stopping attempts of sending a policy to a client
+    maxDialInterval: 8s
+
+    # -- Interval for sending health checks
+    healthCheckInterval: 30s
 
 crds:
   install: true

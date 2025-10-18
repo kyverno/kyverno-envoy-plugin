@@ -6,4 +6,5 @@ import (
 
 const (
 	EvaluationModeEnvoy vpol.EvaluationMode = "Envoy"
+	EvaluationModeHTTP  vpol.EvaluationMode = "HTTP"
 )

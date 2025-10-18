@@ -8,8 +8,9 @@ import (
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/data"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
 	"github.com/kyverno/pkg/ext/resource/convert"
@@ -37,66 +38,60 @@ func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 
 var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
 
-func NewFs(compiler vpolcompiler.Compiler, f fs.FS) engine.Source {
-	input := sources.NewFs(f, func(_ string, entry fs.DirEntry) bool {
-		if entry == nil {
-			return false
+type fsProvider[DATA, IN, OUT any] struct {
+	vpolCompiler engine.Compiler[DATA, IN, OUT]
+	fs           fs.FS
+}
+
+func NewFsProvider[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, IN, OUT], fs fs.FS) core.Source[policy.Policy[DATA, IN, OUT]] {
+	return &fsProvider[DATA, IN, OUT]{
+		vpolCompiler: vpolCompiler,
+		fs:           fs,
+	}
+}
+
+func (p *fsProvider[DATA, IN, OUT]) Load(ctx context.Context) ([]policy.Policy[DATA, IN, OUT], error) {
+	ldr, err := DefaultLoader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load CRDs: %w", err)
+	}
+	vpols := map[string]*vpol.ValidatingPolicy{}
+	if err := fs.WalkDir(p.fs, ".", func(path string, entry fs.DirEntry, _err error) error {
+		documents, err := p.getDocuments(ctx, entry)
+		if err != nil {
+			return fmt.Errorf("failed to extract documents: %w", err)
 		}
-		// process only files
-		if entry.IsDir() {
-			return false
-		}
-		return file.IsYaml(entry.Name()) || file.IsJson(entry.Name())
-	})
-	transform := sources.NewTransformErr(
-		input,
-		func(entry sources.FsEntry) ([]document, error) {
-			return getDocuments(context.Background(), f, entry.DirEntry)
-		},
-	)
-	flatten := sources.NewFlatten(transform)
-	load := sources.NewTransformErr(
-		flatten,
-		func(document document) (*vpol.ValidatingPolicy, error) {
-			ldr, err := DefaultLoader()
-			if err != nil {
-				return nil, fmt.Errorf("failed to load CRDs: %w", err)
-			}
+		for _, document := range documents {
 			gvk, untyped, err := ldr.Load(document)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			switch gvk {
 			case vpolGVK:
 				typed, err := convert.To[vpol.ValidatingPolicy](untyped)
 				if err != nil {
-					return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
+					return fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
 				}
-				return typed, nil
+				vpols[typed.Name] = typed
 			}
-			return nil, nil
-		})
-	filter := sources.NewFilter(
-		load,
-		func(p *vpol.ValidatingPolicy) bool {
-			return p != nil
-		},
-	)
-	// TODO: sort by policy name
-	compile := sources.NewTransformErr(
-		filter,
-		func(p *vpol.ValidatingPolicy) (engine.Policy, error) {
-			c, errs := compiler.Compile(p)
-			if len(errs) > 0 {
-				return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", errs.ToAggregate())
-			}
-			return c, nil
-		},
-	)
-	return compile
+		}
+		return _err
+	}); err != nil {
+		return nil, err
+	}
+	var policies []policy.Policy[DATA, IN, OUT]
+	for _, vpol := range utils.ToSortedSlice(vpols) {
+		compiled, errs := p.vpolCompiler.Compile(vpol)
+		if len(errs) > 0 {
+			fmt.Printf("failed to compile ValidatingPolicy: %s\n", errs)
+			continue
+		}
+		policies = append(policies, compiled)
+	}
+	return policies, nil
 }
 
-func getDocuments(_ context.Context, f fs.FS, entry fs.DirEntry) ([]document, error) {
+func (p *fsProvider[DATA, IN, OUT]) getDocuments(_ context.Context, entry fs.DirEntry) ([]document, error) {
 	if entry == nil {
 		return nil, nil
 	}
@@ -106,7 +101,7 @@ func getDocuments(_ context.Context, f fs.FS, entry fs.DirEntry) ([]document, er
 	}
 	// if it's a yaml file, it can contain multiple documents
 	if file.IsYaml(entry.Name()) {
-		bytes, err := fs.ReadFile(f, entry.Name())
+		bytes, err := fs.ReadFile(p.fs, entry.Name())
 		if err != nil {
 			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
 		}
@@ -118,7 +113,7 @@ func getDocuments(_ context.Context, f fs.FS, entry fs.DirEntry) ([]document, er
 	}
 	// if it's a json file, it contains a single document
 	if file.IsJson(entry.Name()) {
-		doc, err := fs.ReadFile(f, entry.Name())
+		doc, err := fs.ReadFile(p.fs, entry.Name())
 		if err != nil {
 			return nil, fmt.Errorf("failed to read file %s: %w", entry.Name(), err)
 		}

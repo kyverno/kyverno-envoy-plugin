@@ -5,12 +5,15 @@ import (
 	"github.com/google/cel-go/ext"
 	jsonimpl "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/impl"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
+	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	jsoncel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/json"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwt"
+
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/image"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
+
 	"k8s.io/apiserver/pkg/cel/library"
 )
 
@@ -32,11 +35,12 @@ func NewEnv() (*cel.Env, error) {
 		ext.Sets(),
 		ext.Strings(),
 		// register kubernetes libs
+		library.CIDR(),
+		library.Format(),
+		library.IP(),
 		library.Lists(),
 		library.Regex(),
 		library.URLs(),
-		library.IP(),
-		library.CIDR(),
 		library.Quantity(),
 		library.SemverLib(),
 		// register our libs
@@ -44,9 +48,10 @@ func NewEnv() (*cel.Env, error) {
 		jwt.Lib(),
 		jsoncel.Lib(&jsonimpl.JsonImpl{}),
 		// register kyverno libs
+		http.Lib(),
+		httpauth.Lib(),
+		resource.Lib(),
 		image.Lib(),
 		imagedata.Lib(),
-		http.Lib(),
-		resource.Lib(),
 	)
 }

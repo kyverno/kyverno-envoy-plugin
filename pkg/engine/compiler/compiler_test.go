@@ -6,14 +6,19 @@ import (
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/client-go/dynamic"
 )
 
 var pol = &vpol.ValidatingPolicy{
 	Spec: vpol.ValidatingPolicySpec{
+		EvaluationConfiguration: &vpol.EvaluationConfiguration{
+			Mode: v1alpha1.EvaluationModeEnvoy,
+		},
 		Variables: []admissionregistrationv1.Variable{
 			{
 				Name:       "force_authorized",
@@ -43,7 +48,7 @@ var pol = &vpol.ValidatingPolicy{
 }
 
 func TestCompiler(t *testing.T) {
-	compiler := compiler.NewCompiler()
+	compiler := compiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
 
 	compiled, errList := compiler.Compile(pol)
 	assert.NoError(t, errList.ToAggregate())

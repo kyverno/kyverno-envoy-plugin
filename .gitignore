@@ -4,5 +4,5 @@
 /.tools/
 /.venv/
 /charts/*/charts
-/kyverno-envoy-plugin
 /website/site/
+__debug*

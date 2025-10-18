@@ -2,9 +2,8 @@ package compiler
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
-	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -20,22 +19,23 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-type compiledPolicy struct {
+type compiledPolicy[DATA dynamic.Interface, IN, OUT any] struct {
 	failurePolicy   admissionregistrationv1.FailurePolicyType
 	matchConditions []cel.Program
 	variables       map[string]cel.Program
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) Evaluate(ctx context.Context, dynclient dynamic.Interface, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+func (p compiledPolicy[DATA, IN, OUT]) Evaluate(ctx context.Context, dynclient DATA, r IN) (OUT, error) {
+	var zero OUT // create a zero variable of the output type
 	response, err := p.evaluateRules(r, dynclient)
 	if err != nil && p.failurePolicy == admissionregistrationv1.Fail {
-		return nil, err
+		return zero, err
 	}
 	return response, nil
 }
 
-func (p compiledPolicy) match(r *authv3.CheckRequest) (bool, error) {
+func (p compiledPolicy[DATA, IN, OUT]) match(r IN) (bool, error) {
 	data := map[string]any{
 		ObjectKey: r,
 	}
@@ -63,7 +63,7 @@ func (p compiledPolicy) match(r *authv3.CheckRequest) (bool, error) {
 	return true, multierr.Combine(errs...)
 }
 
-func (p compiledPolicy) setupVariables(r *authv3.CheckRequest, dynclient dynamic.Interface) (map[string]any, error) {
+func (p compiledPolicy[DATA, IN, OUT]) setupVariables(r IN, d DATA) (map[string]any, error) {
 	loader, err := variables.ImageData(nil)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (p compiledPolicy) setupVariables(r *authv3.CheckRequest, dynclient dynamic
 		HttpKey:      http.Context{ContextInterface: http.NewHTTP(nil)},
 		ImageDataKey: imagedata.Context{ContextInterface: loader},
 		ObjectKey:    r,
-		ResourceKey:  resource.Context{ContextInterface: variables.NewResourceProvider(dynclient)},
+		ResourceKey:  resource.Context{ContextInterface: variables.NewResourceProvider(d)},
 		VariablesKey: vars,
 	}
 	for name, variable := range p.variables {
@@ -91,32 +91,37 @@ func (p compiledPolicy) setupVariables(r *authv3.CheckRequest, dynclient dynamic
 	return data, nil
 }
 
-func (p compiledPolicy) evaluateRules(r *authv3.CheckRequest, dynclient dynamic.Interface) (*authv3.CheckResponse, error) {
+func (p compiledPolicy[DATA, IN, OUT]) evaluateRules(r IN, dynclient DATA) (OUT, error) {
+	var zero OUT // create a zero variable of the output type
 	if match, err := p.match(r); err != nil {
-		return nil, err
+		return zero, err
 	} else if !match {
-		return nil, nil
+		return zero, nil
 	}
 	data, err := p.setupVariables(r, dynclient)
 	if err != nil {
-		return nil, err
+		return zero, err
 	}
 	for _, rule := range p.rules {
 		// evaluate the rule
 		response, err := evaluateRule(rule, data)
 		// check error
 		if err != nil {
-			return nil, err
+			return zero, err
 		}
 		if response != nil {
 			// no error and evaluation result is not nil, return
-			return response, nil
+			val, ok := response.(OUT)
+			if !ok {
+				return zero, fmt.Errorf("rule result is expected to be %T", zero)
+			}
+			return val, nil
 		}
 	}
-	return nil, nil
+	return zero, nil
 }
 
-func evaluateRule(rule cel.Program, data map[string]any) (*authv3.CheckResponse, error) {
+func evaluateRule(rule cel.Program, data map[string]any) (any, error) {
 	out, _, err := rule.Eval(data)
 	// check error
 	if err != nil {
@@ -132,9 +137,5 @@ func evaluateRule(rule cel.Program, data map[string]any) (*authv3.CheckResponse,
 	if value == nil {
 		return nil, nil
 	}
-	response, ok := value.(*authv3.CheckResponse)
-	if !ok {
-		return nil, errors.New("rule result is expected to be authv3.CheckResponse")
-	}
-	return response, nil
+	return value, nil
 }

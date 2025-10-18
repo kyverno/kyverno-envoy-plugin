@@ -159,7 +159,11 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 			if len(s.policies) > 0 {
 				for _, pol := range s.sortPolicies() {
 					// send each policy in a goroutine to avoid blocking the receive loop
-					go s.sendWithBackoff(stream, pol)
+					go func(p *protov1alpha1.ValidatingPolicy) {
+						if err := s.sendWithBackoff(stream, p); err != nil {
+							s.logger.Errorf("Error sending policy with backoff: %v", err)
+						}
+					}(pol)
 				}
 			}
 			s.cxnMu.Lock()

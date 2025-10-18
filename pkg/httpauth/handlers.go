@@ -20,15 +20,6 @@ type authorizer struct {
 	nestedRequest bool
 }
 
-func NewAuthorizer(dyn dynamic.Interface, p engine.HTTPSource, nestedRequest bool, logger *logrus.Logger) *authorizer {
-	return &authorizer{
-		provider:      p,
-		logger:        logger,
-		dyn:           dyn,
-		nestedRequest: nestedRequest,
-	}
-}
-
 func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		a.logger.Infof("received request from %s", r.RemoteAddr)

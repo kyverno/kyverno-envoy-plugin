@@ -15,7 +15,12 @@ func NewServer(addr string, dyn dynamic.Interface, p engine.HTTPSource, nestedRe
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
-		a := NewAuthorizer(dyn, p, nestedRequest, logger)
+		a := &authorizer{
+			provider:      p,
+			logger:        logger,
+			dyn:           dyn,
+			nestedRequest: nestedRequest,
+		}
 		mux.Handle("POST /", http.HandlerFunc(a.NewHandler()))
 		// create server
 		s := &http.Server{

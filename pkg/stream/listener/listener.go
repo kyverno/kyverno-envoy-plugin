@@ -93,10 +93,14 @@ func (l *policyListener) listen(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				l.logger.Info("Stopping policy listener due to context cancellation")
-				stream.CloseSend()
+				if err := stream.CloseSend(); err != nil {
+					l.logger.Errorf("Error closing stream: %v", err)
+				}
 
 				if l.conn != nil {
-					l.conn.Close()
+					if err := l.conn.Close(); err != nil {
+						l.logger.Errorf("Error closing connection: %v", err)
+					}
 				}
 				return
 			default:
@@ -138,9 +142,11 @@ func (l *policyListener) sendHealthChecks(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-time.After(l.healthCheckInterval):
-			l.client.HealthCheck(ctx, &protov1alpha1.HealthCheckRequest{
+			if _, err := l.client.HealthCheck(ctx, &protov1alpha1.HealthCheckRequest{
 				ClientAddress: l.clientAddr,
-				Time:          timestamppb.Now()})
+				Time:          timestamppb.Now()}); err != nil {
+				l.logger.Debugf("Health check failed: %v", err)
+			}
 			continue
 		}
 	}

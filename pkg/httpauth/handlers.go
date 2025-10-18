@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/sirupsen/logrus"
@@ -38,7 +37,7 @@ func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 			writeErrResp(w, err)
 			return
 		}
-		httpReq, err := httpauth.NewRequest(r)
+		httpReq, err := httpcel.NewRequest(r)
 		if err != nil {
 			writeErrResp(w, err)
 			return

@@ -10,6 +10,8 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwt"
 
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno/pkg/cel/libs/image"
+	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 
 	"k8s.io/apiserver/pkg/cel/library"
@@ -39,6 +41,8 @@ func NewEnv() (*cel.Env, error) {
 		library.Lists(),
 		library.Regex(),
 		library.URLs(),
+		library.Quantity(),
+		library.SemverLib(),
 		// register our libs
 		envoy.Lib(),
 		jwt.Lib(),
@@ -47,5 +51,7 @@ func NewEnv() (*cel.Env, error) {
 		http.Lib(),
 		httpauth.Lib(),
 		resource.Lib(),
+		image.Lib(),
+		imagedata.Lib(),
 	)
 }

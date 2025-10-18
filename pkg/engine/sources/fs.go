@@ -83,7 +83,8 @@ func (p *fsProvider[DATA, IN, OUT]) Load(ctx context.Context) ([]policy.Policy[D
 	for _, vpol := range utils.ToSortedSlice(vpols) {
 		compiled, errs := p.vpolCompiler.Compile(vpol)
 		if len(errs) > 0 {
-			return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
+			fmt.Printf("failed to compile ValidatingPolicy: %s\n", errs)
+			continue
 		}
 		policies = append(policies, compiled)
 	}

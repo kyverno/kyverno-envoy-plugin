@@ -16,10 +16,10 @@ import (
 type policyReconciler struct {
 	client     client.Client
 	polSender  *sender.PolicySender
-	processors []processor.Processor
+	processors map[v1alpha1.EvaluationMode]processor.Processor
 }
 
-func NewPolicyReconciler(client client.Client, sender *sender.PolicySender, processors []processor.Processor) *policyReconciler {
+func NewPolicyReconciler(client client.Client, sender *sender.PolicySender, processors map[v1alpha1.EvaluationMode]processor.Processor) *policyReconciler {
 	return &policyReconciler{
 		client:     client,
 		polSender:  sender,
@@ -51,7 +51,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		go r.polSender.SendPolicy(protoPolicy)
 	}
 	go func() {
-		for _, p := range r.processors {
+		if p, ok := r.processors[policy.Spec.EvaluationMode()]; ok {
 			p.Process(protoPolicy)
 		}
 	}()

@@ -9,6 +9,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,7 +21,7 @@ type policyListener struct {
 	clientAddr                  string
 	client                      protov1alpha1.ValidatingPolicyServiceClient
 	conn                        *grpc.ClientConn
-	processors                  []processor.Processor
+	processors                  map[vpol.EvaluationMode]processor.Processor
 	connEstablished             bool
 	controlPlaneReconnectWait   time.Duration
 	controlPlaneMaxDialInterval time.Duration
@@ -33,7 +34,7 @@ type policyListener struct {
 func NewPolicyListener(
 	controlPlaneAddr string,
 	clientAddr string,
-	processors []processor.Processor,
+	processors map[vpol.EvaluationMode]processor.Processor,
 	logger *logrus.Logger,
 	controlPlaneReconnectWait,
 	controlPlaneMaxDialInterval,
@@ -123,7 +124,7 @@ func (l *policyListener) listen(ctx context.Context) error {
 
 				l.logger.Infof("Received validating policy request: %s, Delete: %t", req.Name, req.Delete)
 				go func() {
-					for _, p := range l.processors {
+					if p, ok := l.processors[vpol.EvaluationMode(req.Spec.EvaluationMode)]; ok {
 						p.Process(req)
 					}
 				}()

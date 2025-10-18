@@ -28,6 +28,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	vpolv1alpha1 "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -135,6 +136,10 @@ func Command() *cobra.Command {
 					envoyProcessor := processor.NewPolicyAccessor(envoyCompiler, logger)
 					httpProcessor := processor.NewPolicyAccessor(httpCompiler, logger)
 
+					processorMap := make(map[vpol.EvaluationMode]processor.Processor)
+					processorMap[v1alpha1.EvaluationModeEnvoy] = envoyProcessor
+					processorMap[v1alpha1.EvaluationModeHTTP] = httpProcessor
+
 					// if kube policy source is enabled and the container is not running as a sidecar
 					if kubePolicySource && controlPlaneAddr == "" {
 						// create a controller manager
@@ -161,7 +166,7 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 
-						r := sources.NewPolicyReconciler(mgr.GetClient(), nil, []processor.Processor{httpProcessor, envoyProcessor})
+						r := sources.NewPolicyReconciler(mgr.GetClient(), nil, processorMap)
 						if err := ctrl.NewControllerManagedBy(mgr).For(&vpolv1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
@@ -207,11 +212,11 @@ func Command() *cobra.Command {
 							panic("can't start auth server, no POD_IP has been passed")
 						}
 						policyListener := listener.NewPolicyListener(controlPlaneAddr,
-							clientAddr, []processor.Processor{httpProcessor, envoyProcessor},
+							clientAddr, processorMap,
 							logger, controlPlaneReconnectWait,
 							controlPlaneMaxDialInterval,
-							healthCheckInterval)
-
+							healthCheckInterval,
+						)
 						for {
 							select {
 							case <-ctx.Done():

@@ -4,7 +4,6 @@
 
 {{ template "chart.badgesSection" . }}
 
-
 A plugin to enforce kyverno policies with Envoy. This plugin allows applying Kyverno policies to APIs managed by Envoy.
 
 ## Overview 
@@ -19,10 +18,10 @@ Add `kyverno-envoy-plugin` Helm repository:
 helm repo add kyverno-json https://kyverno.github.io/kyverno-envoy-plugin/
 ```
 
-Install `kyverno-sidecar-injector` Helm chart:
+Install `kyverno-authz-server` Helm chart:
 
 ```shell
-helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyverno-envoy-plugin/kyverno-sidecar-injector
+helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno-envoy-plugin/kyverno-authz-server
 ```
 
 {{ template "chart.valuesSection" . }}

@@ -2,14 +2,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ template "kyverno-http-authorizer-control-plane.name" . }}
+metadata:
+  name: {{ template "kyverno-authz-server.name" . }}
   labels:
-    {{- include "kyverno-http-authorizer-control-plane.labels" . | nindent 4 }}
+    {{- include "kyverno-authz-server.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-  - envoy.kyverno.io
+  - policies.kyverno.io
   resources:
-  - authorizationpolicies
   - validatingpolicies
   verbs:
   - get

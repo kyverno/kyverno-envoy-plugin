@@ -1,8 +1,8 @@
 apiVersion: v2
-name: kyverno-authz-server-control-plane
-description: Kyverno policies based HTTP authorization server ❤️
+name: kyverno-authz-server
+description: Kyverno policies based authorization plugin for Envoy ❤️
 icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
-home: https://kyverno.github.io/kyverno-authz-server
+home: https://kyverno.github.io/kyverno-envoy-plugin
 
 type: application
 version: 0.0.0
@@ -14,12 +14,12 @@ keywords:
   - kyverno
   - authz
   - policy
-  - http
+  - envoy
   - istio
   - security
 
 sources:
-  - https://github.com/kyverno/kyverno-authz-server
+  - https://github.com/kyverno/kyverno-envoy-plugin
 
 maintainers:
   - name: Kyverno

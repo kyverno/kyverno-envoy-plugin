@@ -22,18 +22,44 @@ data:
       - name: grpc
         protocol: TCP
         containerPort: 9081
+      - name: metrics
+        protocol: TCP
+        containerPort: 9082
+      - name: http-auth
+        protocol: TCP
+        containerPort: 9083
+      {{- if .Values.sidecar.config.controlPlane.address }}
+      env:
+      - name: POD_IP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.podIP
+      {{- end }}
       args:
       - serve
       - authz-server
       - --probes-address=:9080
       - --grpc-address=:9081
+      - --grpc-network={{ .Values.sidecar.config.grpcNetwork }}
       - --metrics-address=:9082
+      - --http-auth-server-address={{ .Values.sidecar.config.httpAuthServerAddress }}
       - --kube-policy-source=false
+      - --allow-insecure-registry={{ .Values.sidecar.config.allowInsecureRegistry }}
+      - --nested-request={{ .Values.sidecar.config.nestedRequest }}
       {{- with .Values.sidecar.externalPolicySources }}
       # external policy sources
       {{- range . }}
       - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
       {{- end }}
+      {{- end }}
+      {{- range .Values.sidecar.config.imagePullSecrets }}
+      - {{ printf "--image-pull-secret=%s" . }}
+      {{- end }}
+      {{- if .Values.sidecar.config.controlPlane.address }}
+      - {{ printf "--control-plane-address=%s" .Values.sidecar.config.controlPlane.address }}
+      - {{ printf "--control-plane-reconnect-wait=%s" .Values.sidecar.config.controlPlane.reconnectWait }}
+      - {{ printf "--control-plane-max-dial-interval=%s" .Values.sidecar.config.controlPlane.maxDialInterval }}
+      - {{ printf "--health-check-interval=%s" .Values.sidecar.config.controlPlane.healthCheckInterval }}
       {{- end }}
       {{- with .Values.sidecar.volumeMounts }}
       # volume mounts

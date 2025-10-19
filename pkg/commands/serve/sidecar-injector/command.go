@@ -14,6 +14,7 @@ func Command() *cobra.Command {
 	var keyFile string
 	var sidecarImage string
 	var controlPlaneAddr string
+	var configFile string
 	var controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval string
 	command := &cobra.Command{
 		Use:   "sidecar-injector",
@@ -33,6 +34,7 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
 	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
 	command.Flags().StringVar(&sidecarImage, "sidecar-image", "", "Image to use in sidecar")
+	command.Flags().StringVar(&configFile, "config-file", "", "File containing the sidecar config")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "The control plane address to inject into the sidecars")
 	command.Flags().StringVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", "3s", "Duration to wait before retrying connecting to the control plane")
 	command.Flags().StringVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", "8s", "Duration to wait before stopping attempts of sending a policy to a client")

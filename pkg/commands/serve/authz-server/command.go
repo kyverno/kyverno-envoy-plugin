@@ -29,7 +29,6 @@ import (
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
-	vpolv1alpha1 "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
@@ -144,7 +143,7 @@ func Command() *cobra.Command {
 					if kubePolicySource && controlPlaneAddr == "" {
 						// create a controller manager
 						scheme := runtime.NewScheme()
-						if err := vpolv1alpha1.Install(scheme); err != nil {
+						if err := vpol.Install(scheme); err != nil {
 							return err
 						}
 						mgr, err := ctrl.NewManager(config, ctrl.Options{
@@ -154,7 +153,7 @@ func Command() *cobra.Command {
 							},
 							Cache: cache.Options{
 								ByObject: map[client.Object]cache.ByObject{
-									&vpolv1alpha1.ValidatingPolicy{}: {
+									&vpol.ValidatingPolicy{}: {
 										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeEnvoy)),
 									},
 								},
@@ -167,7 +166,7 @@ func Command() *cobra.Command {
 						}
 
 						r := sources.NewPolicyReconciler(mgr.GetClient(), nil, processorMap)
-						if err := ctrl.NewControllerManagedBy(mgr).For(&vpolv1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
+						if err := ctrl.NewControllerManagedBy(mgr).For(&vpol.ValidatingPolicy{}).Complete(r); err != nil {
 							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
 						envoyProvider = sdksources.NewComposite(envoyProcessor, envoyProvider)

@@ -32,15 +32,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -150,13 +147,6 @@ func Command() *cobra.Command {
 							Scheme: scheme,
 							Metrics: metricsserver.Options{
 								BindAddress: metricsAddress,
-							},
-							Cache: cache.Options{
-								ByObject: map[client.Object]cache.ByObject{
-									&vpol.ValidatingPolicy{}: {
-										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeEnvoy)),
-									},
-								},
 							},
 							LeaderElection:   leaderElection,
 							LeaderElectionID: leaderElectionID,

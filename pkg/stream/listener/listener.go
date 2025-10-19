@@ -124,6 +124,13 @@ func (l *policyListener) listen(ctx context.Context) error {
 
 				l.logger.Infof("Received validating policy request: %s, Delete: %t", req.Name, req.Delete)
 				go func() {
+					// if its a delete request, remove the policy from all processors that may have it
+					if req.Delete {
+						for _, p := range l.processors {
+							p.Process(req)
+						}
+						return
+					}
 					if p, ok := l.processors[vpol.EvaluationMode(req.Spec.EvaluationMode)]; ok {
 						p.Process(req)
 					}

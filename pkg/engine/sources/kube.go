@@ -31,11 +31,21 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	var policy v1alpha1.ValidatingPolicy
 	err := r.client.Get(ctx, req.NamespacedName, &policy)
 	if errors.IsNotFound(err) {
-		r.polSender.DeletePolicy(req.Name)
-		go r.polSender.SendPolicy(&protov1alpha1.ValidatingPolicy{
+		if r.polSender != nil {
+			r.polSender.DeletePolicy(req.Name)
+			go r.polSender.SendPolicy(&protov1alpha1.ValidatingPolicy{
+				Name:   req.Name,
+				Delete: true,
+			})
+		}
+		protoRequest := &protov1alpha1.ValidatingPolicy{
 			Name:   req.Name,
 			Delete: true,
-		})
+		}
+		// delete this policy from any processor who may have it
+		for _, p := range r.processors {
+			p.Process(protoRequest)
+		}
 		return ctrl.Result{}, nil
 	}
 	if err != nil {

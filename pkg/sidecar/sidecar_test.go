@@ -7,125 +7,119 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func TestSidecar(t *testing.T) {
-	tests := []struct {
-		name                        string
-		image                       string
-		controlPlaneAddr            string
-		controlPlaneReconnectWait   string
-		controlPlaneMaxDialInterval string
-		healthCheckInterval         string
-		want                        corev1.Container
-	}{{
-		name:                        "basic sidecar",
-		image:                       "foo:bar",
-		controlPlaneAddr:            "http://control-plane:9081",
-		controlPlaneReconnectWait:   "3s",
-		controlPlaneMaxDialInterval: "8s",
-		healthCheckInterval:         "30s",
-		want: corev1.Container{
-			Name:            "kyverno-authz-server",
-			ImagePullPolicy: corev1.PullIfNotPresent,
-			Image:           "foo:bar",
-			Ports: []corev1.ContainerPort{{
-				Name:          "http",
-				Protocol:      corev1.ProtocolTCP,
-				ContainerPort: 9080,
-			}, {
-				Name:          "grpc",
-				Protocol:      corev1.ProtocolTCP,
-				ContainerPort: 9081,
-			}},
-			Args: []string{
-				"serve",
-				"authz-server",
-				"--probes-address=:9080",
-				"--control-plane-address=http://control-plane:9081",
-				"--control-plane-reconnect-wait=3s",
-				"--control-plane-max-dial-interval=8s",
-				"--health-check-interval=30s",
-			},
-			Env: []corev1.EnvVar{
-				{
-					Name: "POD_IP",
-					ValueFrom: &corev1.EnvVarSource{
-						FieldRef: &corev1.ObjectFieldSelector{
-							FieldPath: "status.podIP",
-						},
+func TestInject(t *testing.T) {
+	sidecar := &Sidecar{
+		InitContainers: []corev1.Container{{
+			Name:  "init",
+			Image: "foo:init",
+		}},
+		Containers: []corev1.Container{{
+			Name:  "container",
+			Image: "foo:container",
+		}},
+		ImagePullSecrets: []corev1.LocalObjectReference{{
+			Name: "foo",
+		}},
+		Volumes: []corev1.Volume{{
+			Name: "foo",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "foo",
 					},
 				},
 			},
-		},
-	}}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := Sidecar(tt.image, tt.controlPlaneAddr, tt.controlPlaneReconnectWait, tt.controlPlaneMaxDialInterval, tt.healthCheckInterval)
-			assert.Equal(t, tt.want, got)
-		})
+		}},
 	}
-}
-
-func TestInject(t *testing.T) {
-	sidecar := Sidecar("foo:bar", "http://control-plane:9081", "3s", "8s", "30s")
 	tests := []struct {
 		name      string
 		pod       corev1.Pod
-		container corev1.Container
+		container *Sidecar
 		want      corev1.Pod
 	}{{
-		name:      "no containers",
+		name:      "empty",
 		pod:       corev1.Pod{},
 		container: sidecar,
 		want: corev1.Pod{
 			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					sidecar,
-				},
+				InitContainers:   sidecar.InitContainers,
+				Containers:       sidecar.Containers,
+				Volumes:          sidecar.Volumes,
+				ImagePullSecrets: sidecar.ImagePullSecrets,
 			},
 		},
 	}, {
-		name: "found",
+		name:      "nil",
+		pod:       corev1.Pod{},
+		container: nil,
+		want:      corev1.Pod{},
+	}, {
+		name: "not empty",
 		pod: corev1.Pod{
 			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name: sidecar.Name,
+				InitContainers: []corev1.Container{{
+					Name: "not-foo",
+				}},
+				Containers: []corev1.Container{{
+					Name: "not-foo",
+				}},
+				ImagePullSecrets: []corev1.LocalObjectReference{{
+					Name: "not-foo",
+				}},
+				Volumes: []corev1.Volume{{
+					Name: "not-foo",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "foo",
+							},
+						},
 					},
-				},
+				}},
 			},
 		},
 		container: sidecar,
 		want: corev1.Pod{
 			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					sidecar,
-				},
-			},
-		},
-	}, {
-		name: "not found",
-		pod: corev1.Pod{
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name: "not-" + sidecar.Name,
+				InitContainers: []corev1.Container{{
+					Name: "not-foo",
+				}, {
+					Name:  "init",
+					Image: "foo:init",
+				}},
+				Containers: []corev1.Container{{
+					Name: "not-foo",
+				}, {
+					Name:  "container",
+					Image: "foo:container",
+				}},
+				ImagePullSecrets: []corev1.LocalObjectReference{{
+					Name: "not-foo",
+				}, {
+					Name: "foo",
+				}},
+				Volumes: []corev1.Volume{{
+					Name: "not-foo",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "foo",
+							},
+						},
 					},
-				},
-			},
-		},
-		container: sidecar,
-		want: corev1.Pod{
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name: "not-" + sidecar.Name,
+				}, {
+					Name: "foo",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "foo",
+							},
+						},
 					},
-					sidecar,
-				},
+				}},
 			},
 		},
-	},
-	}
+	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Inject(tt.pod, tt.container)

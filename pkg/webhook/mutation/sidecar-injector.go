@@ -16,8 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func NewSidecarInjectorServer(addr, sidecarImage, controlPlaneAddr, certFile, keyFile,
-	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval string) server.ServerFunc {
+func NewSidecarInjectorServer(addr, certFile, keyFile string, scar *sidecar.Sidecar) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()
@@ -31,8 +30,7 @@ func NewSidecarInjectorServer(addr, sidecarImage, controlPlaneAddr, certFile, ke
 			if err := json.Unmarshal(r.Object.Raw, &pod); err != nil {
 				return handlers.AdmissionResponse(r, err)
 			}
-			pod = sidecar.Inject(pod, sidecar.Sidecar(sidecarImage, controlPlaneAddr,
-				controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval))
+			pod = sidecar.Inject(pod, scar)
 			if data, err := json.Marshal(&pod); err != nil {
 				return handlers.AdmissionResponse(r, err)
 			} else if patch, err := jsonpatch.CreatePatch(r.Object.Raw, data); err != nil {

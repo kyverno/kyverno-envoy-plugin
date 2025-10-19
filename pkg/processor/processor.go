@@ -24,6 +24,7 @@ func NewPolicyAccessor[DATA, IN, OUT any](compiler engine.Compiler[DATA, IN, OUT
 	return &policyAccessor[DATA, IN, OUT]{
 		Mutex:    sync.Mutex{},
 		compiler: compiler,
+		logger:   logger,
 		policies: make(map[string]policy.Policy[DATA, IN, OUT]),
 		sortPolicies: func() []policy.Policy[DATA, IN, OUT] {
 			return nil
@@ -43,7 +44,6 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 			return stream.MapToSortedSlice(p.policies)
 		})
 	}
-	// delete requests must specify the type
 	if req.Delete {
 		p.logger.Info("deleting policy: ", req.Name)
 		p.Lock()

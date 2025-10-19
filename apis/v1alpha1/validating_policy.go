@@ -42,6 +42,7 @@ func ToProto(pol *v1alpha1.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
 	return &protov1alpha1.ValidatingPolicy{
 		Name: pol.Name,
 		Spec: &protov1alpha1.ValidatingPolicySpec{
+			EvaluationMode:  string(pol.Spec.EvaluationMode()),
 			Validations:     validations,
 			Variables:       variables,
 			MatchConditions: matchConds,
@@ -82,8 +83,11 @@ func FromProto(pol *protov1alpha1.ValidatingPolicy) *v1alpha1.ValidatingPolicy {
 	case "HTTP":
 		evalMode = EvaluationModeHTTP
 	}
+	var fp admissionregistrationv1.FailurePolicyType = "Ignore"
+	if pol.Spec.FailurePolicy != nil {
+		fp = admissionregistrationv1.FailurePolicyType(*pol.Spec.FailurePolicy)
+	}
 
-	fp := admissionregistrationv1.FailurePolicyType(*pol.Spec.FailurePolicy)
 	return &v1alpha1.ValidatingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: pol.Name,

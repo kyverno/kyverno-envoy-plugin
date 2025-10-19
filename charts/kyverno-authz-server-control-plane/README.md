@@ -1,39 +1,77 @@
 # kyverno-authz-server-control-plane
 
+![Version: 0.0.0](https://img.shields.io/badge/Version-0.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: latest](https://img.shields.io/badge/AppVersion-latest-informational?style=flat-square)
+
 Kyverno control plane for managing sidecar authorization servers
 
-## Description
+**Homepage:** <https://kyverno.github.io/kyverno-envoy-plugin>
 
-This Helm chart deploys the Kyverno control plane, which manages and distributes policies to sidecar authorization servers running in your cluster. The control plane watches for ValidatingPolicy resources and streams them to connected sidecar instances.
+## Maintainers
 
-## Installation
+| Name | Email | Url |
+| ---- | ------ | --- |
+| Kyverno |  | <https://kyverno.io/> |
 
-```bash
-helm install kyverno-authz-server-control-plane ./charts/kyverno-authz-server-control-plane
-```
+## Source Code
 
-## Configuration
-
-The following table lists the configurable parameters specific to the control plane:
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `config.grpcNetwork` | GRPC network type (tcp, unix, etc.) | `tcp` |
-| `config.initialSendWait` | Duration to wait before retrying a send to a client | `5s` |
-| `config.maxSendInterval` | Duration to wait before stopping attempts of sending a policy to a client | `10s` |
-| `config.clientFlushInterval` | Interval for how often to remove dead client connections | `180s` |
-| `config.maxClientInactiveDuration` | Duration to wait before declaring a client as inactive | `240s` |
-
-## Architecture
-
-The control plane:
-- Watches ValidatingPolicy resources in the cluster
-- Maintains gRPC connections with sidecar authorization servers
-- Streams policy updates to connected sidecars
-- Monitors client health and removes inactive connections
+* <https://github.com/kyverno/kyverno-envoy-plugin>
 
 ## Requirements
 
-- Kubernetes 1.25+
-- Helm 3+
-- ValidatingPolicy CRD (installed via kyverno-lib dependency)
+Kubernetes: `>=1.25.0-0`
+
+| Repository | Name | Version |
+|------------|------|---------|
+| file://../kyverno-lib | kyverno-lib | 0.0.0 |
+
+## Values
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| nameOverride | string | `nil` | Override the name of the chart |
+| fullnameOverride | string | `nil` | Override the expanded name of the chart |
+| rbac.create | bool | `true` | Create RBAC resources |
+| rbac.serviceAccount.name | string | `nil` | The ServiceAccount name |
+| rbac.serviceAccount.annotations | object | `{}` | Annotations for the ServiceAccount |
+| deployment.replicas | int | `nil` | Desired number of pods |
+| deployment.revisionHistoryLimit | int | `10` | The number of revisions to keep |
+| deployment.annotations | object | `{}` | Deployment annotations. |
+| deployment.updateStrategy | object | See [values.yaml](values.yaml) | Deployment update strategy. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy |
+| pod.labels | object | `{}` | Additional labels to add to each pod |
+| pod.annotations | object | `{}` | Additional annotations to add to each pod |
+| pod.imagePullSecrets | list | `[]` | Image pull secrets |
+| pod.securityContext | object | `{}` | Security context |
+| pod.nodeSelector | object | `{}` | Node labels for pod assignment |
+| pod.tolerations | list | `[]` | List of node taints to tolerate |
+| pod.topologySpreadConstraints | list | `[]` | Topology spread constraints. |
+| pod.priorityClassName | string | `""` | Optional priority class |
+| pod.hostNetwork | bool | `false` | Change `hostNetwork` to `true` when you want the pod to share its host's network namespace. Useful for situations like when you end up dealing with a custom CNI over Amazon EKS. Update the `dnsPolicy` accordingly as well to suit the host network mode. |
+| pod.dnsPolicy | string | `"ClusterFirst"` | `dnsPolicy` determines the manner in which DNS resolution happens in the cluster. In case of `hostNetwork: true`, usually, the `dnsPolicy` is suitable to be `ClusterFirstWithHostNet`. For further reference: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy. |
+| pod.antiAffinity | object | See [values.yaml](values.yaml) | Pod anti affinity constraints. |
+| pod.affinity | object | `{}` | Pod affinity constraints. |
+| pod.nodeAffinity | object | `{}` | Node affinity constraints. |
+| containers.controlPlane.image.registry | string | `"ghcr.io"` | Image registry |
+| containers.controlPlane.image.repository | string | `"kyverno/kyverno-envoy-plugin"` | Image repository |
+| containers.controlPlane.image.tag | string | `nil` | Image tag Defaults to appVersion in Chart.yaml if omitted |
+| containers.controlPlane.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
+| containers.controlPlane.resources.limits | object | `{"memory":"384Mi"}` | Pod resource limits |
+| containers.controlPlane.resources.requests | object | `{"cpu":"100m","memory":"128Mi"}` | Pod resource requests |
+| containers.controlPlane.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context |
+| containers.controlPlane.startupProbe | object | See [values.yaml](values.yaml) | Startup probe. The block is directly forwarded into the deployment, so you can use whatever startupProbes configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
+| containers.controlPlane.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
+| containers.controlPlane.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
+| containers.controlPlane.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"},{"containerPort":9082,"name":"metrics","protocol":"TCP"}]` | Container ports. |
+| containers.controlPlane.args | list | `["serve","control-plane","--probes-address=:9080","--grpc-address=:9081","--grpc-network={{ .Values.config.grpcNetwork }}","--metrics-address=:9082","--initial-send-wait={{ .Values.config.initialSendWait }}","--max-send-interval={{ .Values.config.maxSendInterval }}","--client-flush-interval={{ .Values.config.clientFlushInterval }}","--max-client-inactive-duration={{ .Values.config.maxClientInactiveDuration }}"]` | Container args. |
+| service.port | int | `9081` | Service port. |
+| service.type | string | `"ClusterIP"` | Service type. |
+| service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
+| service.annotations | object | `{}` | Service annotations. |
+| config.grpcNetwork | string | `"tcp"` | GRPC network type (tcp, unix, etc.) |
+| config.initialSendWait | string | `"5s"` | Duration to wait before retrying a send to a client |
+| config.maxSendInterval | string | `"10s"` | Duration to wait before stopping attempts of sending a policy to a client |
+| config.clientFlushInterval | string | `"180s"` | Interval for how often to remove dead client connections |
+| config.maxClientInactiveDuration | string | `"240s"` | Duration to wait before declaring a client as inactive |
+| crds.install | bool | `true` |  |
+
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.11.0](https://github.com/norwoodj/helm-docs/releases/v1.11.0)

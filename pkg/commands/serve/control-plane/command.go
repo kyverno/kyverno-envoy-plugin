@@ -32,6 +32,8 @@ func Command() *cobra.Command {
 	var maxSendPolicyInterval time.Duration
 	var maxClientInactiveDuration time.Duration
 	var clientFlushInterval time.Duration
+	var leaderElection bool
+	var leaderElectionID string
 	command := &cobra.Command{
 		Use:   "control-plane",
 		Short: "Start the Kyverno authorizer control plane",
@@ -76,6 +78,8 @@ func Command() *cobra.Command {
 						Metrics: metricsserver.Options{
 							BindAddress: metricsAddress,
 						},
+						LeaderElection:   leaderElection,
+						LeaderElectionID: leaderElectionID,
 					})
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
@@ -130,6 +134,8 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
+	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
+	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

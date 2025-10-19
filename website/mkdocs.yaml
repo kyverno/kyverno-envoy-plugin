@@ -4,23 +4,18 @@ nav:
 - Home: index.md
 - Quick start:
   - quick-start/index.md
-  - quick-start/authz-server.md
-  - quick-start/sidecar-injector.md
-  - quick-start/next-steps.md
+  - Envoy: quick-start/envoy.md
+  - HTTP: quick-start/http.md
+  - Sidecar Injector: quick-start/sidecar-injector.md
+  - Next Steps: quick-start/next-steps.md
   - Install:
     - install/crds.md
     - install/certificates.md
     - install/external-policy-source.md
 - Policies:
   - policies/index.md
-  - ValidatingPolicy:
-    - policies/vpol/index.md
-    - policies/vpol/evaluation-mode.md
-    - policies/vpol/validation-rules.md
-  - Common:
-    - policies/failure-policy.md
-    - policies/match-conditions.md
-    - policies/variables.md
+  - Envoy Policy Breakdown: policies/envoy-policy-breakdown.md
+  - HTTP Policy Breakdown: policies/http-policy-breakdown.md
   - CEL extensions:
     - cel-extensions/index.md
     - cel-extensions/envoy.md

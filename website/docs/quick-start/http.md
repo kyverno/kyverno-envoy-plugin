@@ -111,9 +111,9 @@ This policy denies requests that don't contain the header `x-force-authorized` w
 
 ## Next Steps
 
-Now that you have the components deployed, check out the [tutorials](../tutorials/) to learn how to integrate with:
+Now that you have the components deployed, check out the [tutorials](../tutorials/index.md) to learn how to integrate with:
 
-- [Ingress NGINX](../tutorials/ingress-nginx/)
+- [Ingress NGINX](../tutorials/ingress-nginx/index.md)
 
 ## Wrap Up
 

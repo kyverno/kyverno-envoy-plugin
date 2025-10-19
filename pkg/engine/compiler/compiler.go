@@ -58,6 +58,8 @@ func (c *compiler[DATA, IN, OUT]) compiledEnvironment(policy *vpol.ValidatingPol
 		objectKey = cel.Variable(ObjectKey, envoy.CheckRequest)
 	case v1alpha1.EvaluationModeHTTP:
 		objectKey = cel.Variable(ObjectKey, httpauth.RequestType)
+	default:
+		return nil, nil, nil, append(allErrs, field.InternalError(nil, fmt.Errorf("invalid policy evaluation mode: %s", policy.Spec.EvaluationMode())))
 	}
 	provider := authzcel.NewVariablesProvider(base.CELTypeProvider())
 	env, err := base.Extend(

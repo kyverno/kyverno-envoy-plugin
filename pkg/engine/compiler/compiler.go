@@ -39,6 +39,7 @@ func (c *compiler[DATA, IN, OUT]) Compile(policy *vpol.ValidatingPolicy) (policy
 		return compiledPolicy[DATA, IN, OUT]{}, err
 	}
 	return compiledPolicy[DATA, IN, OUT]{
+		failurePolicy:   policy.GetFailurePolicy(),
 		variables:       variables,
 		matchConditions: matchConditions,
 		rules:           rules,

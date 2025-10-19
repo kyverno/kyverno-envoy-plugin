@@ -438,6 +438,24 @@ install-kyverno-authz-server: install-vpol
 install-kyverno-authz-server: $(HELM)
 	@$(MAKE) deploy-kyverno-authz-server
 
+.PHONY: deploy-kyverno-authz-server-control-plane
+deploy-kyverno-authz-server-control-plane: ## Deploy kyverno-authz-server-control-plane chart
+deploy-kyverno-authz-server-control-plane: $(HELM)
+	@echo Build kyverno-authz-server dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
+	@echo Install kyverno-authz-server chart... >&2
+	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server-control-plane \
+		--set containers.server.image.registry=$(KO_REGISTRY) \
+		--set containers.server.image.repository=$(PACKAGE) \
+		--set containers.server.image.tag=$(GIT_SHA) \
+
+.PHONY: install-kyverno-authz-server-control-plane
+install-kyverno-authz-server-control-plane: ## Install kyverno-authz-server-control-plane chart
+install-kyverno-authz-server-control-plane: kind-load-image
+install-kyverno-authz-server-control-plane: install-vpol
+install-kyverno-authz-server-control-plane: $(HELM)
+	@$(MAKE) deploy-kyverno-authz-server-control-plane
+
 ########
 # HELP #
 ########

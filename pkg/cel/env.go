@@ -1,13 +1,17 @@
 package cel
 
 import (
+	"fmt"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	jsonimpl "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/impl"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
 	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	jsoncel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/json"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwt"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/image"
@@ -17,7 +21,16 @@ import (
 	"k8s.io/apiserver/pkg/cel/library"
 )
 
-func NewEnv() (*cel.Env, error) {
+func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
+	var coreEnv cel.EnvOption
+	switch evalMode {
+	case v1alpha1.EvaluationModeEnvoy:
+		coreEnv = envoy.Lib()
+	case v1alpha1.EvaluationModeHTTP:
+		coreEnv = httpauth.Lib()
+	default:
+		return nil, fmt.Errorf("invalid evaluation mode passed for env builder")
+	}
 	// create new cel env
 	return cel.NewEnv(
 		// configure env
@@ -44,12 +57,10 @@ func NewEnv() (*cel.Env, error) {
 		library.Quantity(),
 		library.SemverLib(),
 		// register our libs
-		envoy.Lib(),
 		jwt.Lib(),
 		jsoncel.Lib(&jsonimpl.JsonImpl{}),
-		// register kyverno libs
 		http.Lib(),
-		httpauth.Lib(),
+		coreEnv,
 		resource.Lib(),
 		image.Lib(),
 		imagedata.Lib(),

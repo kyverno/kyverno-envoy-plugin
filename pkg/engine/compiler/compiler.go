@@ -48,7 +48,7 @@ func (c *compiler[DATA, IN, OUT]) Compile(policy *vpol.ValidatingPolicy) (policy
 
 func (c *compiler[DATA, IN, OUT]) compiledEnvironment(policy *vpol.ValidatingPolicy) ([]cel.Program, map[string]cel.Program, []cel.Program, field.ErrorList) {
 	var allErrs field.ErrorList
-	base, err := authzcel.NewEnv()
+	base, err := authzcel.NewEnv(policy.Spec.EvaluationMode())
 	if err != nil {
 		return nil, nil, nil, append(allErrs, field.InternalError(nil, err))
 	}

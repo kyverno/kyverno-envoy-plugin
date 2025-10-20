@@ -27,7 +27,7 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
-	sigs.k8s.io/yaml v1.6.0 // indirect
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (

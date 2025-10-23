@@ -43,7 +43,8 @@ func (*validator) ValidateDelete(ctx context.Context, obj runtime.Object) (admis
 }
 
 func (v *validator) validateVpol(policy *vpol.ValidatingPolicy) error {
-	if policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeEnvoy {
+	if policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeEnvoy ||
+		policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeHTTP {
 		if allErrs := v.compileVpol(policy); len(allErrs) > 0 {
 			return apierrors.NewInvalid(
 				vpol.SchemeGroupVersion.WithKind("ValidatingPolicy").GroupKind(),

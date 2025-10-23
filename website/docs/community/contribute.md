@@ -1,6 +1,6 @@
 # Contributing
 
-Kyverno Envoy Plugin, developed by Kyverno, is an advanced end-to-end testing tool for Kubernetes. Our community plays a crucial role in shaping the project by reporting bugs, suggesting features, and improving documentation.
+Kyverno Envoy Plugin, developed by Kyverno, is a flexible authorization service that enforces Kyverno policies for Envoy proxies and plain HTTP services. Our community plays a crucial role in shaping the project by reporting bugs, suggesting features, and improving documentation.
 
 We aim to make our issue tracker, discussion board, and documentation well-structured and easy to navigate. By following our guidelines, you can help us address your requests efficiently.
 

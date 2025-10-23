@@ -1,10 +1,16 @@
 # kyverno-envoy-plugin
 
-A plugin to enforce kyverno policies with Envoy. This plugin allows applying Kyverno policies to APIs managed by Envoy.
+A flexible authorization service that enforces Kyverno policies for **Envoy proxies** and **plain HTTP services**. This plugin enables you to apply Kyverno's powerful policy engine to secure and control access to your APIs and services.
 
 ## Overview 
 
-[Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy) is a L7 proxy and communication bus designed for large modern service oriented architectures . Envoy (v1.7.0+) supports an External Authorization filter which calls an authorization service to check if the incoming request is authorized or not. [External Authorization filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html) feature will help us to make a decision based on Kyverno policies . 
+The Kyverno Envoy plugin provides authorization capabilities in two modes:
+
+### 🔌 Envoy Integration
+Integrates with [Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy)'s [External Authorization filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html) (v1.7.0+) to make authorization decisions based on Kyverno policies. Perfect for service mesh architectures and API gateway deployments.
+
+### 🌐 HTTP Authorization Server
+Works as a standalone HTTP authorization server that can protect any HTTP service. Your application forwards authorization requests to the plugin, which evaluates them against Kyverno policies and returns allow/deny decisions.
 
 **WARNING: ⚠️ Kyverno-envoy-plugin is in development stage.**
 

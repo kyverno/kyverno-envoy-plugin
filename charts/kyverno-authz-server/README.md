@@ -62,8 +62,8 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | containers.server.startupProbe | object | See [values.yaml](values.yaml) | Startup probe. The block is directly forwarded into the deployment, so you can use whatever startupProbes configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
-| containers.server.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"}]` | Container ports. |
-| containers.server.args | list | `["serve","authz-server","--probes-address=:9080","--grpc-address=:9081","--metrics-address=:9082","--leader-election=true","--leader-election-id={{ template \"kyverno-authz-server.name\" . }}"]` | Container args. |
+| containers.server.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"},{"containerPort":9082,"name":"metrics","protocol":"TCP"},{"containerPort":9083,"name":"http-auth","protocol":"TCP"}]` | Container ports. |
+| containers.server.args | list | `["serve","authz-server","--probes-address=:9080","--grpc-address=:9081","--grpc-network={{ .Values.config.grpcNetwork }}","--metrics-address=:9082","--http-auth-server-address={{ .Values.config.httpAuthServerAddress }}","--leader-election=true","--leader-election-id={{ template \"kyverno-authz-server.name\" . }}","--kube-policy-source={{ .Values.config.kubePolicySource }}","--allow-insecure-registry={{ .Values.config.allowInsecureRegistry }}","--nested-request={{ .Values.config.nestedRequest }}"]` | Container args. |
 | service.port | int | `9081` | Service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
@@ -75,6 +75,16 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | webhook.namespaceSelector | object | `{"matchExpressions":[{"key":"kyverno-injection","operator":"In","values":["enabled"]}]}` | Webhook namespace selector |
 | pdb | string | `nil` |  |
 | externalPolicySources | list | `[]` | External policy sources |
+| config.grpcNetwork | string | `"tcp"` | GRPC network type (tcp, unix, etc.) |
+| config.httpAuthServerAddress | string | `":9083"` | HTTP authorization server address |
+| config.kubePolicySource | bool | `true` | Enable in-cluster kubernetes policy source |
+| config.allowInsecureRegistry | bool | `false` | Allow insecure registry for pulling policy images |
+| config.nestedRequest | bool | `false` | Expect the requests to validate to be in the body of the original request |
+| config.imagePullSecrets | list | `[]` | Image pull secrets for fetching policies from OCI registries |
+| config.controlPlane.address | string | `""` | Control plane address (leave empty for standalone mode) |
+| config.controlPlane.reconnectWait | string | `"3s"` | Duration to wait before retrying connecting to the control plane |
+| config.controlPlane.maxDialInterval | string | `"8s"` | Duration to wait before stopping attempts of sending a policy to a client |
+| config.controlPlane.healthCheckInterval | string | `"30s"` | Interval for sending health checks |
 | crds.install | bool | `true` |  |
 
 ## Source Code

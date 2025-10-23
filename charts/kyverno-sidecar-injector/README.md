@@ -81,6 +81,15 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | sidecar.volumes | list | `[]` | Additional volumes |
 | sidecar.volumeMounts | list | `[]` | Additional sidecar container volume mounts |
 | sidecar.imagePullSecrets | list | `[]` | Additional image pull secrets |
+| sidecar.config.grpcNetwork | string | `"tcp"` | GRPC network type (tcp, unix, etc.) |
+| sidecar.config.httpAuthServerAddress | string | `":9083"` | HTTP authorization server address |
+| sidecar.config.allowInsecureRegistry | bool | `false` | Allow insecure registry for pulling policy images |
+| sidecar.config.nestedRequest | bool | `false` | Expect the requests to validate to be in the body of the original request |
+| sidecar.config.imagePullSecrets | list | `[]` | Image pull secrets for fetching policies from OCI registries |
+| sidecar.config.controlPlane.address | string | `""` | Control plane address (required for sidecar mode) |
+| sidecar.config.controlPlane.reconnectWait | string | `"3s"` | Duration to wait before retrying connecting to the control plane |
+| sidecar.config.controlPlane.maxDialInterval | string | `"8s"` | Duration to wait before stopping attempts of sending a policy to a client |
+| sidecar.config.controlPlane.healthCheckInterval | string | `"30s"` | Interval for sending health checks |
 | crds.install | bool | `true` |  |
 
 ## Source Code

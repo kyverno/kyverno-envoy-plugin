@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
@@ -14,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -60,12 +64,21 @@ func Command() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
-					// create vpol compiler
-					vpolCompiler := vpolcompiler.NewCompiler()
+					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
+					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *http.Request, *http.Response]()
+
 					vpolCompileFunc := func(policy *vpol.ValidatingPolicy) field.ErrorList {
-						_, err := vpolCompiler.Compile(policy)
-						ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Validating policy compilation error")
-						return err
+						switch policy.Spec.EvaluationMode() {
+						case v1alpha1.EvaluationModeEnvoy:
+							_, err := envoyCompiler.Compile(policy)
+							ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Validating policy compilation error")
+							return err
+						case v1alpha1.EvaluationModeHTTP:
+							_, err := httpCompiler.Compile(policy)
+							ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Validating policy compilation error")
+							return err
+						}
+						return field.ErrorList{field.InternalError(nil, fmt.Errorf("invalid policy type passed"))}
 					}
 					v := validation.NewValidator(vpolCompileFunc)
 					if err := ctrl.NewWebhookManagedBy(mgr).For(&vpol.ValidatingPolicy{}).WithValidator(v).Complete(); err != nil {

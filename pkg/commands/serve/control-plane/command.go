@@ -8,7 +8,6 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
@@ -61,12 +60,13 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
-					logger := logrus.New()
-					s := sender.NewPolicySender(ctx, logger,
+					s := sender.NewPolicySender(
+						ctx,
 						initialSendPolicyWait,
 						maxSendPolicyInterval,
 						clientFlushInterval,
-						maxClientInactiveDuration)
+						maxClientInactiveDuration,
+					)
 
 					// create a controller manager
 					scheme := runtime.NewScheme()

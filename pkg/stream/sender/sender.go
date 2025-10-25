@@ -2,18 +2,18 @@ package sender
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream"
-
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
-	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type PolicySender struct {
@@ -26,7 +26,6 @@ type PolicySender struct {
 	cxnsMap map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
 
 	ctx                       context.Context
-	logger                    *logrus.Logger
 	initialSendPolicyWait     time.Duration // how long to wait before the second attempt of a failed policy send
 	maxSendPolicyInterval     time.Duration // the maximum duration to wait before stopping attempts of a policy send
 	clientFlushInterval       time.Duration // how often we remove unhealthy clients from the map
@@ -34,15 +33,16 @@ type PolicySender struct {
 	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
 }
 
-func NewPolicySender(ctx context.Context, logger *logrus.Logger,
+func NewPolicySender(
+	ctx context.Context,
 	initialSendPolicyWait,
 	maxSendPolicyInterval,
 	clientFlushInterval,
-	maxClientInactiveDuration time.Duration) *PolicySender {
+	maxClientInactiveDuration time.Duration,
+) *PolicySender {
 	return &PolicySender{
 		polMu:                     &sync.Mutex{},
 		cxnMu:                     &sync.Mutex{},
-		logger:                    logger,
 		ctx:                       ctx,
 		policies:                  make(map[string]*protov1alpha1.ValidatingPolicy),
 		healthCheckMap:            make(map[string]time.Time),
@@ -85,7 +85,7 @@ func (s *PolicySender) SendPolicy(pol *protov1alpha1.ValidatingPolicy) {
 		errs = append(errs, e)
 	}
 	if len(errs) > 0 {
-		logrus.Error(multierr.Combine(errs...))
+		ctrl.LoggerFrom(nil).Error(multierr.Combine(errs...), "failed to send policy")
 	}
 }
 
@@ -123,7 +123,7 @@ func (s *PolicySender) HealthCheck(ctx context.Context, r *protov1alpha1.HealthC
 	if r.ClientAddress == "" || r.Time == nil {
 		return nil, nil // invalid request, do nothing
 	}
-	s.logger.Debugf("got health check message from %s, time: %s", r.ClientAddress, r.Time.AsTime().Format(time.RFC3339))
+	// s.logger.Debugf("got health check message from %s, time: %s", r.ClientAddress, r.Time.AsTime().Format(time.RFC3339))
 	t, ok := s.healthCheckMap[r.ClientAddress]
 	if !ok || r.Time.AsTime().After(t) {
 		s.healthCheckMap[r.ClientAddress] = r.Time.AsTime()
@@ -140,28 +140,28 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 			req, err := stream.Recv()
 			if err == io.EOF {
 				if p, ok := peer.FromContext(stream.Context()); ok {
-					s.logger.Infof("Receiver at %s closed the stream", p.Addr)
+					ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Receiver at %s closed the stream", p.Addr))
 				} else {
-					s.logger.Infof("Receiver closed the stream")
+					ctrl.LoggerFrom(nil).Info("Receiver closed the stream")
 				}
 				return nil
 			}
 			if err != nil {
 				if p, ok := peer.FromContext(stream.Context()); ok {
-					s.logger.Infof("Receiver at %s errored", p.Addr)
+					ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Receiver at %s errored", p.Addr))
 				} else {
-					s.logger.Infof("Receiver errored")
+					ctrl.LoggerFrom(nil).Info("Receiver errored")
 				}
 				return err
 			}
 
-			s.logger.Infof("Received validating policy stream request from: %s", req.ClientAddress)
+			ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received validating policy stream request from: %s", req.ClientAddress))
 			if len(s.policies) > 0 {
 				for _, pol := range s.sortPolicies() {
 					// send each policy in a goroutine to avoid blocking the receive loop
 					go func(p *protov1alpha1.ValidatingPolicy) {
 						if err := s.sendWithBackoff(stream, p); err != nil {
-							s.logger.Errorf("Error sending policy with backoff: %v", err)
+							ctrl.LoggerFrom(nil).Error(err, "Error sending policy with backoff")
 						}
 					}(pol)
 				}
@@ -191,7 +191,7 @@ func (s *PolicySender) deleteInactive() {
 	inactiveClients := s.getInactiveClients()
 	s.cxnMu.Lock()
 	for _, c := range inactiveClients {
-		s.logger.Debugf("deleting %s from active clients", c)
+		ctrl.LoggerFrom(nil).Info(fmt.Sprintf("deleting %s from active clients", c))
 		delete(s.cxnsMap, c)
 		delete(s.healthCheckMap, c)
 	}

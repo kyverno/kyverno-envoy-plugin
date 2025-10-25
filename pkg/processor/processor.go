@@ -9,22 +9,19 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
-	"github.com/sirupsen/logrus"
 )
 
 type policyAccessor[DATA, IN, OUT any] struct {
 	compiler     engine.Compiler[DATA, IN, OUT]
 	policies     map[string]policy.Policy[DATA, IN, OUT]
 	sortPolicies func() []policy.Policy[DATA, IN, OUT]
-	logger       *logrus.Logger
 	sync.Mutex
 }
 
-func NewPolicyAccessor[DATA, IN, OUT any](compiler engine.Compiler[DATA, IN, OUT], logger *logrus.Logger) *policyAccessor[DATA, IN, OUT] {
+func NewPolicyAccessor[DATA, IN, OUT any](compiler engine.Compiler[DATA, IN, OUT]) *policyAccessor[DATA, IN, OUT] {
 	return &policyAccessor[DATA, IN, OUT]{
 		Mutex:    sync.Mutex{},
 		compiler: compiler,
-		logger:   logger,
 		policies: make(map[string]policy.Policy[DATA, IN, OUT]),
 		sortPolicies: func() []policy.Policy[DATA, IN, OUT] {
 			return nil
@@ -45,7 +42,7 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 		})
 	}
 	if req.Delete {
-		p.logger.Info("deleting policy: ", req.Name)
+		// p.logger.Info("deleting policy: ", req.Name)
 		p.Lock()
 		delete(p.policies, req.Name)
 		p.Unlock()
@@ -56,7 +53,7 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 	vpol := policyapi.FromProto(req)
 	compiledPolicy, err := p.compiler.Compile(vpol)
 	if err != nil {
-		p.logger.Errorf("failed to compile policy %s: %s", req.Name, err)
+		// p.logger.Errorf("failed to compile policy %s: %s", req.Name, err)
 		return
 	}
 	p.Lock()

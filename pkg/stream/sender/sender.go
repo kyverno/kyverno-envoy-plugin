@@ -35,9 +35,9 @@ type PolicySender struct {
 
 func NewPolicySender(
 	ctx context.Context,
-	initialSendPolicyWait,
-	maxSendPolicyInterval,
-	clientFlushInterval,
+	initialSendPolicyWait time.Duration,
+	maxSendPolicyInterval time.Duration,
+	clientFlushInterval time.Duration,
 	maxClientInactiveDuration time.Duration,
 ) *PolicySender {
 	return &PolicySender{

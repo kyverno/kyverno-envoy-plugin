@@ -152,7 +152,7 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 codegen-proto: ## Generate proto files
 codegen-proto: $(BUF)
 	@echo Generate proto files... >&2
-	@cd apis/v1alpha1 && $(BUF) generate
+	@$(BUF) generate
 
 .PHONY: codegen-helm-docs
 codegen-helm-docs: ## Generate helm docs

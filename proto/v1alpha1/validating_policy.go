@@ -1,33 +1,33 @@
 package v1alpha1
 
 import (
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
-	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ToProto(pol *v1alpha1.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
-	validations := []*protov1alpha1.Validation{}
+func ToProto(pol *vpol.ValidatingPolicy) *ValidatingPolicy {
+	validations := []*Validation{}
 	for _, v := range pol.Spec.Validations {
-		validations = append(validations, &protov1alpha1.Validation{
+		validations = append(validations, &Validation{
 			Expression: v.Expression,
 			Message:    &v.Message,
 			Reason:     (*string)(v.Reason),
 		})
 	}
-	variables := []*protov1alpha1.Variable{}
+	variables := []*Variable{}
 	for _, v := range pol.Spec.Variables {
 		variables = append(variables,
-			&protov1alpha1.Variable{
+			&Variable{
 				Name:       v.Name,
 				Expression: v.Expression,
 			},
 		)
 	}
-	matchConds := []*protov1alpha1.MatchCondition{}
+	matchConds := []*MatchCondition{}
 	for _, m := range pol.Spec.MatchConditions {
-		matchConds = append(matchConds, &protov1alpha1.MatchCondition{
+		matchConds = append(matchConds, &MatchCondition{
 			Name:       m.Name,
 			Expression: m.Expression,
 		})
@@ -39,9 +39,9 @@ func ToProto(pol *v1alpha1.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
 	} else {
 		fp = "Ignore"
 	}
-	return &protov1alpha1.ValidatingPolicy{
+	return &ValidatingPolicy{
 		Name: pol.Name,
-		Spec: &protov1alpha1.ValidatingPolicySpec{
+		Spec: &ValidatingPolicySpec{
 			EvaluationMode:  string(pol.Spec.EvaluationMode()),
 			Validations:     validations,
 			Variables:       variables,
@@ -51,7 +51,7 @@ func ToProto(pol *v1alpha1.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
 	}
 }
 
-func FromProto(pol *protov1alpha1.ValidatingPolicy) *v1alpha1.ValidatingPolicy {
+func FromProto(pol *ValidatingPolicy) *vpol.ValidatingPolicy {
 	validations := []admissionregistrationv1.Validation{}
 	for _, v := range pol.Spec.Validations {
 		validations = append(validations, admissionregistrationv1.Validation{
@@ -76,24 +76,24 @@ func FromProto(pol *protov1alpha1.ValidatingPolicy) *v1alpha1.ValidatingPolicy {
 			Expression: m.Expression,
 		})
 	}
-	var evalMode v1alpha1.EvaluationMode
+	var evalMode vpol.EvaluationMode
 	switch pol.Spec.EvaluationMode {
 	case "Envoy":
-		evalMode = EvaluationModeEnvoy
+		evalMode = v1alpha1.EvaluationModeEnvoy
 	case "HTTP":
-		evalMode = EvaluationModeHTTP
+		evalMode = v1alpha1.EvaluationModeHTTP
 	}
 	var fp admissionregistrationv1.FailurePolicyType = "Ignore"
 	if pol.Spec.FailurePolicy != nil {
 		fp = admissionregistrationv1.FailurePolicyType(*pol.Spec.FailurePolicy)
 	}
 
-	return &v1alpha1.ValidatingPolicy{
+	return &vpol.ValidatingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: pol.Name,
 		},
-		Spec: v1alpha1.ValidatingPolicySpec{
-			EvaluationConfiguration: &v1alpha1.EvaluationConfiguration{
+		Spec: vpol.ValidatingPolicySpec{
+			EvaluationConfiguration: &vpol.EvaluationConfiguration{
 				Mode: evalMode,
 			},
 			Validations:     validations,

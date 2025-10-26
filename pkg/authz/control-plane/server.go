@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

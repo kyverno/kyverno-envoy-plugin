@@ -4,9 +4,10 @@ import (
 	"context"
 	"sync"
 
+	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 )
 
@@ -49,7 +50,7 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 		return
 	}
 
-	vpol := protov1alpha1.FromProto(req)
+	vpol := controlplane.FromProto(req)
 	compiledPolicy, err := p.compiler.Compile(vpol)
 	if err != nil {
 		// p.logger.Errorf("failed to compile policy %s: %s", req.Name, err)

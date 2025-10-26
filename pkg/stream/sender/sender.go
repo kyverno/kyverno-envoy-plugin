@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
@@ -96,7 +96,7 @@ func (s *PolicySender) StorePolicy(pol *protov1alpha1.ValidatingPolicy) {
 		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
-			return stream.MapToSortedSlice(s.policies)
+			return utils.ToSortedSlice(s.policies)
 		})
 	}
 	s.polMu.Lock()
@@ -110,7 +110,7 @@ func (s *PolicySender) DeletePolicy(polName string) {
 		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
-			return stream.MapToSortedSlice(s.policies)
+			return utils.ToSortedSlice(s.policies)
 		})
 	}
 	s.polMu.Lock()

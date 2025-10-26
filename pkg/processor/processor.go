@@ -4,10 +4,9 @@ import (
 	"context"
 	"sync"
 
-	policyapi "github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 )
 
@@ -38,7 +37,7 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 		p.sortPolicies = sync.OnceValue(func() []policy.Policy[DATA, IN, OUT] {
 			p.Lock()
 			defer p.Unlock()
-			return stream.MapToSortedSlice(p.policies)
+			return utils.ToSortedSlice(p.policies)
 		})
 	}
 	if req.Delete {
@@ -50,7 +49,7 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 		return
 	}
 
-	vpol := policyapi.FromProto(req)
+	vpol := protov1alpha1.FromProto(req)
 	compiledPolicy, err := p.compiler.Compile(vpol)
 	if err != nil {
 		// p.logger.Errorf("failed to compile policy %s: %s", req.Name, err)

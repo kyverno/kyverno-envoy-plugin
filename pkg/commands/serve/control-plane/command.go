@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
+	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/control-plane"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
-	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
-
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream/sender"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -59,7 +58,6 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-
 					s := sender.NewPolicySender(
 						ctx,
 						initialSendPolicyWait,
@@ -67,7 +65,6 @@ func Command() *cobra.Command {
 						clientFlushInterval,
 						maxClientInactiveDuration,
 					)
-
 					// create a controller manager
 					scheme := runtime.NewScheme()
 					if err := v1alpha1.Install(scheme); err != nil {
@@ -99,12 +96,18 @@ func Command() *cobra.Command {
 						defer cancel()
 						return fmt.Errorf("failed to wait for cache sync")
 					}
-
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
+					// create the sender service
+					sender := sender.NewPolicySender(
+						ctx,
+						initialSendPolicyWait,
+						maxSendPolicyInterval,
+						clientFlushInterval,
+						maxClientInactiveDuration,
+					)
 					// pass the validating policy stream server as the required argument
-					grpc := authz.NewServer(grpcNetwork, grpcAddress, nil, nil, s)
-
+					grpc := controlplane.NewServer(grpcNetwork, grpcAddress, sender)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end

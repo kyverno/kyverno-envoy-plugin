@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -35,9 +35,9 @@ type PolicySender struct {
 
 func NewPolicySender(
 	ctx context.Context,
-	initialSendPolicyWait,
-	maxSendPolicyInterval,
-	clientFlushInterval,
+	initialSendPolicyWait time.Duration,
+	maxSendPolicyInterval time.Duration,
+	clientFlushInterval time.Duration,
 	maxClientInactiveDuration time.Duration,
 ) *PolicySender {
 	return &PolicySender{
@@ -96,7 +96,7 @@ func (s *PolicySender) StorePolicy(pol *protov1alpha1.ValidatingPolicy) {
 		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
-			return stream.MapToSortedSlice(s.policies)
+			return utils.ToSortedSlice(s.policies)
 		})
 	}
 	s.polMu.Lock()
@@ -110,7 +110,7 @@ func (s *PolicySender) DeletePolicy(polName string) {
 		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
-			return stream.MapToSortedSlice(s.policies)
+			return utils.ToSortedSlice(s.policies)
 		})
 	}
 	s.polMu.Lock()

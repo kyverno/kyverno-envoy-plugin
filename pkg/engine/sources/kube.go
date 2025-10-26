@@ -6,7 +6,7 @@ import (
 	policyapi "github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream/sender"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/validatingpolicy/v1alpha1"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -55,7 +55,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		policy.Spec.EvaluationMode() != policyapi.EvaluationModeEnvoy {
 		return ctrl.Result{}, nil
 	}
-	protoPolicy := policyapi.ToProto(&policy)
+	protoPolicy := protov1alpha1.ToProto(&policy)
 	if r.polSender != nil {
 		r.polSender.StorePolicy(protoPolicy)
 		go r.polSender.SendPolicy(protoPolicy)

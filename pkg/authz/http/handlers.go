@@ -1,4 +1,4 @@
-package httpauth
+package http
 
 import (
 	"bufio"

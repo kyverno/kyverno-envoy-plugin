@@ -39,6 +39,8 @@ REGISTER_GEN                       ?= $(TOOLS_DIR)/register-gen
 REGISTER_GEN_VERSION               := v0.34.1
 REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
 REFERENCE_DOCS_VERSION             := latest
+BUF                                := $(TOOLS_DIR)/buf
+BUF_VERSION                        ?= v1.47.2
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -71,6 +73,10 @@ $(REFERENCE_DOCS):
 	@echo Install genref... >&2
 	@GOBIN=$(TOOLS_DIR) go install github.com/kubernetes-sigs/reference-docs/genref@$(REFERENCE_DOCS_VERSION)
 
+$(BUF):
+	@echo Install buf... >&2
+	@GOBIN=$(TOOLS_DIR) go install github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
+
 .PHONY: install-tools
 install-tools: ## Install tools
 install-tools: $(HELM)
@@ -79,6 +85,7 @@ install-tools: $(KO)
 install-tools: $(CONTROLLER_GEN)
 install-tools: $(REGISTER_GEN)
 install-tools: $(REFERENCE_DOCS)
+install-tools: $(BUF)
 
 .PHONY: clean-tools
 clean-tools: ## Remove installed tools
@@ -140,6 +147,13 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "sidecar-injector.labels" . | nindent 4 }}' \
  		> ./charts/kyverno-sidecar-injector/templates/crds.yaml
 
+
+.PHONY: codegen-proto
+codegen-proto: ## Generate proto files
+codegen-proto: $(BUF)
+	@echo Generate proto files... >&2
+	@$(BUF) generate
+
 .PHONY: codegen-helm-docs
 codegen-helm-docs: ## Generate helm docs
 	@echo Generate helm docs... >&2
@@ -199,6 +213,7 @@ codegen-schemas-json: codegen-schemas-openapi
 codegen: ## Rebuild all generated code and docs
 codegen: codegen-crds
 codegen: codegen-helm-crds
+codegen: codegen-proto
 codegen: codegen-helm-docs
 codegen: codegen-api-docs
 codegen: codegen-cli-docs

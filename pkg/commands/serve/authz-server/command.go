@@ -14,12 +14,12 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/http"
+	httplib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/httpauth"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
@@ -29,7 +29,6 @@ import (
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -90,7 +89,6 @@ func Command() *cobra.Command {
 					if len(imagePullSecrets) > 0 {
 						secrets = append(secrets, imagePullSecrets...)
 					}
-					logger := logrus.New()
 					dynclient, err := dynamic.NewForConfig(config)
 					if err != nil {
 						return err
@@ -116,7 +114,7 @@ func Command() *cobra.Command {
 
 					// initialize generic compilers for http and envoy requests
 					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
-					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *http.Request, *http.Response]()
+					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *httplib.Request, *httplib.Response]()
 
 					extForEnvoy, err := getExternalProviders(envoyCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {
@@ -129,8 +127,8 @@ func Command() *cobra.Command {
 
 					envoyProvider := sdksources.NewComposite(extForEnvoy...)
 					httpProvider := sdksources.NewComposite(extForHTTP...)
-					envoyProcessor := processor.NewPolicyAccessor(envoyCompiler, logger)
-					httpProcessor := processor.NewPolicyAccessor(httpCompiler, logger)
+					envoyProcessor := processor.NewPolicyAccessor(envoyCompiler)
+					httpProcessor := processor.NewPolicyAccessor(httpCompiler)
 
 					processorMap := make(map[vpol.EvaluationMode]processor.Processor)
 					processorMap[v1alpha1.EvaluationModeEnvoy] = envoyProcessor
@@ -174,8 +172,8 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					probesServer := probes.NewServer(probesAddress)
-					httpAuthServer := httpauth.NewServer(httpAuthAddress, dynclient, httpProvider, nestedRequest, logger)
-					grpc := authz.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient, nil)
+					httpAuthServer := http.NewServer(httpAuthAddress, dynclient, httpProvider, nestedRequest)
+					grpc := envoy.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient, nil)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
@@ -200,9 +198,10 @@ func Command() *cobra.Command {
 						if clientAddr == "" {
 							panic("can't start auth server, no POD_IP has been passed")
 						}
-						policyListener := listener.NewPolicyListener(controlPlaneAddr,
+						policyListener := listener.NewPolicyListener(
+							controlPlaneAddr,
 							clientAddr, processorMap,
-							logger, controlPlaneReconnectWait,
+							controlPlaneReconnectWait,
 							controlPlaneMaxDialInterval,
 							healthCheckInterval,
 						)
@@ -212,7 +211,7 @@ func Command() *cobra.Command {
 								return
 							default:
 								if connErr = policyListener.Start(ctx); connErr != nil {
-									logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
+									ctrl.LoggerFrom(ctx).Error(connErr, "error connecting to the control plane, sleeping 10 seconds then retrying")
 									time.Sleep(time.Second * 10)
 								}
 								continue

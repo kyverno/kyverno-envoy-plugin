@@ -1,4 +1,4 @@
-package httpauth
+package http
 
 import (
 	"context"
@@ -6,18 +6,16 @@ import (
 
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/dynamic"
 )
 
-func NewServer(addr string, dyn dynamic.Interface, p engine.HTTPSource, nestedRequest bool, logger *logrus.Logger) server.ServerFunc {
+func NewServer(addr string, dyn dynamic.Interface, p engine.HTTPSource, nestedRequest bool) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
 		a := &authorizer{
 			provider:      p,
-			logger:        logger,
 			dyn:           dyn,
 			nestedRequest: nestedRequest,
 		}

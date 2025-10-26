@@ -1,4 +1,4 @@
-package httpauth
+package http
 
 import (
 	"bufio"
@@ -8,20 +8,19 @@ import (
 
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/dynamic"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type authorizer struct {
 	provider      engine.HTTPSource
-	logger        *logrus.Logger
 	dyn           dynamic.Interface
 	nestedRequest bool
 }
 
 func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		a.logger.Infof("received request from %s", r.RemoteAddr)
+		ctrl.LoggerFrom(r.Context()).Info("received request", "from", r.RemoteAddr)
 		if a.nestedRequest {
 			reader := bufio.NewReader(r.Body)
 			req, err := http.ReadRequest(reader)

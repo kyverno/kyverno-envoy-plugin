@@ -3,6 +3,7 @@ module github.com/kyverno/kyverno-envoy-plugin
 go 1.25.1
 
 require (
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589
 	github.com/envoyproxy/go-control-plane/envoy v1.35.0
 	github.com/google/cel-go v0.26.1
@@ -23,10 +24,6 @@ require (
 	k8s.io/client-go v0.34.1
 	sigs.k8s.io/controller-runtime v0.22.3
 	sigs.k8s.io/kubectl-validate v0.0.5-0.20250915070809-d2f2d68fba09
-)
-
-require (
-	github.com/cenkalti/backoff/v4 v4.3.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -178,7 +175,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect

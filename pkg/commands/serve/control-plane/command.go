@@ -6,10 +6,10 @@ import (
 	"time"
 
 	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/sender"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/stream/sender"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"

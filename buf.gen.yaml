@@ -1,0 +1,8 @@
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/go
+    out: proto/v1alpha1
+    opt: paths=source_relative
+  - plugin: buf.build/grpc/go
+    out: proto/v1alpha1
+    opt: paths=source_relative

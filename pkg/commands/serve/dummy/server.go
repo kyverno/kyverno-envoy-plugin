@@ -3,7 +3,7 @@ package dummy
 import (
 	"context"
 
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/envoy"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -16,7 +16,7 @@ type server struct {
 
 func (s *server) Start(ctx context.Context) error {
 	// envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
-	grpc := authz.NewServer(s.grpcNetwork, s.grpcAddress, nil, nil, nil)
+	grpc := envoy.NewServer(s.grpcNetwork, s.grpcAddress, nil, nil)
 
 	s.group.StartWithContext(ctx, func(ctx context.Context) {
 		grpc.Run(ctx)

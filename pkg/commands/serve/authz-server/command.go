@@ -14,12 +14,12 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/http"
+	httplib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/httpauth"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
@@ -114,7 +114,7 @@ func Command() *cobra.Command {
 
 					// initialize generic compilers for http and envoy requests
 					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
-					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *http.Request, *http.Response]()
+					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *httplib.Request, *httplib.Response]()
 
 					extForEnvoy, err := getExternalProviders(envoyCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {
@@ -172,8 +172,8 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					probesServer := probes.NewServer(probesAddress)
-					httpAuthServer := httpauth.NewServer(httpAuthAddress, dynclient, httpProvider, nestedRequest)
-					grpc := authz.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient, nil)
+					httpAuthServer := http.NewServer(httpAuthAddress, dynclient, httpProvider, nestedRequest)
+					grpc := envoy.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient, nil)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes

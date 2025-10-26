@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/authz/control-plane"
+	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"

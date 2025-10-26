@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

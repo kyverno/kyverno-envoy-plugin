@@ -93,30 +93,6 @@ Only one of the fields should be set at a time (mutually exclusive).</p>
 |---|---|---|---|---|
 | `url` | `string` | :white_check_mark: |  | <p>URL is the URL of the external policy source Supported schemes are: file://, oci://, https://, etc</p> |
 
-## Group     {#authz-kyverno-io-v1alpha1-Group}
-
-(Alias of `string`)
-
-**Appears in:**
-    
-- [PolicyObjectReference](#authz-kyverno-io-v1alpha1-PolicyObjectReference)
-
-<p>Group refers to a Kubernetes Group. It must either be an empty string or a
-RFC 1123 subdomain.</p>
-<p>This validation is based off of the corresponding Kubernetes validation:
-https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208</p>
-<p>Valid values include:</p>
-<ul>
-<li>&quot;&quot; - empty string implies core Kubernetes API group</li>
-<li>&quot;authz.kyverno.io&quot;</li>
-<li>&quot;policies.kyverno.io&quot;</li>
-</ul>
-<p>Invalid values include:</p>
-<ul>
-<li>&quot;example.com/bar&quot; - &quot;/&quot; is an invalid character</li>
-</ul>
-
-
 ## HTTPAuthorizationServer     {#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer}
 
 **Appears in:**
@@ -130,26 +106,6 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 |---|---|---|---|---|
 | `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
 | `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) |  |  | <p>Modifiers to apply to requests and responses.</p> |
-
-## Kind     {#authz-kyverno-io-v1alpha1-Kind}
-
-(Alias of `string`)
-
-**Appears in:**
-    
-- [PolicyObjectReference](#authz-kyverno-io-v1alpha1-PolicyObjectReference)
-
-<p>Kind refers to a Kubernetes Kind.</p>
-<p>Valid values include:</p>
-<ul>
-<li>&quot;Service&quot;</li>
-<li>&quot;HTTPRoute&quot;</li>
-</ul>
-<p>Invalid values include:</p>
-<ul>
-<li>&quot;invalid/kind&quot; - &quot;/&quot; is an invalid character</li>
-</ul>
-
 
 ## KubernetesPolicySource     {#authz-kyverno-io-v1alpha1-KubernetesPolicySource}
 
@@ -179,19 +135,6 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 | `request` | `string` |  |  | <p>Request is a script or expression for modifying the incoming request.</p> |
 | `response` | `string` |  |  | <p>Response is a script or expression for modifying the outgoing response.</p> |
 
-## ObjectName     {#authz-kyverno-io-v1alpha1-ObjectName}
-
-(Alias of `string`)
-
-**Appears in:**
-    
-- [PolicyObjectReference](#authz-kyverno-io-v1alpha1-PolicyObjectReference)
-
-<p>ObjectName refers to the name of a Kubernetes object.
-Object names can have a variety of forms, including RFC 1123 subdomains,
-RFC 1123 labels, or RFC 1035 labels.</p>
-
-
 ## PolicyObjectReference     {#authz-kyverno-io-v1alpha1-PolicyObjectReference}
 
 **Appears in:**
@@ -203,9 +146,9 @@ RFC 1123 labels, or RFC 1035 labels.</p>
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `group` | [`Group`](#authz-kyverno-io-v1alpha1-Group) |  |  | *No description provided.* |
-| `kind` | [`Kind`](#authz-kyverno-io-v1alpha1-Kind) |  |  | <p>Kind is the kind of the referent. For example, "ValidatingPolicy".</p> |
-| `name` | [`ObjectName`](#authz-kyverno-io-v1alpha1-ObjectName) |  |  | <p>Name is the name of the referent. Mutually exclusive with Selector.</p> |
+| `group` | `string` |  |  | *No description provided.* |
+| `kind` | `string` |  |  | <p>Kind is the kind of the referent. For example, "ValidatingPolicy".</p> |
+| `name` | `string` |  |  | <p>Name is the name of the referent. Mutually exclusive with Selector.</p> |
 | `selector` | [`meta/v1.LabelSelector`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta) |  |  | <p>Selector is a label selector to select the Kubernetes policy resource. Mutually exclusive with Name.</p> |
 
   

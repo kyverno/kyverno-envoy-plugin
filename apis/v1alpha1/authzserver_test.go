@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 func TestAuthorizationServerSpec(t *testing.T) {
@@ -27,9 +28,9 @@ func TestAuthorizationServerSpec(t *testing.T) {
 					{
 						KubernetesPolicySource: KubernetesPolicySource{
 							PolicyRef: PolicyObjectReference{
-								Group: ptrGroup("policies.kyverno.io"),
-								Kind:  ptrKind("ValidatingPolicy"),
-								Name:  ptrObjectName("test-policy"),
+								Group: ptr.To("policies.kyverno.io"),
+								Kind:  ptr.To("ValidatingPolicy"),
+								Name:  ptr.To("test-policy"),
 							},
 						},
 					},
@@ -40,9 +41,9 @@ func TestAuthorizationServerSpec(t *testing.T) {
 					{
 						KubernetesPolicySource: KubernetesPolicySource{
 							PolicyRef: PolicyObjectReference{
-								Group: ptrGroup("policies.kyverno.io"),
-								Kind:  ptrKind("ValidatingPolicy"),
-								Name:  ptrObjectName("test-policy"),
+								Group: ptr.To("policies.kyverno.io"),
+								Kind:  ptr.To("ValidatingPolicy"),
+								Name:  ptr.To("test-policy"),
 							},
 						},
 					},
@@ -190,9 +191,9 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 			{
 				KubernetesPolicySource: KubernetesPolicySource{
 					PolicyRef: PolicyObjectReference{
-						Group: ptrGroup("policies.kyverno.io"),
-						Kind:  ptrKind("ValidatingPolicy"),
-						Name:  ptrObjectName("e-policy"),
+						Group: ptr.To("policies.kyverno.io"),
+						Kind:  ptr.To("ValidatingPolicy"),
+						Name:  ptr.To("e-policy"),
 					},
 				},
 			},
@@ -247,9 +248,9 @@ func TestAuthorizationServerRoundTrip(t *testing.T) {
 				{
 					KubernetesPolicySource: KubernetesPolicySource{
 						PolicyRef: PolicyObjectReference{
-							Group: ptrGroup("policies.kyverno.io"),
-							Kind:  ptrKind("ValidatingPolicy"),
-							Name:  ptrObjectName("mypolicy"),
+							Group: ptr.To("policies.kyverno.io"),
+							Kind:  ptr.To("ValidatingPolicy"),
+							Name:  ptr.To("mypolicy"),
 						},
 					},
 				},
@@ -276,7 +277,7 @@ func TestAuthorizationServerRoundTrip(t *testing.T) {
 func TestPolicyObjectReference_MutualExclusion(t *testing.T) {
 	// either name or selector must be specified, not both
 	validName := PolicyObjectReference{
-		Name: ptrObjectName("foo"),
+		Name: ptr.To("foo"),
 	}
 
 	validSelector := PolicyObjectReference{
@@ -290,7 +291,7 @@ func TestPolicyObjectReference_MutualExclusion(t *testing.T) {
 	}
 
 	invalid := PolicyObjectReference{
-		Name:     ptrObjectName("foo"),
+		Name:     ptr.To("foo"),
 		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"a": "b"}},
 	}
 	if invalid.Name != nil && invalid.Selector != nil {
@@ -318,8 +319,3 @@ func TestKubernetesPolicySource_Defaults(t *testing.T) {
 		t.Errorf("expected empty PolicyRef.Selector")
 	}
 }
-
-// Pointer helpers for types
-func ptrGroup(v Group) *Group                { tmp := v; return &tmp }
-func ptrKind(v Kind) *Kind                   { tmp := v; return &tmp }
-func ptrObjectName(v ObjectName) *ObjectName { tmp := v; return &tmp }

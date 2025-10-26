@@ -18,7 +18,7 @@ package v1alpha1
 //
 // +kubebuilder:validation:MaxLength=253
 // +kubebuilder:validation:Pattern=`^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
-type Group string
+type Group = string
 
 // Kind refers to a Kubernetes Kind.
 //
@@ -34,7 +34,7 @@ type Group string
 // +kubebuilder:validation:MinLength=1
 // +kubebuilder:validation:MaxLength=63
 // +kubebuilder:validation:Pattern=`^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$`
-type Kind string
+type Kind = string
 
 // ObjectName refers to the name of a Kubernetes object.
 // Object names can have a variety of forms, including RFC 1123 subdomains,
@@ -42,7 +42,7 @@ type Kind string
 //
 // +kubebuilder:validation:MinLength=1
 // +kubebuilder:validation:MaxLength=253
-type ObjectName string
+type ObjectName = string
 
 // Namespace refers to a Kubernetes namespace. It must be a RFC 1123 label.
 //
@@ -63,4 +63,4 @@ type ObjectName string
 // +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
 // +kubebuilder:validation:MinLength=1
 // +kubebuilder:validation:MaxLength=63
-type Namespace string
+type Namespace = string

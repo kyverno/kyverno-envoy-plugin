@@ -146,59 +146,22 @@ func (s *PolicyDiscoveryService) PolicyDiscoveryStream(stream grpc.BidiStreaming
 			break
 		}
 
-		// ACK/NACK handling
-		version := req.GetVersionInfo()
-		nonce := req.GetResponseNonce()
-		if nonce != "" {
-			s.versionMu.Lock()
-			if s.pendingVersion != nil && s.pendingVersion.nonce == nonce {
-				if req.GetErrorDetail() == nil || req.GetErrorDetail().GetMessage() == "" {
-					// ACK
-					s.pendingVersion.ackedClients[clientAddr] = true
-					ackedCount := len(s.pendingVersion.ackedClients)
-					log.Printf("ACK received from client %s: %d", clientAddr, ackedCount)
-				} else {
-					// NACK
-					log.Printf("NACK received from client %s: %s", clientAddr, req.GetErrorDetail().GetMessage())
-				}
-				allAcked := false
-				if len(s.pendingVersion.ackedClients) == len(s.connections) {
-					allAcked = true
-				}
-				if allAcked {
-					select {
-					case s.pendingVersion.allAcked <- struct{}{}:
-					default:
-					}
-				}
-			}
-			s.versionMu.Unlock()
+		// Process the discovery request and get response if needed
+		resp, err := s.processDiscoveryRequest(clientAddr, req)
+		if err != nil {
+			log.Printf("Error processing discovery request from %s: %v", clientAddr, err)
+			break
 		}
 
-		// If policies have changed, send update
-		s.versionMu.RLock()
-		curVersion := s.currentVersion
-		curNonce := s.currentNonce
-		s.versionMu.RUnlock()
+		// If a response is needed, send it
+		if resp != nil {
+			// Update tracked version
+			cxn.currentVersion = resp.VersionInfo
 
-		if version != curVersion {
-			// send updated policies
-			s.polMu.RLock()
-			updatedPolicies := make([]*protov1alpha1.ValidatingPolicy, 0, len(s.policies))
-			for _, pol := range s.policies {
-				updatedPolicies = append(updatedPolicies, pol)
-			}
-			s.polMu.RUnlock()
-
-			updateResp := &protov1alpha1.PolicyDiscoveryResponse{
-				VersionInfo: curVersion,
-				Policies:    updatedPolicies,
-				Nonce:       curNonce,
-			}
-			if err := stream.Send(updateResp); err != nil {
+			if err := stream.Send(resp); err != nil {
+				log.Printf("Error sending response to %s: %v", clientAddr, err)
 				break
 			}
-			cxn.currentVersion = curVersion
 		}
 	}
 
@@ -325,6 +288,60 @@ func (s *PolicyDiscoveryService) GetPolicies() ([]*protov1alpha1.ValidatingPolic
 		policies = append(policies, pol)
 	}
 	return policies, nil
+}
+
+// LoadInitialPolicies loads a list of policies into the discovery service.
+// This should be called at startup before clients connect to ensure they receive
+// the complete policy set. If policies already exist, they will be replaced with
+// the new set and version tracking will be updated.
+func (s *PolicyDiscoveryService) LoadInitialPolicies(policies []*protov1alpha1.ValidatingPolicy) error {
+	s.polMu.Lock()
+	defer s.polMu.Unlock()
+
+	// Replace all existing policies with the new set
+	s.policies = make(map[string]*protov1alpha1.ValidatingPolicy)
+	for _, pol := range policies {
+		s.policies[pol.Name] = pol
+	}
+
+	// Update version tracking
+	s.versionMu.Lock()
+	defer s.versionMu.Unlock()
+
+	// Collect all policies in a deterministic order
+	policyNames := make([]string, 0, len(s.policies))
+	for name := range s.policies {
+		policyNames = append(policyNames, name)
+	}
+	sort.Strings(policyNames)
+
+	// Compute hash of all policies
+	h := sha256.New()
+	for _, name := range policyNames {
+		pol := s.policies[name]
+		b, err := proto.Marshal(pol)
+		if err != nil {
+			continue // skip problematic policies (should not happen)
+		}
+		h.Write([]byte(name))
+		h.Write(b)
+	}
+	newVersion := fmt.Sprintf("%x", h.Sum(nil))
+
+	// Update version and generate new nonce
+	s.currentVersion = newVersion
+	s.currentNonce = fmt.Sprintf("%x", time.Now().UnixNano())
+
+	// Reset pending version state
+	s.pendingVersion = &pendingVersionState{
+		version:      newVersion,
+		nonce:        s.currentNonce,
+		ackedClients: make(map[string]bool),
+		mu:           &sync.Mutex{},
+		allAcked:     make(chan struct{}),
+	}
+
+	return nil
 }
 
 func (s *PolicyDiscoveryService) processDiscoveryRequest(clientAddr string, req *protov1alpha1.PolicyDiscoveryRequest) (*protov1alpha1.PolicyDiscoveryResponse, error) {

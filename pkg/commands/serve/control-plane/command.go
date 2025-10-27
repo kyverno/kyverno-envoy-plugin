@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	policyapi "github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/discovery"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
@@ -98,6 +100,36 @@ func Command() *cobra.Command {
 						defer cancel()
 						return fmt.Errorf("failed to wait for cache sync")
 					}
+
+					// Load initial policies from Kubernetes before starting servers
+					// This ensures clients receive the complete policy set on connection
+					ctrl.LoggerFrom(ctx).Info("Loading initial policies from Kubernetes...")
+					var policiesList v1alpha1.ValidatingPolicyList
+					if err := mgr.GetClient().List(ctx, &policiesList); err != nil {
+						ctrl.LoggerFrom(ctx).Error(err, "Failed to list policies during initial load")
+						defer cancel()
+						return fmt.Errorf("failed to load initial policies: %w", err)
+					}
+
+					// Filter policies by evaluation mode and convert to proto
+					initialPolicies := make([]*protov1alpha1.ValidatingPolicy, 0)
+					for i := range policiesList.Items {
+						policy := &policiesList.Items[i]
+						if policy.Spec.EvaluationMode() == policyapi.EvaluationModeHTTP ||
+							policy.Spec.EvaluationMode() == policyapi.EvaluationModeEnvoy {
+							protoPolicy := controlplane.ToProto(policy)
+							initialPolicies = append(initialPolicies, protoPolicy)
+						}
+					}
+
+					// Load initial policies into discovery service
+					if err := discoveryService.LoadInitialPolicies(initialPolicies); err != nil {
+						ctrl.LoggerFrom(ctx).Error(err, "Failed to load initial policies into discovery service")
+						defer cancel()
+						return fmt.Errorf("failed to load initial policies: %w", err)
+					}
+					ctrl.LoggerFrom(ctx).Info("Loaded initial policies", "count", len(initialPolicies))
+
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
 					// pass the validating policy discovery service as the required argument

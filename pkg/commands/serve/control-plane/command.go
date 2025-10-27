@@ -7,7 +7,6 @@ import (
 
 	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/sender"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
@@ -58,7 +57,7 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-					s := sender.NewPolicySender(
+					sender := sender.NewPolicySender(
 						ctx,
 						initialSendPolicyWait,
 						maxSendPolicyInterval,
@@ -82,7 +81,7 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
 					// create policy reconciler
-					r := sources.NewPolicyReconciler(mgr.GetClient(), s, nil)
+					r := controlplane.NewReconciler(mgr.GetClient(), sender)
 					if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 						return fmt.Errorf("failed to register controller to manager: %w", err)
 					}
@@ -98,14 +97,6 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
-					// create the sender service
-					sender := sender.NewPolicySender(
-						ctx,
-						initialSendPolicyWait,
-						maxSendPolicyInterval,
-						clientFlushInterval,
-						maxClientInactiveDuration,
-					)
 					// pass the validating policy stream server as the required argument
 					grpc := controlplane.NewServer(grpcNetwork, grpcAddress, sender)
 					// run servers
@@ -121,7 +112,7 @@ func Command() *cobra.Command {
 					})
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// start dead client flush
-						s.StartHealthCheckMonitor(ctx)
+						sender.StartHealthCheckMonitor(ctx)
 					})
 					return nil
 				}(ctx)

@@ -22,7 +22,6 @@ import (
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
@@ -125,21 +124,21 @@ func Command() *cobra.Command {
 					// if we have a control plane source
 					if controlPlaneAddr != "" {
 						httpListener := sources.NewListener()
+						clientAddr := os.Getenv("POD_IP")
+						if clientAddr == "" {
+							panic("can't start auth server, no POD_IP has been passed")
+						}
+						policyListener := listener.NewPolicyListener(
+							controlPlaneAddr,
+							clientAddr,
+							map[vpol.EvaluationMode]listener.Processor{
+								v1alpha1.EvaluationModeHTTP: httpListener,
+							},
+							controlPlaneReconnectWait,
+							controlPlaneMaxDialInterval,
+							healthCheckInterval,
+						)
 						group.StartWithContext(ctx, func(ctx context.Context) {
-							clientAddr := os.Getenv("POD_IP")
-							if clientAddr == "" {
-								panic("can't start auth server, no POD_IP has been passed")
-							}
-							policyListener := listener.NewPolicyListener(
-								controlPlaneAddr,
-								clientAddr,
-								map[vpol.EvaluationMode]processor.Processor{
-									v1alpha1.EvaluationModeHTTP: httpListener,
-								},
-								controlPlaneReconnectWait,
-								controlPlaneMaxDialInterval,
-								healthCheckInterval,
-							)
 							for {
 								select {
 								case <-ctx.Done():
@@ -259,7 +258,7 @@ func getExternalProviders[POLICY any](vpolCompiler engine.Compiler[POLICY], nOpt
 		}
 		providers = append(
 			providers,
-			sdksources.NewOnce(sources.NewFsProvider(vpolCompiler, fsys)),
+			sdksources.NewOnce(sources.NewFs(fsys, vpolCompiler)),
 		)
 	}
 	return providers, nil

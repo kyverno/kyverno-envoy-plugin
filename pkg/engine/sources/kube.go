@@ -20,7 +20,6 @@ func NewKube[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY]) (co
 	apis, err := controllerruntime.NewApiSource[v1alpha1.ValidatingPolicy](mgr, options)
 	if err != nil {
 		return nil, err
-
 	}
 	transform := sources.NewTransformErr(apis, func(in *v1alpha1.ValidatingPolicy) (POLICY, error) {
 		policy, err := compiler.Compile(in)

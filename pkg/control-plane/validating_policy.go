@@ -1,33 +1,34 @@
-package v1alpha1
+package controlplane
 
 import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ToProto(pol *vpol.ValidatingPolicy) *ValidatingPolicy {
-	validations := []*Validation{}
+func ToProto(pol *vpol.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
+	validations := []*protov1alpha1.Validation{}
 	for _, v := range pol.Spec.Validations {
-		validations = append(validations, &Validation{
+		validations = append(validations, &protov1alpha1.Validation{
 			Expression: v.Expression,
 			Message:    &v.Message,
 			Reason:     (*string)(v.Reason),
 		})
 	}
-	variables := []*Variable{}
+	variables := []*protov1alpha1.Variable{}
 	for _, v := range pol.Spec.Variables {
 		variables = append(variables,
-			&Variable{
+			&protov1alpha1.Variable{
 				Name:       v.Name,
 				Expression: v.Expression,
 			},
 		)
 	}
-	matchConds := []*MatchCondition{}
+	matchConds := []*protov1alpha1.MatchCondition{}
 	for _, m := range pol.Spec.MatchConditions {
-		matchConds = append(matchConds, &MatchCondition{
+		matchConds = append(matchConds, &protov1alpha1.MatchCondition{
 			Name:       m.Name,
 			Expression: m.Expression,
 		})
@@ -39,9 +40,9 @@ func ToProto(pol *vpol.ValidatingPolicy) *ValidatingPolicy {
 	} else {
 		fp = "Ignore"
 	}
-	return &ValidatingPolicy{
+	return &protov1alpha1.ValidatingPolicy{
 		Name: pol.Name,
-		Spec: &ValidatingPolicySpec{
+		Spec: &protov1alpha1.ValidatingPolicySpec{
 			EvaluationMode:  string(pol.Spec.EvaluationMode()),
 			Validations:     validations,
 			Variables:       variables,
@@ -51,7 +52,7 @@ func ToProto(pol *vpol.ValidatingPolicy) *ValidatingPolicy {
 	}
 }
 
-func FromProto(pol *ValidatingPolicy) *vpol.ValidatingPolicy {
+func FromProto(pol *protov1alpha1.ValidatingPolicy) *vpol.ValidatingPolicy {
 	validations := []admissionregistrationv1.Validation{}
 	for _, v := range pol.Spec.Validations {
 		validations = append(validations, admissionregistrationv1.Validation{

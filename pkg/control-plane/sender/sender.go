@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -18,19 +17,16 @@ import (
 
 type PolicySender struct {
 	protov1alpha1.UnimplementedValidatingPolicyServiceServer
-	polMu          *sync.Mutex
-	policies       map[string]*protov1alpha1.ValidatingPolicy
-	healthCheckMap map[string]time.Time
-
-	cxnMu   *sync.Mutex
-	cxnsMap map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
-
+	polMu                     *sync.Mutex
+	policies                  map[string]*protov1alpha1.ValidatingPolicy
+	healthCheckMap            map[string]time.Time
+	cxnMu                     *sync.Mutex
+	cxnsMap                   map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
 	ctx                       context.Context
 	initialSendPolicyWait     time.Duration // how long to wait before the second attempt of a failed policy send
 	maxSendPolicyInterval     time.Duration // the maximum duration to wait before stopping attempts of a policy send
 	clientFlushInterval       time.Duration // how often we remove unhealthy clients from the map
 	maxClientInactiveDuration time.Duration // how long should we wait before deciding this client is unhealthy
-	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
 }
 
 func NewPolicySender(
@@ -90,33 +86,15 @@ func (s *PolicySender) SendPolicy(pol *protov1alpha1.ValidatingPolicy) {
 }
 
 func (s *PolicySender) StorePolicy(pol *protov1alpha1.ValidatingPolicy) {
-	// this function just sets the struct field, it gets executed when the policies are being fetched
-	// so there is no double locking
-	resetSortPolicies := func() {
-		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
-			s.polMu.Lock()
-			defer s.polMu.Unlock()
-			return utils.ToSortedSlice(s.policies)
-		})
-	}
 	s.polMu.Lock()
-	s.policies[pol.Name] = pol
 	defer s.polMu.Unlock()
-	resetSortPolicies()
+	s.policies[pol.Name] = pol
 }
 
 func (s *PolicySender) DeletePolicy(polName string) {
-	resetSortPolicies := func() {
-		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
-			s.polMu.Lock()
-			defer s.polMu.Unlock()
-			return utils.ToSortedSlice(s.policies)
-		})
-	}
 	s.polMu.Lock()
-	delete(s.policies, polName)
 	defer s.polMu.Unlock()
-	resetSortPolicies()
+	delete(s.policies, polName)
 }
 
 func (s *PolicySender) HealthCheck(ctx context.Context, r *protov1alpha1.HealthCheckRequest) (*protov1alpha1.HealthCheckResponse, error) {
@@ -154,17 +132,14 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				}
 				return err
 			}
-
 			ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received validating policy stream request from: %s", req.ClientAddress))
-			if len(s.policies) > 0 {
-				for _, pol := range s.sortPolicies() {
-					// send each policy in a goroutine to avoid blocking the receive loop
-					go func(p *protov1alpha1.ValidatingPolicy) {
-						if err := s.sendWithBackoff(stream, p); err != nil {
-							ctrl.LoggerFrom(nil).Error(err, "Error sending policy with backoff")
-						}
-					}(pol)
-				}
+			for _, pol := range s.policies {
+				// send each policy in a goroutine to avoid blocking the receive loop
+				go func(p *protov1alpha1.ValidatingPolicy) {
+					if err := s.sendWithBackoff(stream, p); err != nil {
+						ctrl.LoggerFrom(nil).Error(err, "Error sending policy with backoff")
+					}
+				}(pol)
 			}
 			s.cxnMu.Lock()
 			s.cxnsMap[req.ClientAddress] = stream

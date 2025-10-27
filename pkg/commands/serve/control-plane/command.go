@@ -6,7 +6,7 @@ import (
 	"time"
 
 	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/sender"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/discovery"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
@@ -58,13 +58,15 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-					s := sender.NewPolicySender(
+
+					// Create the policy discovery service using NewPolicyDiscoveryService
+					discoveryService := discovery.NewPolicyDiscoveryService(
 						ctx,
-						initialSendPolicyWait,
-						maxSendPolicyInterval,
-						clientFlushInterval,
 						maxClientInactiveDuration,
+						clientFlushInterval,
+						maxSendPolicyInterval,
 					)
+
 					// create a controller manager
 					scheme := runtime.NewScheme()
 					if err := v1alpha1.Install(scheme); err != nil {
@@ -82,7 +84,7 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
 					// create policy reconciler
-					r := sources.NewPolicyReconciler(mgr.GetClient(), s, nil)
+					r := sources.NewPolicyReconciler(mgr.GetClient(), discoveryService, nil)
 					if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 						return fmt.Errorf("failed to register controller to manager: %w", err)
 					}
@@ -98,16 +100,8 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
-					// create the sender service
-					sender := sender.NewPolicySender(
-						ctx,
-						initialSendPolicyWait,
-						maxSendPolicyInterval,
-						clientFlushInterval,
-						maxClientInactiveDuration,
-					)
-					// pass the validating policy stream server as the required argument
-					grpc := controlplane.NewServer(grpcNetwork, grpcAddress, sender)
+					// pass the validating policy discovery service as the required argument
+					grpc := controlplane.NewServer(grpcNetwork, grpcAddress, discoveryService)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
@@ -120,8 +114,17 @@ func Command() *cobra.Command {
 						grpcErr = grpc.Run(ctx)
 					})
 					group.StartWithContext(ctx, func(ctx context.Context) {
-						// start dead client flush
-						s.StartHealthCheckMonitor(ctx)
+						// Periodically flush inactive clients
+						ticker := time.NewTicker(clientFlushInterval)
+						defer ticker.Stop()
+						for {
+							select {
+							case <-ctx.Done():
+								return
+							case <-ticker.C:
+								discoveryService.FlushInactive()
+							}
+						}
 					})
 					return nil
 				}(ctx)

@@ -27,6 +27,11 @@ type policyListener struct {
 	controlPlaneReconnectWait   time.Duration
 	controlPlaneMaxDialInterval time.Duration
 	healthCheckInterval         time.Duration
+
+	// control-plane tracking
+	currentVersion string
+	currentNonce   string
+	mu             sync.Mutex
 }
 
 // can two storage entities share the underlying connection of the policy listener?
@@ -79,7 +84,7 @@ func (l *policyListener) listen(ctx context.Context) error {
 	ctrl.LoggerFrom(nil).Info("Establishing validation channel...")
 
 	// Establish the stream
-	stream, err := l.client.ValidatingPoliciesStream(ctx)
+	stream, err := l.client.PolicyDiscoveryStream(ctx)
 	if err != nil {
 		return err
 	}
@@ -103,42 +108,94 @@ func (l *policyListener) listen(ctx context.Context) error {
 				}
 				return
 			default:
+				// Send initial or ACK/NACK request
 				if !l.connEstablished {
-					if err := stream.Send(&protov1alpha1.ValidatingPolicyStreamRequest{ClientAddress: l.clientAddr}); err != nil {
-						ctrl.LoggerFrom(nil).Error(err, "Error sending to stream")
+					// Initial request with empty version and nonce
+					if err := stream.Send(&protov1alpha1.PolicyDiscoveryRequest{
+						ClientAddress: l.clientAddr,
+						VersionInfo:   "",
+						ResponseNonce: "",
+					}); err != nil {
+						ctrl.LoggerFrom(nil).Error(err, "Error sending initial request")
 						return
 					}
 					l.connEstablished = true
 				}
-				req, err := stream.Recv()
+
+				// Receive policy discovery response
+				resp, err := stream.Recv()
 				if err == io.EOF {
-					ctrl.LoggerFrom(nil).Error(err, "Policy sender closed the stream")
+					ctrl.LoggerFrom(nil).Info("Policy discovery stream closed by server")
 					return
 				}
 				if err != nil {
-					ctrl.LoggerFrom(nil).Error(err, "Error receiving policy request")
+					ctrl.LoggerFrom(nil).Error(err, "Error receiving policy discovery response")
 					return
 				}
 
-				ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received validating policy request: %s, Delete: %t", req.Name, req.Delete))
-				go func() {
-					// if its a delete request, remove the policy from all processors that may have it
-					if req.Delete {
-						for _, p := range l.processors {
-							p.Process(req)
-						}
-						return
+				ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received policy discovery response: version=%s, nonce=%s, policies=%d",
+					resp.VersionInfo, resp.Nonce, len(resp.Policies)))
+
+				// Process all policies from the response
+				applyErr := l.applyPolicies(resp.Policies)
+
+				// Update tracked version and nonce
+				l.mu.Lock()
+				l.currentVersion = resp.VersionInfo
+				l.currentNonce = resp.Nonce
+				l.mu.Unlock()
+
+				// Send ACK or NACK
+				ackReq := &protov1alpha1.PolicyDiscoveryRequest{
+					ClientAddress: l.clientAddr,
+					ResponseNonce: resp.Nonce,
+				}
+
+				if applyErr != nil {
+					// NACK: Send error details
+					ctrl.LoggerFrom(nil).Error(applyErr, "Failed to apply policies")
+					ackReq.VersionInfo = l.currentVersion // Keep old version
+					ackReq.ErrorDetail = &protov1alpha1.ErrorDetail{
+						Message: applyErr.Error(),
 					}
-					if p, ok := l.processors[vpol.EvaluationMode(req.Spec.EvaluationMode)]; ok {
-						p.Process(req)
-					}
-				}()
+				} else {
+					// ACK: Send new version
+					ackReq.VersionInfo = resp.VersionInfo
+				}
+
+				if err := stream.Send(ackReq); err != nil {
+					ctrl.LoggerFrom(nil).Error(err, "Error sending ACK/NACK")
+					return
+				}
 			}
 		}
 	}()
 
 	ctrl.LoggerFrom(nil).Info("Policy listener running...")
 	wg.Wait()
+	return nil
+}
+
+// applyPolicies processes a list of policies received from the discovery service
+func (l *policyListener) applyPolicies(policies []*protov1alpha1.ValidatingPolicy) error {
+	for _, pol := range policies {
+		// Determine the evaluation mode
+		if pol.Spec == nil {
+			ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Policy %s has no spec, skipping", pol.Name))
+			continue
+		}
+
+		mode := vpol.EvaluationMode(pol.Spec.EvaluationMode)
+		processor, ok := l.processors[mode]
+		if !ok {
+			ctrl.LoggerFrom(nil).Info(fmt.Sprintf("No processor for evaluation mode %s, skipping policy %s", mode, pol.Name))
+			continue
+		}
+
+		// Process the policy (Process doesn't return an error)
+		processor.Process(pol)
+		ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Successfully processed policy: %s", pol.Name))
+	}
 	return nil
 }
 

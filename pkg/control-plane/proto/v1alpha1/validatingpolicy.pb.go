@@ -10,7 +10,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -624,7 +623,7 @@ var File_validatingpolicy_proto protoreflect.FileDescriptor
 
 const file_validatingpolicy_proto_rawDesc = "" +
 	"\n" +
-	"\x16validatingpolicy.proto\x12\x15kyverno.http.v1alpha1\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x03\n" +
+	"\x16validatingpolicy.proto\x12\x15kyverno.http.v1alpha1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x03\n" +
 	"\x14ValidatingPolicySpec\x12C\n" +
 	"\vvalidations\x18\x02 \x03(\v2!.kyverno.http.v1alpha1.ValidationR\vvalidations\x12*\n" +
 	"\x0efailure_policy\x18\x03 \x01(\tH\x00R\rfailurePolicy\x88\x01\x01\x12P\n" +
@@ -673,9 +672,9 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x12HealthCheckRequest\x12%\n" +
 	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress\x12.\n" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\"\x15\n" +
-	"\x13HealthCheckResponse2\xf4\x01\n" +
-	"\x17ValidatingPolicyService\x12s\n" +
-	"\x15PolicyDiscoveryStream\x12-.kyverno.http.v1alpha1.PolicyDiscoveryRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy(\x010\x01\x12d\n" +
+	"\x13HealthCheckResponse2\xfb\x01\n" +
+	"\x17ValidatingPolicyService\x12z\n" +
+	"\x15PolicyDiscoveryStream\x12-.kyverno.http.v1alpha1.PolicyDiscoveryRequest\x1a..kyverno.http.v1alpha1.PolicyDiscoveryResponse(\x010\x01\x12d\n" +
 	"\vHealthCheck\x12).kyverno.http.v1alpha1.HealthCheckRequest\x1a*.kyverno.http.v1alpha1.HealthCheckResponseB=Z;github.com/kyverno/kyverno-envoy-plugin/apis/proto/v1alpha1b\x06proto3"
 
 var (
@@ -714,7 +713,7 @@ var file_validatingpolicy_proto_depIdxs = []int32{
 	10, // 6: kyverno.http.v1alpha1.HealthCheckRequest.time:type_name -> google.protobuf.Timestamp
 	5,  // 7: kyverno.http.v1alpha1.ValidatingPolicyService.PolicyDiscoveryStream:input_type -> kyverno.http.v1alpha1.PolicyDiscoveryRequest
 	8,  // 8: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:input_type -> kyverno.http.v1alpha1.HealthCheckRequest
-	4,  // 9: kyverno.http.v1alpha1.ValidatingPolicyService.PolicyDiscoveryStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicy
+	7,  // 9: kyverno.http.v1alpha1.ValidatingPolicyService.PolicyDiscoveryStream:output_type -> kyverno.http.v1alpha1.PolicyDiscoveryResponse
 	9,  // 10: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:output_type -> kyverno.http.v1alpha1.HealthCheckResponse
 	9,  // [9:11] is the sub-list for method output_type
 	7,  // [7:9] is the sub-list for method input_type

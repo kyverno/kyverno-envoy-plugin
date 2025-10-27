@@ -4,7 +4,6 @@ package kyverno.http.v1alpha1;
 
 option go_package = "github.com/kyverno/kyverno-envoy-plugin/apis/proto/v1alpha1";
 
-import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
 // ValidatingPolicySpec defines the desired behavior of the ValidatingPolicy.
@@ -101,6 +100,6 @@ message HealthCheckResponse {}
 
 // ValidatingPolicyService provides bidirectional communication for validating policies
 service ValidatingPolicyService {
-  rpc PolicyDiscoveryStream(stream PolicyDiscoveryRequest) returns (stream ValidatingPolicy);
+  rpc PolicyDiscoveryStream(stream PolicyDiscoveryRequest) returns (stream PolicyDiscoveryResponse);
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }

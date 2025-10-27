@@ -9,7 +9,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,12 +16,16 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
+type Processor interface {
+	Process(req *protov1alpha1.ValidatingPolicy)
+}
+
 type policyListener struct {
 	controlPlaneAddr            string
 	clientAddr                  string
 	client                      protov1alpha1.ValidatingPolicyServiceClient
 	conn                        *grpc.ClientConn
-	processors                  map[vpol.EvaluationMode]processor.Processor
+	processors                  map[vpol.EvaluationMode]Processor
 	connEstablished             bool
 	controlPlaneReconnectWait   time.Duration
 	controlPlaneMaxDialInterval time.Duration
@@ -34,7 +37,7 @@ type policyListener struct {
 func NewPolicyListener(
 	controlPlaneAddr string,
 	clientAddr string,
-	processors map[vpol.EvaluationMode]processor.Processor,
+	processors map[vpol.EvaluationMode]Processor,
 	controlPlaneReconnectWait,
 	controlPlaneMaxDialInterval,
 	healthCheckInterval time.Duration) *policyListener {

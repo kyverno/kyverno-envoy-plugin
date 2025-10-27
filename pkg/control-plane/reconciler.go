@@ -1,13 +1,11 @@
-package sources
+package controlplane
 
 import (
 	"context"
 
 	policyapi "github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/sender"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -15,16 +13,14 @@ import (
 )
 
 type policyReconciler struct {
-	client     client.Client
-	polSender  *sender.PolicySender
-	processors map[v1alpha1.EvaluationMode]processor.Processor
+	client    client.Client
+	polSender *sender.PolicySender
 }
 
-func NewPolicyReconciler(client client.Client, sender *sender.PolicySender, processors map[v1alpha1.EvaluationMode]processor.Processor) *policyReconciler {
+func NewReconciler(client client.Client, sender *sender.PolicySender) *policyReconciler {
 	return &policyReconciler{
-		client:     client,
-		polSender:  sender,
-		processors: processors,
+		client:    client,
+		polSender: sender,
 	}
 }
 
@@ -39,14 +35,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 				Delete: true,
 			})
 		}
-		protoRequest := &protov1alpha1.ValidatingPolicy{
-			Name:   req.Name,
-			Delete: true,
-		}
-		// delete this policy from any processor who may have it
-		for _, p := range r.processors {
-			p.Process(protoRequest)
-		}
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
@@ -56,15 +44,10 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		policy.Spec.EvaluationMode() != policyapi.EvaluationModeEnvoy {
 		return ctrl.Result{}, nil
 	}
-	protoPolicy := controlplane.ToProto(&policy)
+	protoPolicy := ToProto(&policy)
 	if r.polSender != nil {
 		r.polSender.StorePolicy(protoPolicy)
 		go r.polSender.SendPolicy(protoPolicy)
 	}
-	go func() {
-		if p, ok := r.processors[policy.Spec.EvaluationMode()]; ok {
-			p.Process(protoPolicy)
-		}
-	}()
 	return ctrl.Result{}, nil
 }

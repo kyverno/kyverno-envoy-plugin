@@ -69,8 +69,27 @@ message ValidatingPolicy {
   ValidatingPolicySpec spec = 3;
 }
 
-message ValidatingPolicyStreamRequest {
+message PolicyDiscoveryRequest {
   string client_address = 1;
+
+  // Last successfully applied version of the policies
+  string version_info = 2;
+
+  // Nonce from the last PolicyDiscoveryResponse
+  string response_nonce = 3;
+
+  ErrorDetail error_detail = 4;
+}
+
+message ErrorDetail {
+  string message = 1;
+}
+
+
+message PolicyDiscoveryResponse {
+  string version_info = 1; // Hash of all the policies
+  repeated ValidatingPolicy policies = 2;
+  string nonce = 3;
 }
 
 message HealthCheckRequest {
@@ -82,6 +101,6 @@ message HealthCheckResponse {}
 
 // ValidatingPolicyService provides bidirectional communication for validating policies
 service ValidatingPolicyService {
-  rpc ValidatingPoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
+  rpc PolicyDiscoveryStream(stream PolicyDiscoveryRequest) returns (stream ValidatingPolicy);
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }

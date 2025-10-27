@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ValidatingPolicyService_ValidatingPoliciesStream_FullMethodName = "/kyverno.http.v1alpha1.ValidatingPolicyService/ValidatingPoliciesStream"
-	ValidatingPolicyService_HealthCheck_FullMethodName              = "/kyverno.http.v1alpha1.ValidatingPolicyService/HealthCheck"
+	ValidatingPolicyService_PolicyDiscoveryStream_FullMethodName = "/kyverno.http.v1alpha1.ValidatingPolicyService/PolicyDiscoveryStream"
+	ValidatingPolicyService_HealthCheck_FullMethodName           = "/kyverno.http.v1alpha1.ValidatingPolicyService/HealthCheck"
 )
 
 // ValidatingPolicyServiceClient is the client API for ValidatingPolicyService service.
@@ -29,7 +29,7 @@ const (
 //
 // ValidatingPolicyService provides bidirectional communication for validating policies
 type ValidatingPolicyServiceClient interface {
-	ValidatingPoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyStreamRequest, ValidatingPolicy], error)
+	PolicyDiscoveryStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PolicyDiscoveryRequest, ValidatingPolicy], error)
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
@@ -41,18 +41,18 @@ func NewValidatingPolicyServiceClient(cc grpc.ClientConnInterface) ValidatingPol
 	return &validatingPolicyServiceClient{cc}
 }
 
-func (c *validatingPolicyServiceClient) ValidatingPoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyStreamRequest, ValidatingPolicy], error) {
+func (c *validatingPolicyServiceClient) PolicyDiscoveryStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PolicyDiscoveryRequest, ValidatingPolicy], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ValidatingPolicyService_ServiceDesc.Streams[0], ValidatingPolicyService_ValidatingPoliciesStream_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ValidatingPolicyService_ServiceDesc.Streams[0], ValidatingPolicyService_PolicyDiscoveryStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[ValidatingPolicyStreamRequest, ValidatingPolicy]{ClientStream: stream}
+	x := &grpc.GenericClientStream[PolicyDiscoveryRequest, ValidatingPolicy]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ValidatingPolicyService_ValidatingPoliciesStreamClient = grpc.BidiStreamingClient[ValidatingPolicyStreamRequest, ValidatingPolicy]
+type ValidatingPolicyService_PolicyDiscoveryStreamClient = grpc.BidiStreamingClient[PolicyDiscoveryRequest, ValidatingPolicy]
 
 func (c *validatingPolicyServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -70,7 +70,7 @@ func (c *validatingPolicyServiceClient) HealthCheck(ctx context.Context, in *Hea
 //
 // ValidatingPolicyService provides bidirectional communication for validating policies
 type ValidatingPolicyServiceServer interface {
-	ValidatingPoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyStreamRequest, ValidatingPolicy]) error
+	PolicyDiscoveryStream(grpc.BidiStreamingServer[PolicyDiscoveryRequest, ValidatingPolicy]) error
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedValidatingPolicyServiceServer()
 }
@@ -82,8 +82,8 @@ type ValidatingPolicyServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedValidatingPolicyServiceServer struct{}
 
-func (UnimplementedValidatingPolicyServiceServer) ValidatingPoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyStreamRequest, ValidatingPolicy]) error {
-	return status.Errorf(codes.Unimplemented, "method ValidatingPoliciesStream not implemented")
+func (UnimplementedValidatingPolicyServiceServer) PolicyDiscoveryStream(grpc.BidiStreamingServer[PolicyDiscoveryRequest, ValidatingPolicy]) error {
+	return status.Errorf(codes.Unimplemented, "method PolicyDiscoveryStream not implemented")
 }
 func (UnimplementedValidatingPolicyServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
@@ -110,12 +110,12 @@ func RegisterValidatingPolicyServiceServer(s grpc.ServiceRegistrar, srv Validati
 	s.RegisterService(&ValidatingPolicyService_ServiceDesc, srv)
 }
 
-func _ValidatingPolicyService_ValidatingPoliciesStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ValidatingPolicyServiceServer).ValidatingPoliciesStream(&grpc.GenericServerStream[ValidatingPolicyStreamRequest, ValidatingPolicy]{ServerStream: stream})
+func _ValidatingPolicyService_PolicyDiscoveryStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ValidatingPolicyServiceServer).PolicyDiscoveryStream(&grpc.GenericServerStream[PolicyDiscoveryRequest, ValidatingPolicy]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ValidatingPolicyService_ValidatingPoliciesStreamServer = grpc.BidiStreamingServer[ValidatingPolicyStreamRequest, ValidatingPolicy]
+type ValidatingPolicyService_PolicyDiscoveryStreamServer = grpc.BidiStreamingServer[PolicyDiscoveryRequest, ValidatingPolicy]
 
 func _ValidatingPolicyService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthCheckRequest)
@@ -149,8 +149,8 @@ var ValidatingPolicyService_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ValidatingPoliciesStream",
-			Handler:       _ValidatingPolicyService_ValidatingPoliciesStream_Handler,
+			StreamName:    "PolicyDiscoveryStream",
+			Handler:       _ValidatingPolicyService_PolicyDiscoveryStream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

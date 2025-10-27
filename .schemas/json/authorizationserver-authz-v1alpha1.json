@@ -323,6 +323,9 @@
         "object",
         "null"
       ],
+      "required": [
+        "type"
+      ],
       "properties": {
         "sources": {
           "description": "AuthorizationServerPolicySource contains all the sources of policies for the authorization server.",
@@ -364,14 +367,14 @@
                 ],
                 "properties": {
                   "policyRef": {
-                    "description": "PolicyObjectReference represents a reference to a policy resource.",
+                    "description": "PolicyRef is a reference to Kubernetes policy resources.\nWhen omitted, all ValidatingPolicy resources in the cluster are selected.\nWhen present, filters policies by name or selector.",
                     "type": [
                       "object",
                       "null"
                     ],
                     "properties": {
                       "group": {
-                        "description": "Group refers to a Kubernetes Group. It must either be an empty string or a\nRFC 1123 subdomain.\n\nThis validation is based off of the corresponding Kubernetes validation:\nhttps://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208\n\nValid values include:\n\n* \"\" - empty string implies core Kubernetes API group\n* \"authz.kyverno.io\"\n* \"policies.kyverno.io\"\n\nInvalid values include:\n\n* \"example.com/bar\" - \"/\" is an invalid character",
+                        "description": "Group is the group of the referent. For example, \"policies.kyverno.io\".\nWhen unspecified or empty string, core API group is inferred.",
                         "type": [
                           "string",
                           "null"
@@ -490,10 +493,7 @@
         },
         "type": {
           "description": "Type defines the type of authorization server.",
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": "object",
           "maxProperties": 1,
           "minProperties": 1,
           "properties": {
@@ -504,30 +504,6 @@
                 "null"
               ],
               "properties": {
-                "modifiers": {
-                  "description": "Modifiers to apply to requests and responses.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "request": {
-                      "description": "Request is a script or expression for modifying the incoming request.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "response": {
-                      "description": "Response is a script or expression for modifying the outgoing response.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "additionalProperties": false
-                },
                 "port": {
                   "description": "Port is the port the server listens on.",
                   "type": [

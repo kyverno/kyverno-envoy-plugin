@@ -77,27 +77,16 @@ spec:
                         Kubernetes policy resource.
                       properties:
                         policyRef:
-                          description: PolicyObjectReference represents a reference
-                            to a policy resource.
+                          description: |-
+                            PolicyRef is a reference to Kubernetes policy resources.
+                            When omitted, all ValidatingPolicy resources in the cluster are selected.
+                            When present, filters policies by name or selector.
                           properties:
                             group:
                               default: policies.kyverno.io
                               description: |-
-                                Group refers to a Kubernetes Group. It must either be an empty string or a
-                                RFC 1123 subdomain.
-
-                                This validation is based off of the corresponding Kubernetes validation:
-                                https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208
-
-                                Valid values include:
-
-                                * "" - empty string implies core Kubernetes API group
-                                * "authz.kyverno.io"
-                                * "policies.kyverno.io"
-
-                                Invalid values include:
-
-                                * "example.com/bar" - "/" is an invalid character
+                                Group is the group of the referent. For example, "policies.kyverno.io".
+                                When unspecified or empty string, core API group is inferred.
                               maxLength: 253
                               pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                               type: string
@@ -181,18 +170,6 @@ spec:
                   envoy:
                     description: Envoy configures an Envoy-based authorization server.
                     properties:
-                      modifiers:
-                        description: Modifiers to apply to requests and responses.
-                        properties:
-                          request:
-                            description: Request is a script or expression for modifying
-                              the incoming request.
-                            type: string
-                          response:
-                            description: Response is a script or expression for modifying
-                              the outgoing response.
-                            type: string
-                        type: object
                       port:
                         description: Port is the port the server listens on.
                         type: integer
@@ -217,6 +194,8 @@ spec:
                         type: integer
                     type: object
                 type: object
+            required:
+            - type
             type: object
         type: object
     served: true

@@ -4,25 +4,25 @@ import (
 	"context"
 	"sync"
 
+	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
+	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
-	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/proto/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 )
 
-type policyAccessor[DATA, IN, OUT any] struct {
-	compiler     engine.Compiler[DATA, IN, OUT]
-	policies     map[string]policy.Policy[DATA, IN, OUT]
-	sortPolicies func() []policy.Policy[DATA, IN, OUT]
+type policyAccessor[POLICY any] struct {
+	compiler     engine.Compiler[POLICY]
+	policies     map[string]POLICY
+	sortPolicies func() []POLICY
 	sync.Mutex
 }
 
-func NewPolicyAccessor[DATA, IN, OUT any](compiler engine.Compiler[DATA, IN, OUT]) *policyAccessor[DATA, IN, OUT] {
-	return &policyAccessor[DATA, IN, OUT]{
+func NewPolicyAccessor[POLICY any](compiler engine.Compiler[POLICY]) *policyAccessor[POLICY] {
+	return &policyAccessor[POLICY]{
 		Mutex:    sync.Mutex{},
 		compiler: compiler,
-		policies: make(map[string]policy.Policy[DATA, IN, OUT]),
-		sortPolicies: func() []policy.Policy[DATA, IN, OUT] {
+		policies: make(map[string]POLICY),
+		sortPolicies: func() []POLICY {
 			return nil
 		},
 	}
@@ -32,9 +32,9 @@ type Processor interface {
 	Process(req *protov1alpha1.ValidatingPolicy)
 }
 
-func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPolicy) {
+func (p *policyAccessor[POLICY]) Process(req *protov1alpha1.ValidatingPolicy) {
 	resetSortPolicies := func() {
-		p.sortPolicies = sync.OnceValue(func() []policy.Policy[DATA, IN, OUT] {
+		p.sortPolicies = sync.OnceValue(func() []POLICY {
 			p.Lock()
 			defer p.Unlock()
 			return utils.ToSortedSlice(p.policies)
@@ -49,7 +49,7 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 		return
 	}
 
-	vpol := protov1alpha1.FromProto(req)
+	vpol := controlplane.FromProto(req)
 	compiledPolicy, err := p.compiler.Compile(vpol)
 	if err != nil {
 		// p.logger.Errorf("failed to compile policy %s: %s", req.Name, err)
@@ -61,6 +61,6 @@ func (p *policyAccessor[DATA, IN, OUT]) Process(req *protov1alpha1.ValidatingPol
 	resetSortPolicies()
 }
 
-func (p *policyAccessor[DATA, IN, OUT]) Load(ctx context.Context) ([]policy.Policy[DATA, IN, OUT], error) {
+func (p *policyAccessor[POLICY]) Load(ctx context.Context) ([]POLICY, error) {
 	return p.sortPolicies(), nil
 }

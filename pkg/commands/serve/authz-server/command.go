@@ -27,7 +27,6 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
@@ -241,7 +240,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, IN, OUT], nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]core.Source[policy.Policy[DATA, IN, OUT]], error) {
+func getExternalProviders[POLICY any](vpolCompiler engine.Compiler[POLICY], nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]core.Source[POLICY], error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -252,7 +251,7 @@ func getExternalProviders[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, 
 	configuredOCIFS := ocifs.ConfigureOCIFS(nOpts, rOpts)
 	mux.Add(configuredOCIFS)
 
-	var providers []core.Source[policy.Policy[DATA, IN, OUT]]
+	var providers []core.Source[POLICY]
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {

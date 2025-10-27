@@ -5,14 +5,13 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	controllerruntime "github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/controller-runtime"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-func NewKube[DATA, IN, OUT any](mgr ctrl.Manager, compiler engine.Compiler[DATA, IN, OUT]) (core.Source[policy.Policy[DATA, IN, OUT]], error) {
+func NewKube[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY]) (core.Source[POLICY], error) {
 	options := controller.Options{
 		// TODO: allow custom name
 		SkipNameValidation: ptr.To(true),
@@ -23,7 +22,7 @@ func NewKube[DATA, IN, OUT any](mgr ctrl.Manager, compiler engine.Compiler[DATA,
 		return nil, err
 
 	}
-	transform := sources.NewTransformErr(apis, func(in *v1alpha1.ValidatingPolicy) (policy.Policy[DATA, IN, OUT], error) {
+	transform := sources.NewTransformErr(apis, func(in *v1alpha1.ValidatingPolicy) (POLICY, error) {
 		policy, err := compiler.Compile(in)
 		return policy, err.ToAggregate()
 	})

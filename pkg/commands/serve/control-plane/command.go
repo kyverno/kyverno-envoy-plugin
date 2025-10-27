@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	// controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/sender"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
@@ -82,7 +83,7 @@ func Command() *cobra.Command {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
 					// create policy reconciler
-					r := sources.NewPolicyReconciler(mgr.GetClient(), s, nil)
+					r := sources.NewKube(mgr, s, nil)
 					if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 						return fmt.Errorf("failed to register controller to manager: %w", err)
 					}

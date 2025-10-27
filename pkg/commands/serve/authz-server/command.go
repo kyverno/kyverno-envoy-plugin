@@ -13,21 +13,17 @@ import (
 	"github.com/hairyhenderson/go-fsimpl"
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/http"
 	httplib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/listener"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/processor"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
@@ -65,7 +61,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var probesErr, connErr, httpAuthErr, grpcErr, mgrErr error
+				var probesErr, httpAuthErr, grpcErr, mgrErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -127,12 +123,12 @@ func Command() *cobra.Command {
 
 					envoyProvider := sdksources.NewComposite(extForEnvoy...)
 					httpProvider := sdksources.NewComposite(extForHTTP...)
-					envoyProcessor := processor.NewPolicyAccessor(envoyCompiler)
-					httpProcessor := processor.NewPolicyAccessor(httpCompiler)
+					// envoyProcessor := processor.NewPolicyAccessor(envoyCompiler)
+					// httpProcessor := processor.NewPolicyAccessor(httpCompiler)
 
-					processorMap := make(map[vpol.EvaluationMode]processor.Processor)
-					processorMap[v1alpha1.EvaluationModeEnvoy] = envoyProcessor
-					processorMap[v1alpha1.EvaluationModeHTTP] = httpProcessor
+					// processorMap := make(map[vpol.EvaluationMode]processor.Processor)
+					// processorMap[v1alpha1.EvaluationModeEnvoy] = envoyProcessor
+					// processorMap[v1alpha1.EvaluationModeHTTP] = httpProcessor
 
 					// if kube policy source is enabled and the container is not running as a sidecar
 					if kubePolicySource && controlPlaneAddr == "" {
@@ -152,13 +148,13 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-
-						r := sources.NewPolicyReconciler(mgr.GetClient(), nil, processorMap)
-						if err := ctrl.NewControllerManagedBy(mgr).For(&vpol.ValidatingPolicy{}).Complete(r); err != nil {
+						// create kube providers
+						vpolProvider, err := sources.NewKube(mgr, envoyCompiler)
+						if err != nil {
 							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
-						envoyProvider = sdksources.NewComposite(envoyProcessor, envoyProvider)
-						httpProvider = sdksources.NewComposite(httpProcessor, httpProvider)
+						envoyProvider = sdksources.NewComposite(vpolProvider, envoyProvider)
+						// httpProvider = sdksources.NewComposite(httpProcessor, httpProvider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -189,35 +185,35 @@ func Command() *cobra.Command {
 						defer cancel()
 						httpAuthErr = httpAuthServer.Run(ctx)
 					})
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						// control plane connection. if not in sidecar mode exit this function immediately
-						if controlPlaneAddr == "" {
-							return
-						}
-						clientAddr := os.Getenv("POD_IP")
-						if clientAddr == "" {
-							panic("can't start auth server, no POD_IP has been passed")
-						}
-						policyListener := listener.NewPolicyListener(
-							controlPlaneAddr,
-							clientAddr, processorMap,
-							controlPlaneReconnectWait,
-							controlPlaneMaxDialInterval,
-							healthCheckInterval,
-						)
-						for {
-							select {
-							case <-ctx.Done():
-								return
-							default:
-								if connErr = policyListener.Start(ctx); connErr != nil {
-									ctrl.LoggerFrom(ctx).Error(connErr, "error connecting to the control plane, sleeping 10 seconds then retrying")
-									time.Sleep(time.Second * 10)
-								}
-								continue
-							}
-						}
-					})
+					// group.StartWithContext(ctx, func(ctx context.Context) {
+					// 	// control plane connection. if not in sidecar mode exit this function immediately
+					// 	if controlPlaneAddr == "" {
+					// 		return
+					// 	}
+					// 	clientAddr := os.Getenv("POD_IP")
+					// 	if clientAddr == "" {
+					// 		panic("can't start auth server, no POD_IP has been passed")
+					// 	}
+					// 	policyListener := listener.NewPolicyListener(
+					// 		controlPlaneAddr,
+					// 		clientAddr, processorMap,
+					// 		controlPlaneReconnectWait,
+					// 		controlPlaneMaxDialInterval,
+					// 		healthCheckInterval,
+					// 	)
+					// 	for {
+					// 		select {
+					// 		case <-ctx.Done():
+					// 			return
+					// 		default:
+					// 			if connErr = policyListener.Start(ctx); connErr != nil {
+					// 				ctrl.LoggerFrom(ctx).Error(connErr, "error connecting to the control plane, sleeping 10 seconds then retrying")
+					// 				time.Sleep(time.Second * 10)
+					// 			}
+					// 			continue
+					// 		}
+					// 	}
+					// })
 					return nil
 				}(ctx)
 				return multierr.Combine(err, probesErr, httpAuthErr, grpcErr, mgrErr)
@@ -245,7 +241,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, IN, OUT], nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]core.Source[policy.Policy[DATA, IN, OUT]], error) {
+func getExternalProviders[POLICY any](vpolCompiler engine.Compiler[POLICY], nOpts []name.Option, rOpts []remote.Option, urls ...string) ([]core.Source[POLICY], error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -256,7 +252,7 @@ func getExternalProviders[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, 
 	configuredOCIFS := ocifs.ConfigureOCIFS(nOpts, rOpts)
 	mux.Add(configuredOCIFS)
 
-	var providers []core.Source[policy.Policy[DATA, IN, OUT]]
+	var providers []core.Source[POLICY]
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {

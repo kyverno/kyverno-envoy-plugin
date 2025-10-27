@@ -10,7 +10,6 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
-	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
 	"github.com/kyverno/pkg/ext/resource/convert"
@@ -38,19 +37,19 @@ func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 
 var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
 
-type fsProvider[DATA, IN, OUT any] struct {
-	vpolCompiler engine.Compiler[DATA, IN, OUT]
+type fsProvider[POLICY any] struct {
+	vpolCompiler engine.Compiler[POLICY]
 	fs           fs.FS
 }
 
-func NewFsProvider[DATA, IN, OUT any](vpolCompiler engine.Compiler[DATA, IN, OUT], fs fs.FS) core.Source[policy.Policy[DATA, IN, OUT]] {
-	return &fsProvider[DATA, IN, OUT]{
+func NewFsProvider[POLICY any](vpolCompiler engine.Compiler[POLICY], fs fs.FS) core.Source[POLICY] {
+	return &fsProvider[POLICY]{
 		vpolCompiler: vpolCompiler,
 		fs:           fs,
 	}
 }
 
-func (p *fsProvider[DATA, IN, OUT]) Load(ctx context.Context) ([]policy.Policy[DATA, IN, OUT], error) {
+func (p *fsProvider[POLICY]) Load(ctx context.Context) ([]POLICY, error) {
 	ldr, err := DefaultLoader()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load CRDs: %w", err)
@@ -79,7 +78,7 @@ func (p *fsProvider[DATA, IN, OUT]) Load(ctx context.Context) ([]policy.Policy[D
 	}); err != nil {
 		return nil, err
 	}
-	var policies []policy.Policy[DATA, IN, OUT]
+	var policies []POLICY
 	for _, vpol := range utils.ToSortedSlice(vpols) {
 		compiled, errs := p.vpolCompiler.Compile(vpol)
 		if len(errs) > 0 {
@@ -91,7 +90,7 @@ func (p *fsProvider[DATA, IN, OUT]) Load(ctx context.Context) ([]policy.Policy[D
 	return policies, nil
 }
 
-func (p *fsProvider[DATA, IN, OUT]) getDocuments(_ context.Context, entry fs.DirEntry) ([]document, error) {
+func (p *fsProvider[POLICY]) getDocuments(_ context.Context, entry fs.DirEntry) ([]document, error) {
 	if entry == nil {
 		return nil, nil
 	}

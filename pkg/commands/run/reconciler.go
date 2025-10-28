@@ -110,7 +110,7 @@ func (r *reconciler) runServer(req ctrl.Request, object v1alpha1.AuthorizationSe
 		if err != nil {
 			return fmt.Errorf("failed to build engine source: %w", err)
 		}
-		grpc := envoy.NewServer("tcp", fmt.Sprintf(":%d", object.Spec.Type.Envoy.Port), src, dynclient)
+		grpc := envoy.NewServer(object.Spec.Type.Envoy.Network, object.Spec.Type.Envoy.Address, src, dynclient)
 		group.StartWithContext(ctx, func(ctx context.Context) {
 			// grpc auth server
 			defer cancel()

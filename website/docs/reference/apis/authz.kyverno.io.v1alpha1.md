@@ -63,8 +63,8 @@ Only one of the fields should be set at a time (mutually exclusive).</p>
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `envoy` | [`EnvoyAuthorizationServer`](#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer) |  |  | <p>Envoy configures an Envoy-based authorization server.</p> |
-| `http` | [`HTTPAuthorizationServer`](#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer) |  |  | <p>HTTP configures a custom HTTP authorization server.</p> |
+| `envoy` | [`EnvoyAuthorizationServer`](#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer) | :white_check_mark: |  | <p>Envoy configures an Envoy-based authorization server.</p> |
+| `http` | [`HTTPAuthorizationServer`](#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer) | :white_check_mark: |  | <p>HTTP configures a custom HTTP authorization server.</p> |
 
 ## EnvoyAuthorizationServer     {#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer}
 
@@ -78,7 +78,6 @@ Only one of the fields should be set at a time (mutually exclusive).</p>
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
-| `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) |  |  | <p>Modifiers to apply to requests and responses.</p> |
 
 ## ExternalPolicySource     {#authz-kyverno-io-v1alpha1-ExternalPolicySource}
 
@@ -129,7 +128,7 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
-| `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) |  |  | <p>Modifiers to apply to requests and responses.</p> |
+| `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) | :white_check_mark: |  | <p>Modifiers to apply to requests and responses.</p> |
 
 ## Kind     {#authz-kyverno-io-v1alpha1-Kind}
 
@@ -162,13 +161,12 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `policyRef` | [`PolicyObjectReference`](#authz-kyverno-io-v1alpha1-PolicyObjectReference) |  |  | *No description provided.* |
+| `policyRef` | [`PolicyObjectReference`](#authz-kyverno-io-v1alpha1-PolicyObjectReference) | :white_check_mark: |  | <p>PolicyRef is a reference to Kubernetes policy resources. When omitted, all ValidatingPolicy resources in the cluster are selected. When present, filters policies by name or selector.</p> |
 
 ## Modifiers     {#authz-kyverno-io-v1alpha1-Modifiers}
 
 **Appears in:**
     
-- [EnvoyAuthorizationServer](#authz-kyverno-io-v1alpha1-EnvoyAuthorizationServer)
 - [HTTPAuthorizationServer](#authz-kyverno-io-v1alpha1-HTTPAuthorizationServer)
 
 <p>Modifiers defines the request/response modifiers for the authorization server.</p>
@@ -176,8 +174,8 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `request` | `string` |  |  | <p>Request is a script or expression for modifying the incoming request.</p> |
-| `response` | `string` |  |  | <p>Response is a script or expression for modifying the outgoing response.</p> |
+| `request` | `string` | :white_check_mark: |  | <p>Request is a script or expression for modifying the incoming request.</p> |
+| `response` | `string` | :white_check_mark: |  | <p>Response is a script or expression for modifying the outgoing response.</p> |
 
 ## ObjectName     {#authz-kyverno-io-v1alpha1-ObjectName}
 
@@ -203,9 +201,9 @@ RFC 1123 labels, or RFC 1035 labels.</p>
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `group` | [`Group`](#authz-kyverno-io-v1alpha1-Group) |  |  | *No description provided.* |
-| `kind` | [`Kind`](#authz-kyverno-io-v1alpha1-Kind) |  |  | <p>Kind is the kind of the referent. For example, "ValidatingPolicy".</p> |
-| `name` | [`ObjectName`](#authz-kyverno-io-v1alpha1-ObjectName) |  |  | <p>Name is the name of the referent. Mutually exclusive with Selector.</p> |
-| `selector` | [`meta/v1.LabelSelector`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta) |  |  | <p>Selector is a label selector to select the Kubernetes policy resource. Mutually exclusive with Name.</p> |
+| `group` | [`Group`](#authz-kyverno-io-v1alpha1-Group) | :white_check_mark: |  | <p>Group is the group of the referent. For example, "policies.kyverno.io". When unspecified or empty string, core API group is inferred.</p> |
+| `kind` | [`Kind`](#authz-kyverno-io-v1alpha1-Kind) | :white_check_mark: |  | <p>Kind is the kind of the referent. For example, "ValidatingPolicy".</p> |
+| `name` | [`ObjectName`](#authz-kyverno-io-v1alpha1-ObjectName) | :white_check_mark: |  | <p>Name is the name of the referent. Mutually exclusive with Selector.</p> |
+| `selector` | [`meta/v1.LabelSelector`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta) | :white_check_mark: |  | <p>Selector is a label selector to select the Kubernetes policy resource. Mutually exclusive with Name.</p> |
 
   

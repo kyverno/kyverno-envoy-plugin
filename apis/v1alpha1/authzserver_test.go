@@ -25,11 +25,11 @@ func TestAuthorizationServerSpec(t *testing.T) {
 			spec: AuthorizationServerSpec{
 				Sources: []AuthorizationServerPolicySource{
 					{
-						KubernetesPolicySource: KubernetesPolicySource{
-							PolicyRef: PolicyObjectReference{
-								Group: ptrGroup("policies.kyverno.io"),
-								Kind:  ptrKind("ValidatingPolicy"),
-								Name:  ptrObjectName("test-policy"),
+						Kubernetes: &KubernetesPolicySource{
+							PolicyRef: &PolicyObjectReference{
+								Group: "policies.kyverno.io",
+								Kind:  "ValidatingPolicy",
+								Name:  "test-policy",
 							},
 						},
 					},
@@ -38,11 +38,11 @@ func TestAuthorizationServerSpec(t *testing.T) {
 			expect: AuthorizationServerSpec{
 				Sources: []AuthorizationServerPolicySource{
 					{
-						KubernetesPolicySource: KubernetesPolicySource{
-							PolicyRef: PolicyObjectReference{
-								Group: ptrGroup("policies.kyverno.io"),
-								Kind:  ptrKind("ValidatingPolicy"),
-								Name:  ptrObjectName("test-policy"),
+						Kubernetes: &KubernetesPolicySource{
+							PolicyRef: &PolicyObjectReference{
+								Group: "policies.kyverno.io",
+								Kind:  "ValidatingPolicy",
+								Name:  "test-policy",
 							},
 						},
 					},
@@ -54,7 +54,7 @@ func TestAuthorizationServerSpec(t *testing.T) {
 			spec: AuthorizationServerSpec{
 				Sources: []AuthorizationServerPolicySource{
 					{
-						ExternalPolicySource: ExternalPolicySource{
+						External: &ExternalPolicySource{
 							URL: "https://example.com/policy.bundle",
 						},
 					},
@@ -63,7 +63,7 @@ func TestAuthorizationServerSpec(t *testing.T) {
 			expect: AuthorizationServerSpec{
 				Sources: []AuthorizationServerPolicySource{
 					{
-						ExternalPolicySource: ExternalPolicySource{
+						External: &ExternalPolicySource{
 							URL: "https://example.com/policy.bundle",
 						},
 					},
@@ -91,10 +91,6 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 			typ: AuthorizationServerType{
 				Envoy: &EnvoyAuthorizationServer{
 					Port: 8080,
-					Modifiers: &Modifiers{
-						Request:  "req-mod",
-						Response: "resp-mod",
-					},
 				},
 			},
 			expect: func(t *testing.T, typ AuthorizationServerType) {
@@ -106,9 +102,6 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 				}
 				if typ.Envoy.Port != 8080 {
 					t.Errorf("unexpected Port: %d", typ.Envoy.Port)
-				}
-				if typ.Envoy.Modifiers == nil || typ.Envoy.Modifiers.Request != "req-mod" || typ.Envoy.Modifiers.Response != "resp-mod" {
-					t.Errorf("unexpected Modifiers: %+v", typ.Envoy.Modifiers)
 				}
 			},
 		},
@@ -188,11 +181,11 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 		Type: envoyType,
 		Sources: []AuthorizationServerPolicySource{
 			{
-				KubernetesPolicySource: KubernetesPolicySource{
-					PolicyRef: PolicyObjectReference{
-						Group: ptrGroup("policies.kyverno.io"),
-						Kind:  ptrKind("ValidatingPolicy"),
-						Name:  ptrObjectName("e-policy"),
+				Kubernetes: &KubernetesPolicySource{
+					PolicyRef: &PolicyObjectReference{
+						Group: "policies.kyverno.io",
+						Kind:  "ValidatingPolicy",
+						Name:  "e-policy",
 					},
 				},
 			},
@@ -212,7 +205,7 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 		Type: httpType,
 		Sources: []AuthorizationServerPolicySource{
 			{
-				ExternalPolicySource: ExternalPolicySource{
+				External: &ExternalPolicySource{
 					URL: "https://host.net/policy",
 				},
 			},
@@ -245,16 +238,16 @@ func TestAuthorizationServerRoundTrip(t *testing.T) {
 		Spec: AuthorizationServerSpec{
 			Sources: []AuthorizationServerPolicySource{
 				{
-					KubernetesPolicySource: KubernetesPolicySource{
-						PolicyRef: PolicyObjectReference{
-							Group: ptrGroup("policies.kyverno.io"),
-							Kind:  ptrKind("ValidatingPolicy"),
-							Name:  ptrObjectName("mypolicy"),
+					Kubernetes: &KubernetesPolicySource{
+						PolicyRef: &PolicyObjectReference{
+							Group: "policies.kyverno.io",
+							Kind:  "ValidatingPolicy",
+							Name:  "mypolicy",
 						},
 					},
 				},
 				{
-					ExternalPolicySource: ExternalPolicySource{
+					External: &ExternalPolicySource{
 						URL: "oci://myrepo/mybundle:v1",
 					},
 				},
@@ -276,7 +269,7 @@ func TestAuthorizationServerRoundTrip(t *testing.T) {
 func TestPolicyObjectReference_MutualExclusion(t *testing.T) {
 	// either name or selector must be specified, not both
 	validName := PolicyObjectReference{
-		Name: ptrObjectName("foo"),
+		Name: "foo",
 	}
 
 	validSelector := PolicyObjectReference{
@@ -285,15 +278,15 @@ func TestPolicyObjectReference_MutualExclusion(t *testing.T) {
 
 	// The logic here should check that *either* Name or Selector is set, but not both or neither.
 	// In this case, only Name is set, which should be valid.
-	if validName.Name == nil || validSelector.Selector == nil {
+	if validName.Name == "" || validSelector.Selector == nil {
 		t.Errorf("expected only Name to be set, got Name:%v Selector:%v", validName.Name, validSelector.Selector)
 	}
 
 	invalid := PolicyObjectReference{
-		Name:     ptrObjectName("foo"),
+		Name:     "foo",
 		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"a": "b"}},
 	}
-	if invalid.Name != nil && invalid.Selector != nil {
+	if invalid.Name != "" && invalid.Selector != nil {
 		// This would fail schema validation, but in Go it's valid.
 		t.Log("Name and Selector are both set: validation should fail in scheme, not here")
 	}
@@ -311,15 +304,12 @@ func TestExternalPolicySource(t *testing.T) {
 func TestKubernetesPolicySource_Defaults(t *testing.T) {
 	// Omitting PolicyRef should be valid and select all ValidatingPolicy in cluster.
 	src := KubernetesPolicySource{}
-	if src.PolicyRef.Name != nil {
-		t.Errorf("expected empty PolicyRef.Name")
-	}
-	if src.PolicyRef.Selector != nil {
-		t.Errorf("expected empty PolicyRef.Selector")
+	if src.PolicyRef != nil {
+		if src.PolicyRef.Name != "" {
+			t.Errorf("expected empty PolicyRef.Name")
+		}
+		if src.PolicyRef.Selector != nil {
+			t.Errorf("expected empty PolicyRef.Selector")
+		}
 	}
 }
-
-// Pointer helpers for types
-func ptrGroup(v Group) *Group                { tmp := v; return &tmp }
-func ptrKind(v Kind) *Kind                   { tmp := v; return &tmp }
-func ptrObjectName(v ObjectName) *ObjectName { tmp := v; return &tmp }

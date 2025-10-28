@@ -211,7 +211,6 @@ func Command() *cobra.Command {
 						defer cancel()
 						httpAuthErr = httpAuthServer.Run(ctx)
 					})
-
 					return nil
 				}(ctx)
 				return multierr.Combine(err, probesErr, httpAuthErr, grpcErr, mgrErr)

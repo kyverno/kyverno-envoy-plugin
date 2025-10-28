@@ -161,9 +161,16 @@ spec:
                   envoy:
                     description: Envoy configures an Envoy-based authorization server.
                     properties:
-                      port:
-                        description: Port is the port the server listens on.
-                        type: integer
+                      address:
+                        description: Address is the network address the server listens
+                          on.
+                        type: string
+                      network:
+                        default: tcp
+                        description: Network is the network the server listens on.
+                        type: string
+                    required:
+                    - address
                     type: object
                   http:
                     description: HTTP configures a custom HTTP authorization server.

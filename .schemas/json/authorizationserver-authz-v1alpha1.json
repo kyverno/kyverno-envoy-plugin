@@ -503,13 +503,21 @@
                 "object",
                 "null"
               ],
+              "required": [
+                "address"
+              ],
               "properties": {
-                "port": {
-                  "description": "Port is the port the server listens on.",
+                "address": {
+                  "description": "Address is the network address the server listens on.",
+                  "type": "string"
+                },
+                "network": {
+                  "description": "Network is the network the server listens on.",
                   "type": [
-                    "integer",
+                    "string",
                     "null"
-                  ]
+                  ],
+                  "default": "tcp"
                 }
               },
               "additionalProperties": false

@@ -77,7 +77,8 @@ Only one of the fields should be set at a time (mutually exclusive).</p>
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
+| `network` | `string` |  |  | <p>Network is the network the server listens on.</p> |
+| `address` | `string` | :white_check_mark: |  | <p>Address is the network address the server listens on.</p> |
 
 ## ExternalPolicySource     {#authz-kyverno-io-v1alpha1-ExternalPolicySource}
 

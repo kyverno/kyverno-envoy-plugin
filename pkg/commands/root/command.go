@@ -1,6 +1,7 @@
 package root
 
 import (
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/commands/run"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/commands/serve"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/commands/version"
 	"github.com/spf13/cobra"
@@ -16,6 +17,7 @@ func Command() *cobra.Command {
 		},
 	}
 	root.AddCommand(
+		run.Command(),
 		serve.Command(),
 		version.Command(),
 	)

@@ -20,7 +20,6 @@ type AuthorizationServerSpec struct {
 	// Type defines the type of authorization server.
 	// +required
 	Type AuthorizationServerType `json:"type"`
-
 	// AuthorizationServerPolicySource contains all the sources of policies for the authorization server.
 	Sources []AuthorizationServerPolicySource `json:"sources,omitempty"`
 }
@@ -38,15 +37,18 @@ type AuthorizationServerType struct {
 
 // EnvoyAuthorizationServer defines the Envoy authorization server configuration.
 type EnvoyAuthorizationServer struct {
-	// Port is the port the server listens on.
-	Port int `json:"port,omitempty"`
+	// Network is the network the server listens on.
+	// +kubebuilder:default=tcp
+	// +optional
+	Network string `json:"network"`
+	// Address is the network address the server listens on.
+	Address string `json:"address"`
 }
 
 // HTTPAuthorizationServer defines the HTTP authorization server configuration.
 type HTTPAuthorizationServer struct {
 	// Port is the port the server listens on.
 	Port int `json:"port,omitempty"`
-
 	// Modifiers to apply to requests and responses.
 	Modifiers *Modifiers `json:"modifiers,omitempty"`
 }

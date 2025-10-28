@@ -90,7 +90,7 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 			name: "Envoy type set",
 			typ: AuthorizationServerType{
 				Envoy: &EnvoyAuthorizationServer{
-					Port: 8080,
+					Address: ":8080",
 				},
 			},
 			expect: func(t *testing.T, typ AuthorizationServerType) {
@@ -100,8 +100,8 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 				if typ.HTTP != nil {
 					t.Errorf("HTTP should be nil when Envoy is set")
 				}
-				if typ.Envoy.Port != 8080 {
-					t.Errorf("unexpected Port: %d", typ.Envoy.Port)
+				if typ.Envoy.Address != ":8080" {
+					t.Errorf("unexpected Port: %s", typ.Envoy.Address)
 				}
 			},
 		},
@@ -144,7 +144,7 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 			name: "Both types set (invalid config)",
 			typ: AuthorizationServerType{
 				Envoy: &EnvoyAuthorizationServer{
-					Port: 8888,
+					Address: ":8080",
 				},
 				HTTP: &HTTPAuthorizationServer{
 					Port: 9999,
@@ -168,7 +168,7 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 	envoyType := AuthorizationServerType{
 		Envoy: &EnvoyAuthorizationServer{
-			Port: 8000,
+			Address: ":8080",
 		},
 	}
 	httpType := AuthorizationServerType{
@@ -197,8 +197,8 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 	if specEnvoy.Type.HTTP != nil {
 		t.Errorf("HTTP field should not be set in Type")
 	}
-	if specEnvoy.Type.Envoy.Port != 8000 {
-		t.Errorf("unexpected Envoy Port: %d", specEnvoy.Type.Envoy.Port)
+	if specEnvoy.Type.Envoy.Address != ":8080" {
+		t.Errorf("unexpected Envoy Address: %s", specEnvoy.Type.Envoy.Address)
 	}
 
 	specHTTP := AuthorizationServerSpec{

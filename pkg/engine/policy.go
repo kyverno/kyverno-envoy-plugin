@@ -8,4 +8,4 @@ import (
 )
 
 type EnvoyPolicy = policy.Policy[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]
-type HTTPPolicy = policy.Policy[dynamic.Interface, *http.Request, *http.Response]
+type HTTPPolicy = policy.Policy[dynamic.Interface, *http.Req, *http.Resp]

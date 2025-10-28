@@ -57,8 +57,8 @@ func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
 		library.Quantity(),
 		library.SemverLib(),
 		// register our libs
-		http.Lib(),
 		coreEnv,
+		http.Lib(),
 		jwt.Lib(),
 		jsoncel.Lib(&jsonimpl.JsonImpl{}),
 		resource.Lib(),

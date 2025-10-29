@@ -42,7 +42,7 @@ spec:
               containers:
               - name: http-srv
                 image: aerosouund/http-authorizer:v0.1.0
-                args: ["--authorizer-addr", "http://kyverno-authz-server.default.svc.cluster.local:9083/"]
+                args: ["--authorizer-addr", "http://kyverno-authz-server.kyverno.svc.cluster.local:9083/"]
                 imagePullPolicy: IfNotPresent
                 ports:
                 - name: http

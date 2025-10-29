@@ -10,7 +10,7 @@ import (
 )
 
 func RunGrpc(ctx context.Context, server *grpc.Server, listener net.Listener) error {
-	logger := ctrl.LoggerFrom(ctx).WithValues("address", listener.Addr())
+	logger := ctrl.LoggerFrom(ctx).WithValues("address", listener.Addr()).WithValues("network", listener.Addr().Network())
 	defer logger.Info("GRPC Server stopped")
 	// create a wait group
 	var group wait.Group

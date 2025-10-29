@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/playground/refs/heads/main/schemas/json/v3/validatingpolicy-policies.kyverno.io-v1alpha1.json
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: policy
+spec:
+  evaluation:
+    mode: HTTP
+  matchConditions:
+  - name: match-host
+    expression: |
+      object.path.startsWith("/get")
+  validations:
+  - expression: >
+      object.headers.get("foo") == "bar"  
+        ?  http.response().status(200)
+        :  http.response().status(403).withBody("the needed header was missing")

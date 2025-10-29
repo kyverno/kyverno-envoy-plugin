@@ -299,7 +299,7 @@ config:
   allowInsecureRegistry: false
 
   # -- Expect the requests to validate to be in the body of the original request
-  nestedRequest: false
+  nestedRequest: true
 
   # -- Image pull secrets for fetching policies from OCI registries
   imagePullSecrets: []

@@ -5,7 +5,7 @@ metadata:
   name: allow
 spec:
   steps:
-  - name: create istio policy
+  - name: create authorizer
     use:
       template: ../../../_step-templates/authorizer.yaml
   - name: create policy
@@ -18,9 +18,6 @@ spec:
   - name: create shell
     use:
       template: ../../../_step-templates/shell.yaml
-  - try:
-    - sleep:
-        duration: 150s
   - try:
     - script:
         content: >

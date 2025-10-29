@@ -7,20 +7,25 @@ spec:
   steps:
   - name: create authorizer
     use:
-      template: ../../../_step-templates/authorizer.yaml
+      template: ../../../../_step-templates/authorizer.yaml
   - name: create policy
     use:
-      template: ../../../_step-templates/policy.yaml
+      template: ../../../../_step-templates/policy.yaml
       with:
         bindings:
         - name: file
           value: policy.yaml
   - name: create shell
     use:
-      template: ../../../_step-templates/shell.yaml
+      template: ../../../../_step-templates/shell.yaml
   - try:
     - script:
         content: >
           kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" http-srv.app/get
         check:
           (wildcard('*http_code=403', $stdout)): true
+    - script:
+        content: >
+          kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" http-srv.app.svc.cluster.local/get
+        check:
+          (wildcard('*http_code=200', $stdout)): true

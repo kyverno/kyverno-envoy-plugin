@@ -25,10 +25,14 @@ func (c *impl) get_header_value(allHeaders ref.Val, header ref.Val) ref.Val {
 	} else {
 		caser := cases.Title(language.Und) // turn all instances of a header to match a single case
 		v, exists := kv.inner[caser.String(header)]
-		if !exists {
-			return c.NativeToValue("")
+		if exists {
+			return c.NativeToValue(v[0])
 		}
-		return c.NativeToValue(v[0])
+		v, exists = kv.inner[header] // try to get the header directly
+		if exists {
+			return c.NativeToValue(v[0])
+		}
+		return c.NativeToValue("")
 	}
 }
 
@@ -40,10 +44,14 @@ func (c *impl) get_header_all(allHeaders ref.Val, header ref.Val) ref.Val {
 	} else {
 		caser := cases.Title(language.Und)
 		v, exists := kv.inner[caser.String(header)]
-		if !exists {
-			return c.NativeToValue([]string{})
+		if exists {
+			return c.NativeToValue(v)
 		}
-		return c.NativeToValue(v)
+		v, exists = kv.inner[header]
+		if exists {
+			return c.NativeToValue(v)
+		}
+		return c.NativeToValue([]string{})
 	}
 }
 

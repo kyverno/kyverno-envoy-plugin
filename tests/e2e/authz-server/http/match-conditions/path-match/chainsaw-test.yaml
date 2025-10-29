@@ -19,9 +19,6 @@ spec:
     use:
       template: ../../../../_step-templates/shell.yaml
   - try:
-    - sleep:
-        duration: 15m
-  - try:
     - script:
         content: >
           kubectl exec -n $NAMESPACE deploy/curl -- curl -s -w "\nhttp_code=%{http_code}" http-srv.app/get

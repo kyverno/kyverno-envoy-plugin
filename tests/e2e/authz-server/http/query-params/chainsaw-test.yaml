@@ -18,9 +18,6 @@ spec:
   - name: create shell
     use:
       template: ../../../_step-templates/shell.yaml
-  # - try:
-  #   - sleep:
-  #       duration: 5m
   - try:
     - script:
         content: >

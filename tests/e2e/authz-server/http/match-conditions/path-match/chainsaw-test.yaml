@@ -2,7 +2,7 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: allow
+  name: path
 spec:
   steps:
   - name: create authorizer

@@ -61,7 +61,7 @@ func writeErrResp(w http.ResponseWriter, err error) {
 	fmt.Fprint(w, err.Error()) //nolint:errcheck
 }
 
-func writeResponse(w http.ResponseWriter, resp *httpcel.Response) {
+func writeResponse(w http.ResponseWriter, resp *httpcel.Resp) {
 	if resp.Headers != nil {
 		for k, v := range resp.Headers.GetInnerMap() {
 			for _, val := range v {

@@ -67,6 +67,8 @@ type Modifiers struct {
 type AuthorizationServerPolicySource struct {
 	Kubernetes *KubernetesPolicySource `json:"kubernetes,omitempty"`
 	External   *ExternalPolicySource   `json:"external,omitempty"`
+	Oci        *OciPolicySource        `json:"oci,omitempty"`
+	Fs         *FsPolicySource         `json:"fs,omitempty"`
 }
 
 // PolicyObjectReference represents a reference to a policy resource.
@@ -105,6 +107,34 @@ type ExternalPolicySource struct {
 	// Supported schemes are: file://, oci://, https://, etc
 	// +required
 	URL string `json:"url"`
+}
+
+// OciPolicySource defines the configuration for fetching policies
+// from an OCI (Open Container Initiative) registry.
+type OciPolicySource struct {
+	// URL specifies the location of the OCI registry or image
+	// that contains the policy definitions.
+	URL string `json:"url"`
+
+	// AllowInsecureRegistry indicates whether connections to an
+	// insecure (HTTP or self-signed HTTPS) registry are permitted.
+	// This should generally be false in production environments
+	// to ensure secure communication.
+	AllowInsecureRegistry bool `json:"allowInsecureRegistry,omitempty"`
+
+	// ImagePullSecrets lists the names of Kubernetes secrets that
+	// contain credentials needed to authenticate with the OCI registry.
+	// These are typically referenced in Kubernetes to pull images
+	// from private registries.
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+}
+
+// FsPolicySource defines the configuration for loading a policy
+// from a local or mounted filesystem path.
+type FsPolicySource struct {
+	// Path specifies the filesystem location where the policy
+	// files are stored.
+	Path string `json:"path"`
 }
 
 // +kubebuilder:object:root=true

@@ -36,6 +36,8 @@ auto_generated: true
 |---|---|---|---|---|
 | `kubernetes` | [`KubernetesPolicySource`](#authz-kyverno-io-v1alpha1-KubernetesPolicySource) | :white_check_mark: |  | *No description provided.* |
 | `external` | [`ExternalPolicySource`](#authz-kyverno-io-v1alpha1-ExternalPolicySource) | :white_check_mark: |  | *No description provided.* |
+| `oci` | [`OciPolicySource`](#authz-kyverno-io-v1alpha1-OciPolicySource) | :white_check_mark: |  | *No description provided.* |
+| `fs` | [`FsPolicySource`](#authz-kyverno-io-v1alpha1-FsPolicySource) | :white_check_mark: |  | *No description provided.* |
 
 ## AuthorizationServerSpec     {#authz-kyverno-io-v1alpha1-AuthorizationServerSpec}
 
@@ -92,6 +94,20 @@ Only one of the fields should be set at a time (mutually exclusive).</p>
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `url` | `string` | :white_check_mark: |  | <p>URL is the URL of the external policy source Supported schemes are: file://, oci://, https://, etc</p> |
+
+## FsPolicySource     {#authz-kyverno-io-v1alpha1-FsPolicySource}
+
+**Appears in:**
+    
+- [AuthorizationServerPolicySource](#authz-kyverno-io-v1alpha1-AuthorizationServerPolicySource)
+
+<p>FsPolicySource defines the configuration for loading a policy
+from a local or mounted filesystem path.</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `path` | `string` | :white_check_mark: |  | <p>Path specifies the filesystem location where the policy files are stored.</p> |
 
 ## Group     {#authz-kyverno-io-v1alpha1-Group}
 
@@ -190,6 +206,22 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 Object names can have a variety of forms, including RFC 1123 subdomains,
 RFC 1123 labels, or RFC 1035 labels.</p>
 
+
+## OciPolicySource     {#authz-kyverno-io-v1alpha1-OciPolicySource}
+
+**Appears in:**
+    
+- [AuthorizationServerPolicySource](#authz-kyverno-io-v1alpha1-AuthorizationServerPolicySource)
+
+<p>OciPolicySource defines the configuration for fetching policies
+from an OCI (Open Container Initiative) registry.</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `url` | `string` | :white_check_mark: |  | <p>URL specifies the location of the OCI registry or image that contains the policy definitions.</p> |
+| `allowInsecureRegistry` | `bool` | :white_check_mark: |  | <p>AllowInsecureRegistry indicates whether connections to an insecure (HTTP or self-signed HTTPS) registry are permitted. This should generally be false in production environments to ensure secure communication.</p> |
+| `imagePullSecrets` | `[]string` | :white_check_mark: |  | <p>ImagePullSecrets lists the names of Kubernetes secrets that contain credentials needed to authenticate with the OCI registry. These are typically referenced in Kubernetes to pull images from private registries.</p> |
 
 ## PolicyObjectReference     {#authz-kyverno-io-v1alpha1-PolicyObjectReference}
 

@@ -206,7 +206,7 @@ containers:
     # -- Container ports.
     ports:
     - containerPort: 9080
-      name: http
+      name: probes
       protocol: TCP
     - containerPort: 9081
       name: grpc
@@ -215,7 +215,7 @@ containers:
       name: metrics
       protocol: TCP
     - containerPort: 9083
-      name: http-auth
+      name: http
       protocol: TCP
 
     # -- Container args.
@@ -235,15 +235,21 @@ containers:
 
 service:
 
-  # -- Service port.
-  port: 9081
+  # -- Service ports.
+  ports:
+    # -- gRPC service port.
+    grpc: 9081
+    # -- HTTP auth service port.
+    http: 9083
 
   # -- Service type.
   type: ClusterIP
 
-  # -- Service node port.
+  # -- Service node ports.
   # Only used if `type` is `NodePort`.
-  nodePort:
+  nodePorts:
+    grpc:
+    http:
 
   # -- Service annotations.
   annotations: {}

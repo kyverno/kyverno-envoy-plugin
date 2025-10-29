@@ -486,6 +486,43 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "oci": {
+                "description": "OciPolicySource defines the configuration for fetching policies\nfrom an OCI (Open Container Initiative) registry.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "url"
+                ],
+                "properties": {
+                  "allowInsecureRegistry": {
+                    "description": "AllowInsecureRegistry indicates whether connections to an\ninsecure (HTTP or self-signed HTTPS) registry are permitted.\nThis should generally be false in production environments\nto ensure secure communication.",
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "imagePullSecrets": {
+                    "description": "ImagePullSecrets lists the names of Kubernetes secrets that\ncontain credentials needed to authenticate with the OCI registry.\nThese are typically referenced in Kubernetes to pull images\nfrom private registries.",
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "url": {
+                    "description": "URL specifies the location of the OCI registry or image\nthat contains the policy definitions.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false

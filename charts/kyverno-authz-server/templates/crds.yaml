@@ -160,6 +160,35 @@ spec:
                           - message: name and selector are mutually exclusive
                             rule: '!(has(self.name) && has(self.selector))'
                       type: object
+                    oci:
+                      description: |-
+                        OciPolicySource defines the configuration for fetching policies
+                        from an OCI (Open Container Initiative) registry.
+                      properties:
+                        allowInsecureRegistry:
+                          description: |-
+                            AllowInsecureRegistry indicates whether connections to an
+                            insecure (HTTP or self-signed HTTPS) registry are permitted.
+                            This should generally be false in production environments
+                            to ensure secure communication.
+                          type: boolean
+                        imagePullSecrets:
+                          description: |-
+                            ImagePullSecrets lists the names of Kubernetes secrets that
+                            contain credentials needed to authenticate with the OCI registry.
+                            These are typically referenced in Kubernetes to pull images
+                            from private registries.
+                          items:
+                            type: string
+                          type: array
+                        url:
+                          description: |-
+                            URL specifies the location of the OCI registry or image
+                            that contains the policy definitions.
+                          type: string
+                      required:
+                      - url
+                      type: object
                   type: object
                 type: array
               type:

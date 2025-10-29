@@ -62,11 +62,13 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | containers.server.startupProbe | object | See [values.yaml](values.yaml) | Startup probe. The block is directly forwarded into the deployment, so you can use whatever startupProbes configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.server.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
-| containers.server.ports | list | `[{"containerPort":9080,"name":"http","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"},{"containerPort":9082,"name":"metrics","protocol":"TCP"},{"containerPort":9083,"name":"http-auth","protocol":"TCP"}]` | Container ports. |
+| containers.server.ports | list | `[{"containerPort":9080,"name":"probes","protocol":"TCP"},{"containerPort":9081,"name":"grpc","protocol":"TCP"},{"containerPort":9082,"name":"metrics","protocol":"TCP"},{"containerPort":9083,"name":"http","protocol":"TCP"}]` | Container ports. |
 | containers.server.args | list | `["serve","authz-server","--probes-address=:9080","--grpc-address=:9081","--grpc-network={{ .Values.config.grpcNetwork }}","--metrics-address=:9082","--http-auth-server-address={{ .Values.config.httpAuthServerAddress }}","--leader-election=true","--leader-election-id={{ template \"kyverno-authz-server.name\" . }}","--kube-policy-source={{ .Values.config.kubePolicySource }}","--allow-insecure-registry={{ .Values.config.allowInsecureRegistry }}","--nested-request={{ .Values.config.nestedRequest }}"]` | Container args. |
-| service.port | int | `9081` | Service port. |
+| service.ports | object | `{"grpc":9081,"http":9083}` | Service ports. |
+| service.ports.grpc | int | `9081` | gRPC service port. |
+| service.ports.http | int | `9083` | HTTP auth service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
-| service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
+| service.nodePorts | object | `{"grpc":null,"http":null}` | Service node ports. Only used if `type` is `NodePort`. |
 | service.annotations | object | `{}` | Service annotations. |
 | service.appProtocol | string | `nil` | Service application protocol. Setting app protocol is only needed in specific cases like integration with certain gateways. ref: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol |
 | webhook.annotations | object | `{}` | Webhook annotations |
@@ -79,7 +81,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | config.httpAuthServerAddress | string | `":9083"` | HTTP authorization server address |
 | config.kubePolicySource | bool | `true` | Enable in-cluster kubernetes policy source |
 | config.allowInsecureRegistry | bool | `false` | Allow insecure registry for pulling policy images |
-| config.nestedRequest | bool | `false` | Expect the requests to validate to be in the body of the original request |
+| config.nestedRequest | bool | `true` | Expect the requests to validate to be in the body of the original request |
 | config.imagePullSecrets | list | `[]` | Image pull secrets for fetching policies from OCI registries |
 | config.controlPlane.address | string | `""` | Control plane address (leave empty for standalone mode) |
 | config.controlPlane.reconnectWait | string | `"3s"` | Duration to wait before retrying connecting to the control plane |

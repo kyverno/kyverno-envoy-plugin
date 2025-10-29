@@ -150,9 +150,6 @@ func (r *reconciler) stopServer(req ctrl.Request) error {
 func buildSources[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY], server v1alpha1.AuthorizationServer) (core.Source[POLICY], error) {
 	var out []core.Source[POLICY]
 	mux := fsimpl.NewMux()
-	mux.Add(filefs.FS)
-	// mux.Add(httpfs.FS)
-	// mux.Add(blobfs.FS)
 	mux.Add(gitfs.FS)
 	for _, src := range server.Spec.Sources {
 		if src.Kubernetes != nil {
@@ -165,6 +162,17 @@ func buildSources[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY]
 		}
 		if src.External != nil {
 			fsys, err := mux.Lookup(src.External.URL)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, sdksources.NewOnce(sources.NewFs(fsys, compiler)))
+		}
+		if src.Fs != nil {
+			u, err := url.Parse("file://" + src.Fs.Path)
+			if err != nil {
+				return nil, err
+			}
+			fsys, err := filefs.New(u)
 			if err != nil {
 				return nil, err
 			}

@@ -72,6 +72,19 @@ spec:
                       required:
                       - url
                       type: object
+                    fs:
+                      description: |-
+                        FsPolicySource defines the configuration for loading a policy
+                        from a local or mounted filesystem path.
+                      properties:
+                        path:
+                          description: |-
+                            Path specifies the filesystem location where the policy
+                            files are stored.
+                          type: string
+                      required:
+                      - path
+                      type: object
                     kubernetes:
                       description: KubernetesPolicySource defines a reference to a
                         Kubernetes policy resource.

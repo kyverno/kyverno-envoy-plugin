@@ -13,7 +13,7 @@ type impl struct {
 }
 
 func (c *impl) response() ref.Val {
-	r := &Response{}
+	r := &Resp{}
 	return c.NativeToValue(r)
 }
 
@@ -48,7 +48,7 @@ func (c *impl) get_header_all(allHeaders ref.Val, header ref.Val) ref.Val {
 }
 
 func (c *impl) with_status(r ref.Val, status ref.Val) ref.Val {
-	if r, err := utils.ConvertToNative[*Response](r); err != nil {
+	if r, err := utils.ConvertToNative[*Resp](r); err != nil {
 		return types.WrapErr(err)
 	} else if statusCode, err := utils.ConvertToNative[int](status); err != nil {
 		return types.WrapErr(err)
@@ -59,7 +59,7 @@ func (c *impl) with_status(r ref.Val, status ref.Val) ref.Val {
 }
 
 func (c *impl) with_header(args ...ref.Val) ref.Val {
-	if r, err := utils.ConvertToNative[*Response](args[0]); err != nil {
+	if r, err := utils.ConvertToNative[*Resp](args[0]); err != nil {
 		return types.WrapErr(err)
 	} else if k, err := utils.ConvertToNative[string](args[1]); err != nil {
 		return types.WrapErr(err)
@@ -77,7 +77,7 @@ func (c *impl) with_header(args ...ref.Val) ref.Val {
 }
 
 func (c *impl) with_body(r ref.Val, b ref.Val) ref.Val {
-	if r, err := utils.ConvertToNative[*Response](r); err != nil {
+	if r, err := utils.ConvertToNative[*Resp](r); err != nil {
 		return types.WrapErr(err)
 	} else if b, err := utils.ConvertToNative[string](b); err != nil {
 		return types.WrapErr(err)

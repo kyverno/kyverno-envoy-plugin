@@ -68,6 +68,7 @@ type AuthorizationServerPolicySource struct {
 	Kubernetes *KubernetesPolicySource `json:"kubernetes,omitempty"`
 	External   *ExternalPolicySource   `json:"external,omitempty"`
 	Oci        *OciPolicySource        `json:"oci,omitempty"`
+	Fs         *FsPolicySource         `json:"fs,omitempty"`
 }
 
 // PolicyObjectReference represents a reference to a policy resource.
@@ -128,9 +129,13 @@ type OciPolicySource struct {
 	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
 }
 
-// type FsPolicySource struct {
-// 	Path string `json:"path"`
-// }
+// FsPolicySource defines the configuration for loading a policy
+// from a local or mounted filesystem path.
+type FsPolicySource struct {
+	// Path specifies the filesystem location where the policy
+	// files are stored.
+	Path string `json:"path"`
+}
 
 // +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -342,23 +342,6 @@
             "maxProperties": 1,
             "minProperties": 1,
             "properties": {
-              "external": {
-                "description": "ExternalSource defines an external policy source.",
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "required": [
-                  "url"
-                ],
-                "properties": {
-                  "url": {
-                    "description": "URL is the URL of the external policy source\nSupported schemes are: file://, oci://, https://, etc",
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              },
               "fs": {
                 "description": "FsPolicySource defines the configuration for loading a policy\nfrom a local or mounted filesystem path.",
                 "type": [
@@ -371,6 +354,23 @@
                 "properties": {
                   "path": {
                     "description": "Path specifies the filesystem location where the policy\nfiles are stored.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "git": {
+                "description": "GitPolicySource defines the configuration for retrieving a policy\nfrom a Git repository.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "url"
+                ],
+                "properties": {
+                  "url": {
+                    "description": "URL specifies the Git repository location that contains\nthe policy files or definitions. Supported formats typically\ninclude HTTPS or SSH Git URLs.",
                     "type": "string"
                   }
                 },
@@ -582,7 +582,14 @@
                 "object",
                 "null"
               ],
+              "required": [
+                "address"
+              ],
               "properties": {
+                "address": {
+                  "description": "Address is the network address the server listens on.",
+                  "type": "string"
+                },
                 "modifiers": {
                   "description": "Modifiers to apply to requests and responses.",
                   "type": [
@@ -606,13 +613,6 @@
                     }
                   },
                   "additionalProperties": false
-                },
-                "port": {
-                  "description": "Port is the port the server listens on.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
                 }
               },
               "additionalProperties": false

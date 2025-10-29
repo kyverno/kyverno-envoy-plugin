@@ -12,25 +12,14 @@ import (
 	jsoncel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/json"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwt"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
-
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/image"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
-
 	"k8s.io/apiserver/pkg/cel/library"
 )
 
-func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
-	var coreEnv cel.EnvOption
-	switch evalMode {
-	case v1alpha1.EvaluationModeEnvoy:
-		coreEnv = envoy.Lib()
-	case v1alpha1.EvaluationModeHTTP:
-		coreEnv = httpauth.Lib()
-	default:
-		return nil, fmt.Errorf("invalid evaluation mode passed for env builder")
-	}
+func NewBaseEnv() (*cel.Env, error) {
 	// create new cel env
 	return cel.NewEnv(
 		// configure env
@@ -57,7 +46,6 @@ func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
 		library.Quantity(),
 		library.SemverLib(),
 		// register our libs
-		coreEnv,
 		jwt.Lib(),
 		jsoncel.Lib(&jsonimpl.JsonImpl{}),
 		http.Lib(),
@@ -65,4 +53,31 @@ func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
 		image.Lib(),
 		imagedata.Lib(),
 	)
+}
+
+func NewEnvoyEnv() (*cel.Env, error) {
+	base, err := NewBaseEnv()
+	if err != nil {
+		return nil, err
+	}
+	return base.Extend(envoy.Lib())
+}
+
+func NewHttpEnv() (*cel.Env, error) {
+	base, err := NewBaseEnv()
+	if err != nil {
+		return nil, err
+	}
+	return base.Extend(httpauth.Lib())
+}
+
+func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
+	switch evalMode {
+	case v1alpha1.EvaluationModeEnvoy:
+		return NewEnvoyEnv()
+	case v1alpha1.EvaluationModeHTTP:
+		return NewHttpEnv()
+	default:
+		return nil, fmt.Errorf("invalid evaluation mode passed for env builder")
+	}
 }

@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"sync"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -14,6 +15,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils/ocifs"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	sdksources "github.com/kyverno/kyverno-envoy-plugin/sdk/core/sources"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
@@ -22,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -106,7 +109,7 @@ func (r *reconciler) runServer(req ctrl.Request, object v1alpha1.AuthorizationSe
 			defer cancel()
 			return fmt.Errorf("failed to wait for cache sync")
 		}
-		src, err := buildSources(mgr, envoyCompiler, object.Spec.Sources...)
+		src, err := buildSources(mgr, envoyCompiler, object)
 		if err != nil {
 			return fmt.Errorf("failed to build engine source: %w", err)
 		}
@@ -144,19 +147,11 @@ func (r *reconciler) stopServer(req ctrl.Request) error {
 	return nil
 }
 
-func buildSources[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY], s ...v1alpha1.AuthorizationServerPolicySource) (core.Source[POLICY], error) {
+func buildSources[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY], server v1alpha1.AuthorizationServer) (core.Source[POLICY], error) {
 	var out []core.Source[POLICY]
 	mux := fsimpl.NewMux()
-	mux.Add(filefs.FS)
-	// mux.Add(httpfs.FS)
-	// mux.Add(blobfs.FS)
 	mux.Add(gitfs.FS)
-
-	// Create a configured ocifs.FS with registry options
-	// TODO
-	// configuredOCIFS := ocifs.ConfigureOCIFS(nOpts, rOpts)
-	// mux.Add(configuredOCIFS)
-	for _, src := range s {
+	for _, src := range server.Spec.Sources {
 		if src.Kubernetes != nil {
 			// TODO: selector
 			source, err := sources.NewKube(mgr, compiler)
@@ -167,6 +162,40 @@ func buildSources[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY]
 		}
 		if src.External != nil {
 			fsys, err := mux.Lookup(src.External.URL)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, sdksources.NewOnce(sources.NewFs(fsys, compiler)))
+		}
+		if src.Fs != nil {
+			u, err := url.Parse("file://" + src.Fs.Path)
+			if err != nil {
+				return nil, err
+			}
+			fsys, err := filefs.New(u)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, sdksources.NewOnce(sources.NewFs(fsys, compiler)))
+		}
+		if src.Oci != nil {
+			u, err := url.Parse(src.Oci.URL)
+			if err != nil {
+				return nil, err
+			}
+			kubernetes, err := kubernetes.NewForConfig(mgr.GetConfig())
+			if err != nil {
+				return nil, err
+			}
+			rOpts, nOpts, err := ocifs.RegistryOpts(
+				kubernetes.CoreV1().Secrets(server.Namespace),
+				src.Oci.AllowInsecureRegistry,
+				src.Oci.ImagePullSecrets...,
+			)
+			if err != nil {
+				return nil, err
+			}
+			fsys, err := ocifs.New(u, nOpts, rOpts)
 			if err != nil {
 				return nil, err
 			}

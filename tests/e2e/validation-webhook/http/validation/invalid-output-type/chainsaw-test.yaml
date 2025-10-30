@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: invalid-output-type
+spec:
+  steps: 
+  - try:
+    - create:
+        file: ./policy.yaml
+        expect:
+        - check:
+            ($error): |-
+              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "invalid-output-type" is invalid: spec.validations[0].expression: Invalid value: "'bye'\n": rule response output is expected to be of type envoy.service.auth.v3.CheckResponse

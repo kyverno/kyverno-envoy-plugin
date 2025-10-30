@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/playground/refs/heads/main/schemas/json/v3/validatingpolicy-policies.kyverno.io-v1alpha1.json
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: policy
+spec:
+  evaluation:
+    mode: HTTP
+  matchConditions:
+  - name: check-foo
+    expression: variables.foo
+  variables:
+  - name: foo
+    expression: >
+      true
+  validations:
+  - expression: >
+      http.response().status(200)

@@ -412,10 +412,10 @@ jobs:
         run:  |
           set -e
           chainsaw test tests/e2e/authz-server/http
-      # - name: Run Chainsaw Tests (validation-webhook)
-      #   run:  |
-      #     set -e
-      #     chainsaw test tests/e2e/validation-webhook
+      - name: Run Chainsaw Tests (validation-webhook)
+        run:  |
+          set -e
+          chainsaw test tests/e2e/validation-webhook/http
 
   required:
     needs:

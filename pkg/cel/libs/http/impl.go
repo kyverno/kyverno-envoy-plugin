@@ -24,17 +24,17 @@ func (c *impl) response(statusCode ref.Val) ref.Val {
 }
 
 func (c *impl) get_header_value(allHeaders ref.Val, header ref.Val) ref.Val {
-	if kv, err := utils.ConvertToNative[*KV](allHeaders); err != nil {
+	if kv, err := utils.ConvertToNative[KV](allHeaders); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[string](header); err != nil {
 		return types.WrapErr(err)
 	} else {
 		caser := cases.Title(language.Und) // turn all instances of a header to match a single case
-		v, exists := kv.inner[caser.String(header)]
+		v, exists := kv[caser.String(header)]
 		if exists {
 			return c.NativeToValue(v[0])
 		}
-		v, exists = kv.inner[header] // try to get the header directly
+		v, exists = kv[header] // try to get the header directly
 		if exists {
 			return c.NativeToValue(v[0])
 		}
@@ -43,17 +43,17 @@ func (c *impl) get_header_value(allHeaders ref.Val, header ref.Val) ref.Val {
 }
 
 func (c *impl) get_header_all(allHeaders ref.Val, header ref.Val) ref.Val {
-	if kv, err := utils.ConvertToNative[*KV](allHeaders); err != nil {
+	if kv, err := utils.ConvertToNative[KV](allHeaders); err != nil {
 		return types.WrapErr(err)
 	} else if header, err := utils.ConvertToNative[string](header); err != nil {
 		return types.WrapErr(err)
 	} else {
 		caser := cases.Title(language.Und)
-		v, exists := kv.inner[caser.String(header)]
+		v, exists := kv[caser.String(header)]
 		if exists {
 			return c.NativeToValue(v)
 		}
-		v, exists = kv.inner[header]
+		v, exists = kv[header]
 		if exists {
 			return c.NativeToValue(v)
 		}
@@ -70,11 +70,9 @@ func (c *impl) with_header(args ...ref.Val) ref.Val {
 		return types.WrapErr(err)
 	} else {
 		if r.Headers == nil {
-			r.Headers = &KV{
-				inner: make(map[string][]string),
-			}
+			r.Headers = KV{}
 		}
-		r.Headers.inner[k] = append(r.Headers.inner[k], v)
+		r.Headers[k] = append(r.Headers[k], v)
 		return c.NativeToValue(r)
 	}
 }

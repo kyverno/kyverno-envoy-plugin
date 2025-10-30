@@ -61,7 +61,7 @@ func writeErrResp(w http.ResponseWriter, err error) {
 
 func writeResponse(w http.ResponseWriter, resp *httpcel.Resp) {
 	if resp.Headers != nil {
-		for k, v := range resp.Headers.GetInnerMap() {
+		for k, v := range resp.Headers {
 			for _, val := range v {
 				w.Header().Set(k, val)
 			}

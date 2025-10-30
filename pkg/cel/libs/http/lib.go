@@ -17,7 +17,12 @@ func Lib() cel.EnvOption {
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		// register types
-		ext.NativeTypes(reflect.TypeFor[Req](), reflect.TypeFor[Resp](), reflect.TypeFor[KV](), ext.ParseStructTags(true)),
+		ext.NativeTypes(
+			reflect.TypeFor[Req](),
+			reflect.TypeFor[Resp](),
+			// reflect.TypeFor[KV](),
+			ext.ParseStructTags(true),
+		),
 		// extend environment with function overloads
 		c.extendEnv,
 	}

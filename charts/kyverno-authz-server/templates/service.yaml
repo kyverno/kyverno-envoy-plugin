@@ -13,14 +13,21 @@ spec:
   type: {{ .Values.service.type }}
   ports:
   - name: grpc
-    port: {{ .Values.service.port }}
+    port: {{ .Values.service.ports.grpc }}
     protocol: TCP
     {{- with .Values.service.appProtocol }}
     appProtocol: {{ . }}
     {{- end }}
     targetPort: grpc
-    {{- if and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePort)) }}
-    nodePort: {{ .Values.service.nodePort }}
+    {{- if and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePorts.grpc)) }}
+    nodePort: {{ .Values.service.nodePorts.grpc }}
+    {{- end }}
+  - name: http
+    port: {{ .Values.service.ports.http }}
+    protocol: TCP
+    targetPort: http
+    {{- if and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePorts.http)) }}
+    nodePort: {{ .Values.service.nodePorts.http }}
     {{- end }}
   selector:
     {{- include "kyverno-authz-server.labels.selector" . | nindent 4 }}

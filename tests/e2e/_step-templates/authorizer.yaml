@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/steptemplate-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: istio-policy
+spec:
+  try:
+  - create:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: http-srv
+          namespace: app
+          labels:
+            app: http-srv
+        spec:
+          ports:
+          - port: 80
+            targetPort: 80
+            name: http
+          selector:
+            app: http-srv
+  - create:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: http-srv
+          namespace: app
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: http-srv
+          template:
+            metadata:
+              labels:
+                app: http-srv
+            spec:
+              terminationGracePeriodSeconds: 0
+              containers:
+              - name: http-srv
+                image: aerosouund/http-authorizer:v0.1.0
+                args: ["--authorizer-addr", "http://kyverno-authz-server.kyverno.svc.cluster.local:9083/"]
+                imagePullPolicy: IfNotPresent
+                ports:
+                - name: http
+                  containerPort: 80
+  - sleep:
+      duration: 5s

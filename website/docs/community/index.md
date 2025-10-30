@@ -1,13 +1,13 @@
 # Community
 
-The Kyverno Envoy Plugin has a growing community and we would definitely love to see you join and contribute.
+The Kyverno Authz Server has a growing community and we would definitely love to see you join and contribute.
 
 Everyone is welcome to make suggestions, report bugs, open feature requests, contribute code or docs, participate in discussions, write blogs or anything that can benefit the project.
 
 ---
 
 <center>
-The Kyverno Envoy Plugin is built and maintained under the Kyverno umbrella but decisions are
+The Kyverno Authz Server is built and maintained under the Kyverno umbrella but decisions are
 <h3><b>Community driven</b></h3>
 <h3><b>Everyone's voice matters</b></h3>
 </center>
@@ -32,4 +32,4 @@ Please read the [contributing guide](https://github.com/kyverno/kyverno/blob/mai
 
 ## Adopters
 
-If you are using the Kyverno Envoy Plugin and want to share it publicly we always appreciate a bit of support. Pull requests to the [ADOPTERS LIST](https://github.com/kyverno/kyverno-envoy-plugin/blob/main/ADOPTERS.md) will put a smile on our faces :smile:
+If you are using the Kyverno Authz Server and want to share it publicly we always appreciate a bit of support. Pull requests to the [ADOPTERS LIST](https://github.com/kyverno/kyverno-envoy-plugin/blob/main/ADOPTERS.md) will put a smile on our faces :smile:

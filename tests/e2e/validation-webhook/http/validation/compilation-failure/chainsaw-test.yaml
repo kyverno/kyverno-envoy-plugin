@@ -11,6 +11,6 @@ spec:
         expect:
         - check:
             ($error): |-
-              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "compilation-failure" is invalid: spec.validations[0].expression: Invalid value: "envoy.Allowed() + 1\n": ERROR: <input>:1:17: found no matching overload for '_+_' applied to '(envoy.service.auth.v3.OkHttpResponse, int)'
+              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "compilation-failure" is invalid: spec.validations[0].expression: Invalid value: "envoy.Allowed() + 1\n": ERROR: <input>:1:17: found no matching overload for '_+_' applied to '(http.Resp, int)'
                | envoy.Allowed() + 1
                | ................^

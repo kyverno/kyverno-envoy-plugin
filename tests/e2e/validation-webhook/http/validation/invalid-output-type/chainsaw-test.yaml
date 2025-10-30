@@ -11,4 +11,4 @@ spec:
         expect:
         - check:
             ($error): |-
-              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "invalid-output-type" is invalid: spec.validations[0].expression: Invalid value: "'bye'\n": rule response output is expected to be of type envoy.service.auth.v3.CheckResponse
+              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "invalid-output-type" is invalid: spec.validations[0].expression: Invalid value: "'bye'\n": rule response output is expected to be of type http.Resp

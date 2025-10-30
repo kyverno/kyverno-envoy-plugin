@@ -43,9 +43,12 @@ type entry struct {
 }
 
 type reconciler struct {
-	client  client.Client
-	servers map[reconcile.Request]*entry
-	lock    *sync.Mutex
+	client        client.Client
+	servers       map[reconcile.Request]*entry
+	certFile      string
+	keyFile       string
+	nestedRequest bool
+	lock          *sync.Mutex
 }
 
 func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -200,7 +203,7 @@ func (r *reconciler) runHttpServer(req ctrl.Request, object v1alpha1.Authorizati
 		if err != nil {
 			return fmt.Errorf("failed to build engine source: %w", err)
 		}
-		http := http.NewServer(object.Spec.Type.HTTP.Address, dynclient, src, false)
+		http := http.NewServer(object.Spec.Type.HTTP.Address, dynclient, src, r.nestedRequest, r.certFile, r.keyFile)
 		group.StartWithContext(ctx, func(ctx context.Context) {
 			// grpc auth server
 			defer cancel()

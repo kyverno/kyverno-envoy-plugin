@@ -26,6 +26,9 @@ func Command() *cobra.Command {
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var leaderElection bool
 	var leaderElectionID string
+	var certFile string
+	var keyFile string
+	var nestedRequest bool
 	command := &cobra.Command{
 		Use:   "run",
 		Short: "Run authz-server controller",
@@ -55,6 +58,9 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
 	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
+	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
+	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
+	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }

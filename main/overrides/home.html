@@ -201,8 +201,15 @@
 				style="display: flex; flex-direction: column; justify-content: center; min-height: inherit;">
 				<div style="display: flex; justify-content: space-between; align-items: center;">
 					<div>
-						<h1><a href="https://kyverno.io">Kyverno</a> Envoy plugin</h1>
-						<h2>Policy based authorizations... in a mesh !</h2>
+						<h1>Kyverno Authz Server</h1>
+						<h3>
+							<ul>
+								<li>Programmable authz servers</li>
+								<li>Policy based authorizations</li>
+								<li>Compatible with HTTP proxies (Traefik, NGINX, ...)</li>
+								<li>Compatible with Envoy (Istio, kgateway, ...)</li>
+							</ul>
+						</h3>
 						<a href="{{ page.next_page.url | url }}" title="{{ page.next_page.title | striptags }}"
 							class="md-button md-button--primary">
 							Get started
@@ -232,8 +239,23 @@
 			<div class="md-content__inner md-typeset">
 				<header class="md-typeset">
 					<h1>
-						Overview (Istio)
+						Overview (Envoy / Istio)
 						<a href="#istio-use-case" class="headerlink" title="Permanent link"> ¶ </a>
+					</h1>
+				</header>
+				<div style="display: flex; justify-content: center; margin-top: 2rem;">
+					<img src="schemas/overview.svg" alt="" draggable="false"
+						style="border-radius: 0.5rem; border: 1px solid #333; filter: drop-shadow(0 0 0.75rem #555);" />
+				</div>
+			</div>
+	</section>
+	<section id="traefik-use-case" class="tx-container" style="min-height: 100vh;">
+		<div class="md-content md-grid" data-md-component="content">
+			<div class="md-content__inner md-typeset">
+				<header class="md-typeset">
+					<h1>
+						Overview (Traefik)
+						<a href="#traefik-use-case" class="headerlink" title="Permanent link"> ¶ </a>
 					</h1>
 				</header>
 				<div style="display: flex; justify-content: center; margin-top: 2rem;">

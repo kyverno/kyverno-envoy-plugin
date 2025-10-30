@@ -19,7 +19,7 @@ func NewServer(addr string, dyn dynamic.Interface, p engine.HTTPSource, nestedRe
 			dyn:           dyn,
 			nestedRequest: nestedRequest,
 		}
-		mux.Handle("POST /", http.HandlerFunc(a.NewHandler()))
+		mux.Handle("POST /", a.NewHandler())
 		// create server
 		s := &http.Server{
 			Addr:    addr,

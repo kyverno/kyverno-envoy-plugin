@@ -12,7 +12,10 @@ import (
 )
 
 func RunHttp(ctx context.Context, server *http.Server, certFile, keyFile string) error {
-	logger := ctrl.LoggerFrom(ctx).WithValues("address", server.Addr)
+	logger := ctrl.LoggerFrom(ctx).
+		WithValues("address", server.Addr).
+		WithValues("cert", certFile).
+		WithValues("key", keyFile)
 	defer logger.Info("HTTP Server stopped")
 	// track shutdown error
 	var shutdownErr error

@@ -2,8 +2,10 @@ INHERIT: ./mkdocs.base.yaml
 
 nav:
 - Home: index.md
-- Quick start:
+- Getting Started:
   - quick-start/index.md
+  - quick-start/install.md
+  - quick-start/completion.md
   - Envoy: quick-start/envoy.md
   - HTTP: quick-start/http.md
   - Sidecar Injector: quick-start/sidecar-injector.md
@@ -40,6 +42,11 @@ nav:
     - reference/commands/kyverno-envoy-plugin_serve_sidecar-injector.md
     - reference/commands/kyverno-envoy-plugin_serve_validation-webhook.md
     - reference/commands/kyverno-envoy-plugin_version.md
+    - reference/commands/kyverno-envoy-plugin_completion.md
+    - reference/commands/kyverno-envoy-plugin_completion_bash.md
+    - reference/commands/kyverno-envoy-plugin_completion_fish.md
+    - reference/commands/kyverno-envoy-plugin_completion_powershell.md
+    - reference/commands/kyverno-envoy-plugin_completion_zsh.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md

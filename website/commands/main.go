@@ -23,6 +23,10 @@ func main() {
 	}
 
 	root := root.Command()
+	root.InitDefaultHelpCmd()
+	root.InitDefaultCompletionCmd()
+	root = root.Root()
+
 	root.DisableAutoGenTag = true // stable, reproducible files (no timestamp footer)
 
 	switch *format {

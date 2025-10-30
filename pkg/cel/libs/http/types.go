@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	RequestType  = types.NewObjectType("http.Req")
+	RequestType  = types.NewObjectType("http.CheckRequest")
+	ResponseType = types.NewObjectType("http.CheckResponse")
 	KVType       = types.NewObjectType("http.KV")
-	ResponseType = types.NewObjectType("http.Resp")
 )
 
 type KV struct {
@@ -21,7 +21,7 @@ func (k *KV) GetInnerMap() map[string][]string {
 	return k.inner
 }
 
-type Req struct {
+type CheckRequest struct {
 	Method   string `cel:"method"`
 	Headers  *KV    `cel:"headers"`
 	Path     string `cel:"path"`
@@ -35,18 +35,18 @@ type Req struct {
 	RawBody  []byte `cel:"rawBody"`
 }
 
-type Resp struct {
+type CheckResponse struct {
 	Status  int    `cel:"status"`
 	Headers *KV    `cel:"headers"`
 	Body    string `cel:"body"`
 }
 
-func NewRequest(r *http.Request) (Req, error) {
+func NewRequest(r *http.Request) (CheckRequest, error) {
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		return Req{}, err
+		return CheckRequest{}, err
 	}
-	return Req{
+	return CheckRequest{
 		Method:   r.Method,
 		Headers:  &KV{inner: r.Header},
 		Path:     r.URL.Path,

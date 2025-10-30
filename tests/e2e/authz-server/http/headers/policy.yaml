@@ -13,5 +13,5 @@ spec:
   validations:
   - expression: >
       object.headers.Get("foo") == "bar"  
-        ?  http.Response().WithStatus(200)
-        :  http.Response().WithStatus(403).WithBody("the needed header was missing")
+        ?  http.Response(200)
+        :  http.Response(403).WithBody("the needed header was missing")

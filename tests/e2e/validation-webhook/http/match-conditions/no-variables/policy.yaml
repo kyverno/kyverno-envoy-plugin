@@ -15,4 +15,4 @@ spec:
       true
   validations:
   - expression: >
-      http.Response().WithStatus(200)
+      http.Response(200)

@@ -12,9 +12,15 @@ type impl struct {
 	types.Adapter
 }
 
-func (c *impl) response() ref.Val {
-	r := &Resp{}
-	return c.NativeToValue(r)
+func (c *impl) response(statusCode ref.Val) ref.Val {
+	if status, err := utils.ConvertToNative[int](statusCode); err != nil {
+		return types.WrapErr(err)
+	} else {
+		r := &Resp{
+			Status: status,
+		}
+		return c.NativeToValue(r)
+	}
 }
 
 func (c *impl) get_header_value(allHeaders ref.Val, header ref.Val) ref.Val {
@@ -52,17 +58,6 @@ func (c *impl) get_header_all(allHeaders ref.Val, header ref.Val) ref.Val {
 			return c.NativeToValue(v)
 		}
 		return c.NativeToValue([]string{})
-	}
-}
-
-func (c *impl) with_status(r ref.Val, status ref.Val) ref.Val {
-	if r, err := utils.ConvertToNative[*Resp](r); err != nil {
-		return types.WrapErr(err)
-	} else if statusCode, err := utils.ConvertToNative[int](status); err != nil {
-		return types.WrapErr(err)
-	} else {
-		r.Status = statusCode
-		return c.NativeToValue(r)
 	}
 }
 

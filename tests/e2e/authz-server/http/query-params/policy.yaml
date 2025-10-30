@@ -9,5 +9,5 @@ spec:
   validations:
   - expression: >
       object.queryParams.Get("foo") == "bar"  
-        ?  http.Response().WithStatus(200)
-        :  http.Response().WithStatus(403).WithBody("the needed query parameter was missing")
+        ?  http.Response(200)
+        :  http.Response(403).WithBody("the needed query parameter was missing")

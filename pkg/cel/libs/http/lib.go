@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
 )
 
@@ -35,16 +34,13 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 
 	libraryDecls := map[string][]cel.FunctionOpt{
 		"http.Response": {
-			cel.Overload("http_response", []*cel.Type{}, ResponseType, cel.FunctionBinding(func(values ...ref.Val) ref.Val { return impl.response() })),
+			cel.Overload("http_response", []*cel.Type{cel.IntType}, ResponseType, cel.UnaryBinding(impl.response)),
 		},
 		"WithHeader": {
 			cel.MemberOverload("with_header", []*cel.Type{ResponseType, cel.StringType, cel.StringType}, ResponseType, cel.FunctionBinding(impl.with_header)),
 		},
 		"WithBody": {
 			cel.MemberOverload("with_body", []*cel.Type{ResponseType, cel.StringType}, ResponseType, cel.BinaryBinding(impl.with_body)),
-		},
-		"WithStatus": {
-			cel.MemberOverload("with_status", []*cel.Type{ResponseType, cel.IntType}, ResponseType, cel.BinaryBinding(impl.with_status)),
 		},
 		"Get": {
 			cel.MemberOverload("get_header_value", []*cel.Type{KVType, cel.StringType}, cel.StringType, cel.BinaryBinding(impl.get_header_value)),

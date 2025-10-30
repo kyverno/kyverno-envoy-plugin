@@ -275,7 +275,7 @@ jobs:
       - name: Run Chainsaw Tests
         run: chainsaw test tests/e2e/sidecar-injector
 
-  e2e-authz-server:
+  e2e-authz-server-envoy:
     runs-on: ubuntu-latest
     needs: [ prepare-images ]
     strategy:
@@ -340,16 +340,88 @@ jobs:
       - name: Run Chainsaw Tests (authz-server)
         run:  |
           set -e
-          chainsaw test tests/e2e/authz-server
+          chainsaw test tests/e2e/authz-server/envoy
       - name: Run Chainsaw Tests (validation-webhook)
         run:  |
           set -e
-          chainsaw test tests/e2e/validation-webhook
+          chainsaw test tests/e2e/validation-webhook/envoy
+
+  e2e-authz-server-http:
+    runs-on: ubuntu-latest
+    needs: [ prepare-images ]
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s-version: [v1.31.12, v1.32.8, v1.33.4, v1.34.0]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Setup go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Install helm
+        id: helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+      - name: Install cosign
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      - name: Install chainsaw
+        uses: kyverno/action-install-chainsaw@6354895e0f99ab23d3e38d85cf5c71b5dc21d727 # v0.2.13
+        with:
+          verify: true
+      - name: Download image archive
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: image.tar
+      - name: Create kind cluster
+        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+        with:
+          node_image: kindest/node:${{ matrix.k8s-version }}
+          cluster_name: kind
+      - name: Load image archive
+        run: |
+          set -e
+          make kind-load-archive
+      - name: Setup istio
+        run: |
+          set -e
+          export HELM=${{ steps.helm.outputs.helm-path }}
+          KYVERNO_AUTHZ_SERVICE=kyverno-authz-server.kyverno.svc.cluster.local make install-istio
+      - name: Setup cert-manager
+        run: |
+          set -e
+          export HELM=${{ steps.helm.outputs.helm-path }}
+          make install-cert-manager install-cluster-issuer
+      - name: Install VPOL
+        run: |
+          set -e
+          make install-vpol
+      - name: Install chart
+        run: |
+          set -e
+          export HELM=${{ steps.helm.outputs.helm-path }}
+          make deploy-kyverno-authz-server
+      - name: Install sample app
+        run: |
+          set -e
+          kubectl create ns app
+          kubectl label namespace app istio-injection=enabled
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.24/samples/httpbin/httpbin.yaml -n app
+      - name: Run Chainsaw Tests (authz-server)
+        run:  |
+          set -e
+          chainsaw test tests/e2e/authz-server/http
+      # - name: Run Chainsaw Tests (validation-webhook)
+      #   run:  |
+      #     set -e
+      #     chainsaw test tests/e2e/validation-webhook
 
   required:
     needs:
       - check-actions
-      - e2e-authz-server
+      - e2e-authz-server-envoy
+      - e2e-authz-server-http
       - e2e-sidecar-injector
       - golangci-lint
       - prepare-images

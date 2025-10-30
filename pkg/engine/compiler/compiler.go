@@ -53,7 +53,6 @@ func (c *compiler[DATA, IN, OUT]) compiledEnvironment(policy *vpol.ValidatingPol
 		return nil, nil, nil, append(allErrs, field.InternalError(nil, err))
 	}
 	var objectKey cel.EnvOption
-
 	switch policy.Spec.EvaluationMode() {
 	case v1alpha1.EvaluationModeEnvoy:
 		objectKey = cel.Variable(ObjectKey, envoy.CheckRequest)
@@ -142,7 +141,7 @@ func (c *compiler[DATA, IN, OUT]) compileAuthorization(path *field.Path, evalMod
 			}
 		case v1alpha1.EvaluationModeHTTP:
 			if !ast.OutputType().IsExactType(httpauth.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
-				msg := fmt.Sprintf("rule response output is expected to be of type %s", envoy.CheckResponse.TypeName())
+				msg := fmt.Sprintf("rule response output is expected to be of type %s", httpauth.ResponseType.TypeName())
 				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 			}
 		}

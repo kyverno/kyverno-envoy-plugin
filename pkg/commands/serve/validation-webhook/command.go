@@ -78,7 +78,7 @@ func Command() *cobra.Command {
 							ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Validating policy compilation error")
 							return err
 						}
-						return field.ErrorList{field.InternalError(nil, fmt.Errorf("invalid policy type passed"))}
+						return nil
 					}
 					v := validation.NewValidator(vpolCompileFunc)
 					if err := ctrl.NewWebhookManagedBy(mgr).For(&vpol.ValidatingPolicy{}).WithValidator(v).Complete(); err != nil {

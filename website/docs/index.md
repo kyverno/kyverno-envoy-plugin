@@ -1,4 +1,4 @@
 ---
 template: home.html
-title: Kyverno Envoy Plugin - Policy based authz!
+title: Kyverno Authz Server - Policy based authz!
 ---

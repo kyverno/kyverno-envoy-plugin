@@ -1,7 +1,7 @@
 # site
-site_name: Kyverno Envoy Plugin
+site_name: Kyverno Authz Server
 site_url: https://kyverno.github.io/kyverno-envoy-plugin/
-site_description: Kyverno based authz in a mesh
+site_description: Kyverno programmable, policy-based authz servers
 
 # repo
 repo_name: kyverno/kyverno-envoy-plugin

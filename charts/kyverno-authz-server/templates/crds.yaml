@@ -61,17 +61,6 @@ spec:
                   maxProperties: 1
                   minProperties: 1
                   properties:
-                    external:
-                      description: ExternalSource defines an external policy source.
-                      properties:
-                        url:
-                          description: |-
-                            URL is the URL of the external policy source
-                            Supported schemes are: file://, oci://, https://, etc
-                          type: string
-                      required:
-                      - url
-                      type: object
                     fs:
                       description: |-
                         FsPolicySource defines the configuration for loading a policy
@@ -84,6 +73,20 @@ spec:
                           type: string
                       required:
                       - path
+                      type: object
+                    git:
+                      description: |-
+                        GitPolicySource defines the configuration for retrieving a policy
+                        from a Git repository.
+                      properties:
+                        url:
+                          description: |-
+                            URL specifies the Git repository location that contains
+                            the policy files or definitions. Supported formats typically
+                            include HTTPS or SSH Git URLs.
+                          type: string
+                      required:
+                      - url
                       type: object
                     kubernetes:
                       description: KubernetesPolicySource defines a reference to a
@@ -226,6 +229,10 @@ spec:
                   http:
                     description: HTTP configures a custom HTTP authorization server.
                     properties:
+                      address:
+                        description: Address is the network address the server listens
+                          on.
+                        type: string
                       modifiers:
                         description: Modifiers to apply to requests and responses.
                         properties:
@@ -238,9 +245,8 @@ spec:
                               the outgoing response.
                             type: string
                         type: object
-                      port:
-                        description: Port is the port the server listens on.
-                        type: integer
+                    required:
+                    - address
                     type: object
                 type: object
             required:

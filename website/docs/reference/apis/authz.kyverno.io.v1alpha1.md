@@ -35,9 +35,9 @@ auto_generated: true
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `kubernetes` | [`KubernetesPolicySource`](#authz-kyverno-io-v1alpha1-KubernetesPolicySource) | :white_check_mark: |  | *No description provided.* |
-| `external` | [`ExternalPolicySource`](#authz-kyverno-io-v1alpha1-ExternalPolicySource) | :white_check_mark: |  | *No description provided.* |
-| `oci` | [`OciPolicySource`](#authz-kyverno-io-v1alpha1-OciPolicySource) | :white_check_mark: |  | *No description provided.* |
 | `fs` | [`FsPolicySource`](#authz-kyverno-io-v1alpha1-FsPolicySource) | :white_check_mark: |  | *No description provided.* |
+| `git` | [`GitPolicySource`](#authz-kyverno-io-v1alpha1-GitPolicySource) | :white_check_mark: |  | *No description provided.* |
+| `oci` | [`OciPolicySource`](#authz-kyverno-io-v1alpha1-OciPolicySource) | :white_check_mark: |  | *No description provided.* |
 
 ## AuthorizationServerSpec     {#authz-kyverno-io-v1alpha1-AuthorizationServerSpec}
 
@@ -82,19 +82,6 @@ Only one of the fields should be set at a time (mutually exclusive).</p>
 | `network` | `string` |  |  | <p>Network is the network the server listens on.</p> |
 | `address` | `string` | :white_check_mark: |  | <p>Address is the network address the server listens on.</p> |
 
-## ExternalPolicySource     {#authz-kyverno-io-v1alpha1-ExternalPolicySource}
-
-**Appears in:**
-    
-- [AuthorizationServerPolicySource](#authz-kyverno-io-v1alpha1-AuthorizationServerPolicySource)
-
-<p>ExternalSource defines an external policy source.</p>
-
-
-| Field | Type | Required | Inline | Description |
-|---|---|---|---|---|
-| `url` | `string` | :white_check_mark: |  | <p>URL is the URL of the external policy source Supported schemes are: file://, oci://, https://, etc</p> |
-
 ## FsPolicySource     {#authz-kyverno-io-v1alpha1-FsPolicySource}
 
 **Appears in:**
@@ -108,6 +95,20 @@ from a local or mounted filesystem path.</p>
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `path` | `string` | :white_check_mark: |  | <p>Path specifies the filesystem location where the policy files are stored.</p> |
+
+## GitPolicySource     {#authz-kyverno-io-v1alpha1-GitPolicySource}
+
+**Appears in:**
+    
+- [AuthorizationServerPolicySource](#authz-kyverno-io-v1alpha1-AuthorizationServerPolicySource)
+
+<p>GitPolicySource defines the configuration for retrieving a policy
+from a Git repository.</p>
+
+
+| Field | Type | Required | Inline | Description |
+|---|---|---|---|---|
+| `url` | `string` | :white_check_mark: |  | <p>URL specifies the Git repository location that contains the policy files or definitions. Supported formats typically include HTTPS or SSH Git URLs.</p> |
 
 ## Group     {#authz-kyverno-io-v1alpha1-Group}
 
@@ -144,7 +145,7 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
-| `port` | `int` | :white_check_mark: |  | <p>Port is the port the server listens on.</p> |
+| `address` | `string` | :white_check_mark: |  | <p>Address is the network address the server listens on.</p> |
 | `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) | :white_check_mark: |  | <p>Modifiers to apply to requests and responses.</p> |
 
 ## Kind     {#authz-kyverno-io-v1alpha1-Kind}

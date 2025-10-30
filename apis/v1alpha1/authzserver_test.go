@@ -54,7 +54,7 @@ func TestAuthorizationServerSpec(t *testing.T) {
 			spec: AuthorizationServerSpec{
 				Sources: []AuthorizationServerPolicySource{
 					{
-						External: &ExternalPolicySource{
+						Git: &GitPolicySource{
 							URL: "https://example.com/policy.bundle",
 						},
 					},
@@ -63,7 +63,7 @@ func TestAuthorizationServerSpec(t *testing.T) {
 			expect: AuthorizationServerSpec{
 				Sources: []AuthorizationServerPolicySource{
 					{
-						External: &ExternalPolicySource{
+						Git: &GitPolicySource{
 							URL: "https://example.com/policy.bundle",
 						},
 					},
@@ -109,7 +109,7 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 			name: "HTTP type set",
 			typ: AuthorizationServerType{
 				HTTP: &HTTPAuthorizationServer{
-					Port: 9090,
+					Address: ":9090",
 					Modifiers: &Modifiers{
 						Request:  "req-script",
 						Response: "resp-script",
@@ -123,8 +123,8 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 				if typ.Envoy != nil {
 					t.Errorf("Envoy should be nil when HTTP is set")
 				}
-				if typ.HTTP.Port != 9090 {
-					t.Errorf("unexpected Port: %d", typ.HTTP.Port)
+				if typ.HTTP.Address != ":9090" {
+					t.Errorf("unexpected Port: %s", typ.HTTP.Address)
 				}
 				if typ.HTTP.Modifiers == nil || typ.HTTP.Modifiers.Request != "req-script" || typ.HTTP.Modifiers.Response != "resp-script" {
 					t.Errorf("unexpected Modifiers: %+v", typ.HTTP.Modifiers)
@@ -147,7 +147,7 @@ func TestAuthorizationServerTypeField(t *testing.T) {
 					Address: ":8080",
 				},
 				HTTP: &HTTPAuthorizationServer{
-					Port: 9999,
+					Address: ":9999",
 				},
 			},
 			expect: func(t *testing.T, typ AuthorizationServerType) {
@@ -173,7 +173,7 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 	}
 	httpType := AuthorizationServerType{
 		HTTP: &HTTPAuthorizationServer{
-			Port: 9000,
+			Address: ":9000",
 		},
 	}
 
@@ -205,7 +205,7 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 		Type: httpType,
 		Sources: []AuthorizationServerPolicySource{
 			{
-				External: &ExternalPolicySource{
+				Git: &GitPolicySource{
 					URL: "https://host.net/policy",
 				},
 			},
@@ -217,8 +217,8 @@ func TestAuthorizationServerSpec_TypeFieldUsage(t *testing.T) {
 	if specHTTP.Type.Envoy != nil {
 		t.Errorf("Envoy field should not be set in Type")
 	}
-	if specHTTP.Type.HTTP.Port != 9000 {
-		t.Errorf("unexpected HTTP Port: %d", specHTTP.Type.HTTP.Port)
+	if specHTTP.Type.HTTP.Address != ":9000" {
+		t.Errorf("unexpected HTTP Port: %s", specHTTP.Type.HTTP.Address)
 	}
 }
 
@@ -247,7 +247,7 @@ func TestAuthorizationServerRoundTrip(t *testing.T) {
 					},
 				},
 				{
-					External: &ExternalPolicySource{
+					Git: &GitPolicySource{
 						URL: "oci://myrepo/mybundle:v1",
 					},
 				},
@@ -293,7 +293,7 @@ func TestPolicyObjectReference_MutualExclusion(t *testing.T) {
 }
 
 func TestExternalPolicySource(t *testing.T) {
-	src := ExternalPolicySource{
+	src := GitPolicySource{
 		URL: "file:///etc/policies/bundle.tar.gz",
 	}
 	if src.URL == "" {

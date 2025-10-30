@@ -47,8 +47,8 @@ type EnvoyAuthorizationServer struct {
 
 // HTTPAuthorizationServer defines the HTTP authorization server configuration.
 type HTTPAuthorizationServer struct {
-	// Port is the port the server listens on.
-	Port int `json:"port,omitempty"`
+	// Address is the network address the server listens on.
+	Address string `json:"address"`
 	// Modifiers to apply to requests and responses.
 	Modifiers *Modifiers `json:"modifiers,omitempty"`
 }
@@ -66,9 +66,9 @@ type Modifiers struct {
 // +kubebuilder:validation:MaxProperties=1
 type AuthorizationServerPolicySource struct {
 	Kubernetes *KubernetesPolicySource `json:"kubernetes,omitempty"`
-	External   *ExternalPolicySource   `json:"external,omitempty"`
-	Oci        *OciPolicySource        `json:"oci,omitempty"`
 	Fs         *FsPolicySource         `json:"fs,omitempty"`
+	Git        *GitPolicySource        `json:"git,omitempty"`
+	Oci        *OciPolicySource        `json:"oci,omitempty"`
 }
 
 // PolicyObjectReference represents a reference to a policy resource.
@@ -101,11 +101,20 @@ type KubernetesPolicySource struct {
 	PolicyRef *PolicyObjectReference `json:"policyRef,omitempty"`
 }
 
-// ExternalSource defines an external policy source.
-type ExternalPolicySource struct {
-	// URL is the URL of the external policy source
-	// Supported schemes are: file://, oci://, https://, etc
-	// +required
+// FsPolicySource defines the configuration for loading a policy
+// from a local or mounted filesystem path.
+type FsPolicySource struct {
+	// Path specifies the filesystem location where the policy
+	// files are stored.
+	Path string `json:"path"`
+}
+
+// GitPolicySource defines the configuration for retrieving a policy
+// from a Git repository.
+type GitPolicySource struct {
+	// URL specifies the Git repository location that contains
+	// the policy files or definitions. Supported formats typically
+	// include HTTPS or SSH Git URLs.
 	URL string `json:"url"`
 }
 
@@ -127,14 +136,6 @@ type OciPolicySource struct {
 	// These are typically referenced in Kubernetes to pull images
 	// from private registries.
 	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
-}
-
-// FsPolicySource defines the configuration for loading a policy
-// from a local or mounted filesystem path.
-type FsPolicySource struct {
-	// Path specifies the filesystem location where the policy
-	// files are stored.
-	Path string `json:"path"`
 }
 
 // +kubebuilder:object:root=true

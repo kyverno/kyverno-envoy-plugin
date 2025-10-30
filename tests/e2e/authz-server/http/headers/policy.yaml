@@ -13,5 +13,5 @@ spec:
   validations:
   - expression: >
       object.headers.get("foo") == "bar"  
-        ?  http.response().status(200)
-        :  http.response().status(403).withBody("the needed header was missing")
+        ?  http.response(200)
+        :  http.response(403).withBody("the needed header was missing")

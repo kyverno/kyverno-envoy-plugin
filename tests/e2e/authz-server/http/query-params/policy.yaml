@@ -9,5 +9,5 @@ spec:
   validations:
   - expression: >
       object.queryParams.get("foo") == "bar"  
-        ?  http.response().status(200)
-        :  http.response().status(403).withBody("the needed query parameter was missing")
+        ?  http.response(200)
+        :  http.response(403).withBody("the needed query parameter was missing")

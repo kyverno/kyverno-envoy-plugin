@@ -45,9 +45,12 @@ type entry struct {
 }
 
 type reconciler struct {
-	client  client.Client
-	servers map[reconcile.Request]*entry
-	lock    *sync.Mutex
+	client        client.Client
+	servers       map[reconcile.Request]*entry
+	certFile      string
+	keyFile       string
+	nestedRequest bool
+	lock          *sync.Mutex
 }
 
 func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -221,6 +224,8 @@ func (r *reconciler) runHttpServer(req ctrl.Request, object v1alpha1.Authorizati
 			NestedRequest:    false,
 			InputExpression:  object.Spec.Type.HTTP.Modifiers.Request,
 			OutputExpression: object.Spec.Type.HTTP.Modifiers.Response,
+			CertFile:         r.certFile,
+			KeyFile:          r.keyFile,
 		}
 		http := http.NewServer(httpConfig, src, dynclient)
 		group.StartWithContext(ctx, func(ctx context.Context) {

@@ -16,7 +16,9 @@ func Lib() cel.EnvOption {
 
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
+		// register types
 		ext.NativeTypes(reflect.TypeFor[Req](), reflect.TypeFor[Resp](), reflect.TypeFor[KV](), ext.ParseStructTags(true)),
+		// extend environment with function overloads
 		c.extendEnv,
 	}
 }
@@ -31,38 +33,22 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	}
 
 	libraryDecls := map[string][]cel.FunctionOpt{
-		"get": {
-			cel.MemberOverload("get_header_value",
-				[]*cel.Type{KVType, cel.StringType},
-				cel.StringType,
-				cel.BinaryBinding(impl.get_header_value),
-			)},
-		"getAll": {
-			cel.MemberOverload("get_header_all",
-				[]*cel.Type{KVType, cel.StringType},
-				cel.ListType(cel.StringType),
-				cel.BinaryBinding(impl.get_header_all),
-			)},
-		"http.response": {
-			cel.Overload("http_response",
-				[]*cel.Type{cel.IntType},
-				ResponseType,
-				cel.UnaryBinding(impl.response),
-			)},
-		"withHeader": {
-			cel.MemberOverload("with_header",
-				[]*cel.Type{ResponseType, cel.StringType, cel.StringType},
-				ResponseType,
-				cel.FunctionBinding(impl.with_header),
-			)},
-		"withBody": {
-			cel.MemberOverload("with_body",
-				[]*cel.Type{ResponseType, cel.StringType},
-				ResponseType,
-				cel.BinaryBinding(impl.with_body),
-			)},
+		"http.Response": {
+			cel.Overload("http_response", []*cel.Type{cel.IntType}, ResponseType, cel.UnaryBinding(impl.response)),
+		},
+		"WithHeader": {
+			cel.MemberOverload("with_header", []*cel.Type{ResponseType, cel.StringType, cel.StringType}, ResponseType, cel.FunctionBinding(impl.with_header)),
+		},
+		"WithBody": {
+			cel.MemberOverload("with_body", []*cel.Type{ResponseType, cel.StringType}, ResponseType, cel.BinaryBinding(impl.with_body)),
+		},
+		"Get": {
+			cel.MemberOverload("get_header_value", []*cel.Type{KVType, cel.StringType}, cel.StringType, cel.BinaryBinding(impl.get_header_value)),
+		},
+		"GetAll": {
+			cel.MemberOverload("get_header_all", []*cel.Type{KVType, cel.StringType}, cel.ListType(cel.StringType), cel.BinaryBinding(impl.get_header_all)),
+		},
 	}
-
 	// create env options corresponding to our function overloads
 	options := []cel.EnvOption{}
 	for name, overloads := range libraryDecls {

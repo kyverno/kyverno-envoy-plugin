@@ -8,4 +8,4 @@ spec:
     mode: HTTP
   validations:
   - expression: >
-      http.response(403)
+      http.Response(403)

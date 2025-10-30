@@ -15,4 +15,4 @@ spec:
       true
   validations:
   - expression: >
-      http.response(200)
+      http.Response(200)

@@ -10,7 +10,6 @@ import (
 var (
 	RequestType  = types.NewObjectType("http.CheckRequest")
 	ResponseType = types.NewObjectType("http.CheckResponse")
-	// KVType       = types.NewObjectType("http.KV")
 )
 
 type Header = map[string][]string

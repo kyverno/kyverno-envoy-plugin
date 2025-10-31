@@ -17,7 +17,11 @@ func Lib() cel.EnvOption {
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		// register types
-		ext.NativeTypes(reflect.TypeFor[CheckRequest](), reflect.TypeFor[CheckResponse](), reflect.TypeFor[KV](), ext.ParseStructTags(true)),
+		ext.NativeTypes(
+			reflect.TypeFor[CheckRequest](),
+			reflect.TypeFor[CheckResponse](),
+			ext.ParseStructTags(true),
+		),
 		// extend environment with function overloads
 		c.extendEnv,
 	}
@@ -41,12 +45,6 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 		},
 		"WithBody": {
 			cel.MemberOverload("with_body", []*cel.Type{ResponseType, cel.StringType}, ResponseType, cel.BinaryBinding(impl.with_body)),
-		},
-		"Get": {
-			cel.MemberOverload("get_header_value", []*cel.Type{KVType, cel.StringType}, cel.StringType, cel.BinaryBinding(impl.get_header_value)),
-		},
-		"GetAll": {
-			cel.MemberOverload("get_header_all", []*cel.Type{KVType, cel.StringType}, cel.ListType(cel.StringType), cel.BinaryBinding(impl.get_header_all)),
 		},
 	}
 	// create env options corresponding to our function overloads

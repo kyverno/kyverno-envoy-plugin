@@ -12,6 +12,6 @@ spec:
       object.path.startsWith("/get")
   validations:
   - expression: >
-      object.headers.Get("foo") == "bar"  
+      "bar" in object.header[?"Foo"].orValue([])
         ?  http.Response(200)
         :  http.Response(403).WithBody("the needed header was missing")

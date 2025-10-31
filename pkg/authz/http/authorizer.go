@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/cel-go/cel"
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"k8s.io/client-go/dynamic"
@@ -15,6 +16,8 @@ import (
 type authorizer struct {
 	provider      engine.HTTPSource
 	dyn           dynamic.Interface
+	inputProgram  cel.Program
+	outputProgram cel.Program
 	nestedRequest bool
 }
 
@@ -29,7 +32,6 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		r = req
 	}
-
 	pols, err := a.provider.Load(context.Background())
 	if err != nil {
 		writeErrResp(w, err)
@@ -40,6 +42,22 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeErrResp(w, err)
 		return
 	}
+	if a.inputProgram != nil {
+		out, _, err := a.inputProgram.Eval(map[string]any{
+			"object": &httpReq,
+		})
+		if err != nil {
+			writeErrResp(w, err)
+			return
+		}
+		if out.Value() != nil {
+			out, ok := out.Value().(*httpcel.CheckRequest)
+			if ok && out != nil {
+				httpReq = *out
+			}
+		}
+	}
+	var result *httpcel.CheckResponse
 	for _, pol := range pols {
 		resp, err := pol.Evaluate(context.Background(), a.dyn, &httpReq)
 		if err != nil {
@@ -48,25 +66,26 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		// write the first valid policy response and exit
 		if resp != nil {
-			writeResponse(w, resp)
-			return
+			result = resp
+			break
 		}
+	}
+	if result == nil {
+		result = &httpcel.CheckResponse{}
+	}
+	_, _, err = a.outputProgram.Eval(map[string]any{
+		"object": result,
+		"writer": httpcel.ResponseWriter{
+			ResponseWriter: w,
+		},
+	})
+	if err != nil {
+		writeErrResp(w, err)
+		return
 	}
 }
 
 func writeErrResp(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprint(w, err.Error()) //nolint:errcheck
-}
-
-func writeResponse(w http.ResponseWriter, resp *httpcel.CheckResponse) {
-	if resp.Header != nil {
-		for k, v := range resp.Header {
-			for _, val := range v {
-				w.Header().Set(k, val)
-			}
-		}
-	}
-	w.WriteHeader(resp.Status)
-	fmt.Fprint(w, resp.Body) //nolint:errcheck
 }

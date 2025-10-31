@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
 )
 
@@ -38,20 +39,23 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	}
 
 	libraryDecls := map[string][]cel.FunctionOpt{
-		"http.Response": {
-			cel.Overload("http_response", []*cel.Type{cel.IntType}, ResponseType, cel.UnaryBinding(impl.response)),
+		"http.Allowed": {
+			cel.Overload("http_allow", []*cel.Type{}, ResponseType, cel.FunctionBinding(func(values ...ref.Val) ref.Val { return impl.allowed() })),
 		},
-		"WithHeader": {
-			cel.MemberOverload("with_header", []*cel.Type{ResponseType, cel.StringType, cel.StringType}, ResponseType, cel.FunctionBinding(impl.with_header)),
-		},
-		"WithBody": {
-			cel.MemberOverload("with_body", []*cel.Type{ResponseType, cel.StringType}, ResponseType, cel.BinaryBinding(impl.with_body)),
+		"http.Denied": {
+			cel.Overload("http_deny", []*cel.Type{cel.StringType}, ResponseType, cel.UnaryBinding(impl.denied)),
 		},
 		"Header": {
 			cel.MemberOverload("get_header", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_header)),
 		},
 		"QueryParam": {
 			cel.MemberOverload("get_queryparam", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_queryparam)),
+		},
+		"Write": {
+			cel.MemberOverload("write", []*cel.Type{ResponseWriterType, cel.BytesType}, ResponseWriterType, cel.BinaryBinding(impl.write)),
+		},
+		"WriteHeader": {
+			cel.MemberOverload("write_header", []*cel.Type{ResponseWriterType, cel.IntType}, ResponseWriterType, cel.BinaryBinding(impl.write_header)),
 		},
 	}
 	// create env options corresponding to our function overloads

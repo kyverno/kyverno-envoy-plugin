@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	RequestType  = types.NewObjectType("http.CheckRequest")
-	ResponseType = types.NewObjectType("http.CheckResponse")
+	RequestType        = types.NewObjectType("http.CheckRequest")
+	ResponseType       = types.NewObjectType("http.CheckResponse")
+	ResponseWriterType = types.NewOpaqueType("http.ResponseWriter")
 )
 
 type Header = map[string][]string
@@ -32,9 +33,14 @@ type CheckRequest struct {
 }
 
 type CheckResponse struct {
-	Status int                 `cel:"status"`
-	Header map[string][]string `cel:"header"`
-	Body   string              `cel:"body"`
+	Reason string `cel:"reason"`
+	// Status int                 `cel:"status"`
+	// Header map[string][]string `cel:"header"`
+	// Body   string              `cel:"body"`
+}
+
+type ResponseWriter struct {
+	http.ResponseWriter
 }
 
 func NewRequest(r *http.Request) (CheckRequest, error) {

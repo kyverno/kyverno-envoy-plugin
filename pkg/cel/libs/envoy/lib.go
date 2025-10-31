@@ -37,7 +37,6 @@ func (c *lib) CompileOptions() []cel.EnvOption {
 			(*status.Status)(nil),
 			(*structpb.Struct)(nil),
 		),
-		// ext.NativeTypes(ext.ParseStructTags(true), reflect.TypeFor[DeniedResponse](), reflect.TypeFor[OkResponse]()),
 		// extend environment with function overloads
 		c.extendEnv,
 	}

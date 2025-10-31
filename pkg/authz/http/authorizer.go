@@ -59,9 +59,9 @@ func writeErrResp(w http.ResponseWriter, err error) {
 	fmt.Fprint(w, err.Error()) //nolint:errcheck
 }
 
-func writeResponse(w http.ResponseWriter, resp *httpcel.Resp) {
-	if resp.Headers != nil {
-		for k, v := range resp.Headers.GetInnerMap() {
+func writeResponse(w http.ResponseWriter, resp *httpcel.CheckResponse) {
+	if resp.Header != nil {
+		for k, v := range resp.Header {
 			for _, val := range v {
 				w.Header().Set(k, val)
 			}

@@ -8,55 +8,51 @@ import (
 )
 
 var (
-	RequestType  = types.NewObjectType("http.Req")
-	KVType       = types.NewObjectType("http.KV")
-	ResponseType = types.NewObjectType("http.Resp")
+	RequestType  = types.NewObjectType("http.CheckRequest")
+	ResponseType = types.NewObjectType("http.CheckResponse")
 )
 
-type KV struct {
-	inner map[string][]string `cel:"inner"`
+type Header = map[string][]string
+type Query = map[string][]string
+
+type CheckRequest struct {
+	// from request
+	Method        string              `cel:"method"`
+	Header        map[string][]string `cel:"header"`
+	Host          string              `cel:"host"`
+	Protocol      string              `cel:"protocol"`
+	ContentLength int64               `cel:"contentLength"`
+	Body          string              `cel:"body"`
+	RawBody       []byte              `cel:"rawBody"`
+	// from url
+	Scheme   string              `cel:"scheme"`
+	Path     string              `cel:"path"`
+	Query    map[string][]string `cel:"query"`
+	Fragment string              `cel:"fragment"`
 }
 
-func (k *KV) GetInnerMap() map[string][]string {
-	return k.inner
+type CheckResponse struct {
+	Status int                 `cel:"status"`
+	Header map[string][]string `cel:"header"`
+	Body   string              `cel:"body"`
 }
 
-type Req struct {
-	Method   string `cel:"method"`
-	Headers  *KV    `cel:"headers"`
-	Path     string `cel:"path"`
-	Host     string `cel:"host"`
-	Scheme   string `cel:"scheme"`
-	Query    *KV    `cel:"queryParams"`
-	Fragment string `cel:"fragment"`
-	Size     int64  `cel:"size"`
-	Protocol string `cel:"protocol"`
-	Body     string `cel:"body"`
-	RawBody  []byte `cel:"rawBody"`
-}
-
-type Resp struct {
-	Status  int    `cel:"status"`
-	Headers *KV    `cel:"headers"`
-	Body    string `cel:"body"`
-}
-
-func NewRequest(r *http.Request) (Req, error) {
+func NewRequest(r *http.Request) (CheckRequest, error) {
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		return Req{}, err
+		return CheckRequest{}, err
 	}
-	return Req{
-		Method:   r.Method,
-		Headers:  &KV{inner: r.Header},
-		Path:     r.URL.Path,
-		Host:     r.Host,
-		Protocol: r.Proto,
-		RawBody:  bodyBytes,
-		Body:     string(bodyBytes),
-		Query:    &KV{inner: r.URL.Query()},
-		Size:     int64(len(bodyBytes)),
-		Fragment: r.URL.Fragment,
-		Scheme:   r.URL.Scheme,
+	return CheckRequest{
+		Method:        r.Method,
+		Header:        r.Header,
+		Path:          r.URL.Path,
+		Host:          r.Host,
+		Protocol:      r.Proto,
+		RawBody:       bodyBytes,
+		Body:          string(bodyBytes),
+		Query:         r.URL.Query(),
+		ContentLength: int64(len(bodyBytes)),
+		Fragment:      r.URL.Fragment,
+		Scheme:        r.URL.Scheme,
 	}, nil
 }

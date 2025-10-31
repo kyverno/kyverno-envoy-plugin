@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
 )
 
@@ -45,6 +46,12 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 		},
 		"WithBody": {
 			cel.MemberOverload("with_body", []*cel.Type{ResponseType, cel.StringType}, ResponseType, cel.BinaryBinding(impl.with_body)),
+		},
+		"Header": {
+			cel.MemberOverload("get_header", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_header)),
+		},
+		"QueryParam": {
+			cel.MemberOverload("get_queryparam", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_queryparam)),
 		},
 	}
 	// create env options corresponding to our function overloads

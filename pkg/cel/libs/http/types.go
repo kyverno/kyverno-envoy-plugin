@@ -10,29 +10,32 @@ import (
 var (
 	RequestType  = types.NewObjectType("http.CheckRequest")
 	ResponseType = types.NewObjectType("http.CheckResponse")
-	KVType       = types.NewObjectType("http.KV")
+	// KVType       = types.NewObjectType("http.KV")
 )
 
-type KV map[string][]string
+type Header = map[string][]string
+type Query = map[string][]string
 
 type CheckRequest struct {
-	Method   string `cel:"method"`
-	Headers  KV     `cel:"headers"`
-	Path     string `cel:"path"`
-	Host     string `cel:"host"`
-	Scheme   string `cel:"scheme"`
-	Query    KV     `cel:"queryParams"`
-	Fragment string `cel:"fragment"`
-	Size     int64  `cel:"size"`
-	Protocol string `cel:"protocol"`
-	Body     string `cel:"body"`
-	RawBody  []byte `cel:"rawBody"`
+	// from request
+	Method        string              `cel:"method"`
+	Header        map[string][]string `cel:"header"`
+	Host          string              `cel:"host"`
+	Protocol      string              `cel:"protocol"`
+	ContentLength int64               `cel:"contentLength"`
+	Body          string              `cel:"body"`
+	RawBody       []byte              `cel:"rawBody"`
+	// from url
+	Scheme   string              `cel:"scheme"`
+	Path     string              `cel:"path"`
+	Query    map[string][]string `cel:"query"`
+	Fragment string              `cel:"fragment"`
 }
 
 type CheckResponse struct {
-	Status  int    `cel:"status"`
-	Headers KV     `cel:"headers"`
-	Body    string `cel:"body"`
+	Status int                 `cel:"status"`
+	Header map[string][]string `cel:"header"`
+	Body   string              `cel:"body"`
 }
 
 func NewRequest(r *http.Request) (CheckRequest, error) {
@@ -41,16 +44,16 @@ func NewRequest(r *http.Request) (CheckRequest, error) {
 		return CheckRequest{}, err
 	}
 	return CheckRequest{
-		Method:   r.Method,
-		Headers:  KV(r.Header),
-		Path:     r.URL.Path,
-		Host:     r.Host,
-		Protocol: r.Proto,
-		RawBody:  bodyBytes,
-		Body:     string(bodyBytes),
-		Query:    KV(r.URL.Query()),
-		Size:     int64(len(bodyBytes)),
-		Fragment: r.URL.Fragment,
-		Scheme:   r.URL.Scheme,
+		Method:        r.Method,
+		Header:        r.Header,
+		Path:          r.URL.Path,
+		Host:          r.Host,
+		Protocol:      r.Proto,
+		RawBody:       bodyBytes,
+		Body:          string(bodyBytes),
+		Query:         r.URL.Query(),
+		ContentLength: int64(len(bodyBytes)),
+		Fragment:      r.URL.Fragment,
+		Scheme:        r.URL.Scheme,
 	}, nil
 }

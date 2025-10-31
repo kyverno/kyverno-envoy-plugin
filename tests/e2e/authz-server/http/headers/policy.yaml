@@ -13,5 +13,5 @@ spec:
   validations:
   - expression: >
       "bar" in object.Header("foo")
-        ?  http.Response(200)
-        :  http.Response(403).WithBody("the needed header was missing")
+        ?  http.response(200)
+        :  http.response(403).withBody("the needed header was missing")

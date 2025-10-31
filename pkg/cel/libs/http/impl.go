@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/textproto"
+
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
@@ -45,5 +47,25 @@ func (c *impl) with_body(r ref.Val, b ref.Val) ref.Val {
 	} else {
 		r.Body = b
 		return c.NativeToValue(r)
+	}
+}
+
+func (c *impl) get_header(lhs ref.Val, rhs ref.Val) ref.Val {
+	if request, err := utils.ConvertToNative[*CheckRequest](lhs); err != nil {
+		return types.WrapErr(err)
+	} else if key, err := utils.ConvertToNative[string](rhs); err != nil {
+		return types.WrapErr(err)
+	} else {
+		return c.NativeToValue(textproto.MIMEHeader(request.Header).Values(key))
+	}
+}
+
+func (c *impl) get_queryparam(lhs ref.Val, rhs ref.Val) ref.Val {
+	if request, err := utils.ConvertToNative[*CheckRequest](lhs); err != nil {
+		return types.WrapErr(err)
+	} else if key, err := utils.ConvertToNative[string](rhs); err != nil {
+		return types.WrapErr(err)
+	} else {
+		return c.NativeToValue(request.Query[key])
 	}
 }

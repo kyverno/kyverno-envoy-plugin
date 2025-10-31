@@ -18,8 +18,8 @@ func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		// register types
 		ext.NativeTypes(
-			reflect.TypeFor[Req](),
-			reflect.TypeFor[Resp](),
+			reflect.TypeFor[CheckRequest](),
+			reflect.TypeFor[CheckResponse](),
 			// reflect.TypeFor[KV](),
 			ext.ParseStructTags(true),
 		),

@@ -35,7 +35,7 @@ import (
 
 var (
 	envoyCompiler = vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
-	httpCompiler  = vpolcompiler.NewCompiler[dynamic.Interface, *httplib.Req, *httplib.Resp]()
+	httpCompiler  = vpolcompiler.NewCompiler[dynamic.Interface, *httplib.CheckRequest, *httplib.CheckResponse]()
 )
 
 type entry struct {

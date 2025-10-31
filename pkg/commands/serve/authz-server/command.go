@@ -110,7 +110,7 @@ func Command() *cobra.Command {
 					}
 					// initialize generic compilers for http and envoy requests
 					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
-					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *httplib.Req, *httplib.Resp]()
+					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *httplib.CheckRequest, *httplib.CheckResponse]()
 					extForEnvoy, err := getExternalProviders(envoyCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {
 						return err

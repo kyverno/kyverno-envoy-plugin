@@ -38,19 +38,19 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	}
 
 	libraryDecls := map[string][]cel.FunctionOpt{
-		"http.Response": {
+		"http.response": {
 			cel.Overload("http_response", []*cel.Type{cel.IntType}, ResponseType, cel.UnaryBinding(impl.response)),
 		},
-		"WithHeader": {
+		"withHeader": {
 			cel.MemberOverload("with_header", []*cel.Type{ResponseType, cel.StringType, cel.StringType}, ResponseType, cel.FunctionBinding(impl.with_header)),
 		},
-		"WithBody": {
+		"withBody": {
 			cel.MemberOverload("with_body", []*cel.Type{ResponseType, cel.StringType}, ResponseType, cel.BinaryBinding(impl.with_body)),
 		},
-		"Header": {
+		"header": {
 			cel.MemberOverload("get_header", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_header)),
 		},
-		"QueryParam": {
+		"queryParam": {
 			cel.MemberOverload("get_queryparam", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_queryparam)),
 		},
 	}

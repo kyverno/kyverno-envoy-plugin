@@ -8,6 +8,6 @@ spec:
     mode: HTTP
   validations:
   - expression: >
-      "bar" in object.QueryParam("foo")
-        ?  http.Response(200)
-        :  http.Response(403).WithBody("the needed query parameter was missing")
+      "bar" in object.queryParam("foo")
+        ?  http.response(200)
+        :  http.response(403).withBody("the needed query parameter was missing")

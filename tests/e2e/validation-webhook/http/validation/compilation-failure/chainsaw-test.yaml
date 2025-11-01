@@ -12,5 +12,5 @@ spec:
         - check:
             ($error): |-
               admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "compilation-failure" is invalid: spec.validations[0].expression: Invalid value: "http.response()\n": ERROR: <input>:1:14: found no matching overload for 'http.response' applied to '()'
-               | http.Response()
+               | http.response()
                | .............^

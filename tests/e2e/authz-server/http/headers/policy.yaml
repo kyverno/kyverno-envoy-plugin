@@ -12,6 +12,6 @@ spec:
       object.path.startsWith("/get")
   validations:
   - expression: >
-      "bar" in object.Header("foo")
+      "bar" in object.header("foo")
         ?  http.response(200)
         :  http.response(403).withBody("the needed header was missing")

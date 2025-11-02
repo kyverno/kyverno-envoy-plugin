@@ -7,7 +7,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	kcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
-	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
 	"k8s.io/client-go/dynamic"
@@ -64,7 +64,6 @@ object.reason == ""
 		}
 		outputEnv, err := base.Extend(
 			cel.Variable("object", httpcel.ResponseType),
-			cel.Variable("writer", httpcel.ResponseWriterType),
 		)
 		outputAst, issues := outputEnv.Compile(config.OutputExpression)
 		if err := issues.Err(); err != nil {

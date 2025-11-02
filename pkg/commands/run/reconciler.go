@@ -12,7 +12,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/envoy"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/http"
-	httplib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	httplib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"

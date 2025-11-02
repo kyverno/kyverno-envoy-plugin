@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/google/cel-go/cel"
-	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -75,9 +75,6 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _, err = a.outputProgram.Eval(map[string]any{
 		"object": result,
-		"writer": httpcel.ResponseWriter{
-			ResponseWriter: w,
-		},
 	})
 	if err != nil {
 		writeErrResp(w, err)

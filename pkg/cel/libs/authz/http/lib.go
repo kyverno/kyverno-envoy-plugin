@@ -37,25 +37,23 @@ func (c *lib) extendEnv(env *cel.Env) (*cel.Env, error) {
 	impl := impl{
 		Adapter: env.CELTypeAdapter(),
 	}
-
+	// build our function overloads
 	libraryDecls := map[string][]cel.FunctionOpt{
 		"http.Allowed": {
-			cel.Overload("http_allow", []*cel.Type{}, ResponseType, cel.FunctionBinding(func(values ...ref.Val) ref.Val { return impl.allowed() })),
+			cel.Overload("http_allowed", []*cel.Type{}, ResponseOkType, cel.FunctionBinding(func(values ...ref.Val) ref.Val { return impl.allowed() })),
 		},
 		"http.Denied": {
-			cel.Overload("http_deny", []*cel.Type{cel.StringType}, ResponseType, cel.UnaryBinding(impl.denied)),
+			cel.Overload("http_denied_string", []*cel.Type{cel.StringType}, ResponseDeniedType, cel.UnaryBinding(impl.denied)),
 		},
 		"Header": {
-			cel.MemberOverload("get_header", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_header)),
+			cel.MemberOverload("http_get_header_string", []*cel.Type{RequestAttributesType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_header)),
 		},
 		"QueryParam": {
-			cel.MemberOverload("get_queryparam", []*cel.Type{RequestType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_queryparam)),
+			cel.MemberOverload("http_get_queryparam_string", []*cel.Type{RequestAttributesType, cel.StringType}, types.NewListType(cel.StringType), cel.BinaryBinding(impl.get_queryparam)),
 		},
-		"Write": {
-			cel.MemberOverload("write", []*cel.Type{ResponseWriterType, cel.BytesType}, ResponseWriterType, cel.BinaryBinding(impl.write)),
-		},
-		"WriteHeader": {
-			cel.MemberOverload("write_header", []*cel.Type{ResponseWriterType, cel.IntType}, ResponseWriterType, cel.BinaryBinding(impl.write_header)),
+		"Response": {
+			cel.MemberOverload("http_response_ok", []*cel.Type{ResponseOkType}, ResponseType, cel.UnaryBinding(impl.response_ok)),
+			cel.MemberOverload("http_response_denied", []*cel.Type{ResponseDeniedType}, ResponseType, cel.UnaryBinding(impl.response_denied)),
 		},
 	}
 	// create env options corresponding to our function overloads

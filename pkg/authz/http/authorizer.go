@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -60,13 +60,18 @@ func writeErrResp(w http.ResponseWriter, err error) {
 }
 
 func writeResponse(w http.ResponseWriter, resp *httpcel.CheckResponse) {
-	if resp.Header != nil {
-		for k, v := range resp.Header {
-			for _, val := range v {
-				w.Header().Set(k, val)
-			}
-		}
+	if resp.Denied != nil {
+		w.WriteHeader(403)
+	} else {
+		w.WriteHeader(200)
 	}
-	w.WriteHeader(resp.Status)
-	fmt.Fprint(w, resp.Body) //nolint:errcheck
+	// if resp.Header != nil {
+	// 	for k, v := range resp.Header {
+	// 		for _, val := range v {
+	// 			w.Header().Set(k, val)
+	// 		}
+	// 	}
+	// }
+	// w.WriteHeader(resp.Status)
+	// fmt.Fprint(w, resp.Body) //nolint:errcheck
 }

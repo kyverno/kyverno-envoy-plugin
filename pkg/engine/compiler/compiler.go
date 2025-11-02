@@ -8,7 +8,7 @@ import (
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
 	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/envoy"
-	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"

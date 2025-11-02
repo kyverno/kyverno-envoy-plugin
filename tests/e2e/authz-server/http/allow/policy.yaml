@@ -8,4 +8,4 @@ spec:
     mode: HTTP
   validations:
   - expression: >
-      http.Response(200)
+      http.Allowed().Response()

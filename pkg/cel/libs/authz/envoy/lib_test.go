@@ -8,7 +8,7 @@ import (
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/interpreter"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/envoy"
 	"github.com/stretchr/testify/assert"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/protobuf/types/known/structpb"

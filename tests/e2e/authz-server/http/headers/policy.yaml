@@ -9,9 +9,9 @@ spec:
   matchConditions:
   - name: match-host
     expression: |
-      object.path.startsWith("/get")
+      object.attributes.path.startsWith("/get")
   validations:
   - expression: >
-      "bar" in object.Header("foo")
-        ?  http.Response(200)
-        :  http.Response(403).WithBody("the needed header was missing")
+      "bar" in object.attributes.Header("foo")
+        ?  http.Allowed().Response()
+        :  http.Denied("not allowed").Response()

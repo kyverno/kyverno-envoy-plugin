@@ -9,7 +9,7 @@ spec:
   matchConditions:
   - name: match-host
     expression: |
-      object.host == "http-srv.app"
+      object.attributes.host == "http-srv.app"
   validations:
   - expression: >
-      http.Response(403)
+      http.Denied("not allowed").Response()

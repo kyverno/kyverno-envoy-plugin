@@ -61,7 +61,7 @@ func writeErrResp(w http.ResponseWriter, err error) {
 
 func writeResponse(w http.ResponseWriter, resp *httpcel.CheckResponse) {
 	if resp.Denied != nil {
-		w.WriteHeader(401)
+		w.WriteHeader(403)
 	} else {
 		w.WriteHeader(200)
 	}

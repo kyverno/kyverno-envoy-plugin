@@ -52,7 +52,7 @@ func (c *impl) response_ok(response ref.Val) ref.Val {
 	if response, err := utils.ConvertToNative[CheckResponseOk](response); err != nil {
 		return types.WrapErr(err)
 	} else {
-		r := CheckResponse{
+		r := &CheckResponse{
 			Ok: &response,
 		}
 		return c.NativeToValue(r)
@@ -63,7 +63,7 @@ func (c *impl) response_denied(response ref.Val) ref.Val {
 	if response, err := utils.ConvertToNative[CheckResponseDenied](response); err != nil {
 		return types.WrapErr(err)
 	} else {
-		r := CheckResponse{
+		r := &CheckResponse{
 			Denied: &response,
 		}
 		return c.NativeToValue(r)

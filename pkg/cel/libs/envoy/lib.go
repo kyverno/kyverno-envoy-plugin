@@ -27,6 +27,10 @@ func Lib() cel.EnvOption {
 	return cel.Lib(&lib{})
 }
 
+func (*lib) LibraryName() string {
+	return "kyverno.envoy"
+}
+
 func (c *lib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		// register envoy protobuf messages

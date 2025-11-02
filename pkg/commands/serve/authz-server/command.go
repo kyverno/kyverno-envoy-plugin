@@ -194,7 +194,11 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					probesServer := probes.NewServer(probesAddress)
-					httpAuthServer := http.NewServer(httpAuthAddress, dynclient, httpProvider, nestedRequest)
+					httpConfig := http.Config{
+						Address:       httpAuthAddress,
+						NestedRequest: nestedRequest,
+					}
+					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient)
 					grpc := envoy.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {

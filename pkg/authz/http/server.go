@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-func NewServer(addr string, dyn dynamic.Interface, p engine.HTTPSource, nestedRequest bool) server.ServerFunc {
+func NewServer(config Config, p engine.HTTPSource, dyn dynamic.Interface) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()
@@ -17,12 +17,12 @@ func NewServer(addr string, dyn dynamic.Interface, p engine.HTTPSource, nestedRe
 		a := &authorizer{
 			provider:      p,
 			dyn:           dyn,
-			nestedRequest: nestedRequest,
+			nestedRequest: config.NestedRequest,
 		}
 		mux.Handle("POST /", a)
 		// create server
 		s := &http.Server{
-			Addr:    addr,
+			Addr:    config.Address,
 			Handler: mux,
 		}
 		// run server

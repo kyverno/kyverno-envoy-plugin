@@ -200,7 +200,13 @@ func (r *reconciler) runHttpServer(req ctrl.Request, object v1alpha1.Authorizati
 		if err != nil {
 			return fmt.Errorf("failed to build engine source: %w", err)
 		}
-		http := http.NewServer(object.Spec.Type.HTTP.Address, dynclient, src, false)
+		httpConfig := http.Config{
+			Address:          object.Spec.Type.HTTP.Address,
+			NestedRequest:    false,
+			InputExpression:  object.Spec.Type.HTTP.Modifiers.Request,
+			OutputExpression: object.Spec.Type.HTTP.Modifiers.Response,
+		}
+		http := http.NewServer(httpConfig, src, dynclient)
 		group.StartWithContext(ctx, func(ctx context.Context) {
 			// grpc auth server
 			defer cancel()

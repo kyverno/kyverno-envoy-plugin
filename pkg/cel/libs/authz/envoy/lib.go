@@ -28,7 +28,7 @@ func Lib() cel.EnvOption {
 }
 
 func (*lib) LibraryName() string {
-	return "kyverno.envoy"
+	return "kyverno.authz.envoy"
 }
 
 func (c *lib) CompileOptions() []cel.EnvOption {

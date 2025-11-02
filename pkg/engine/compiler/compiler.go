@@ -7,7 +7,7 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
-	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/envoy"
+	envoy "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/envoy"
 	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"

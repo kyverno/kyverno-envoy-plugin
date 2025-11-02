@@ -6,7 +6,7 @@ import (
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"

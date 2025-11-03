@@ -21,7 +21,6 @@ type PolicySender struct {
 	polMu                     *sync.Mutex
 	policies                  map[string]*protov1alpha1.ValidatingPolicy
 	currentVersion            int64
-	nonce                     string
 	healthCheckMap            map[string]*clientStatus
 	cxnMu                     *sync.Mutex
 	cxnsMap                   map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicyStreamResponse]
@@ -55,10 +54,8 @@ func NewPolicySender(
 }
 
 type clientStatus struct {
-	cancelFunc    context.CancelFunc // a function that
-	senderActive  bool
-	clientVersion int64
-	lastSent      time.Time
+	cancelFunc context.CancelFunc
+	lastSent   time.Time
 }
 
 func (s *PolicySender) StartHealthCheckMonitor(ctx context.Context) {

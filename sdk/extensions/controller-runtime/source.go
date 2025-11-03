@@ -77,7 +77,7 @@ type apiSource[API any, API_PTR api[API]] struct {
 //	    log.Fatal(err)
 //	}
 //	objs, _ := src.Load(ctx) // snapshot of current ConfigMaps
-func NewApiSource[API any, API_PTR api[API]](mgr ctrl.Manager, options controller.Options) (*apiSource[API, API_PTR], error) {
+func NewApiSource[API any, API_PTR api[API]](name string, mgr ctrl.Manager, options controller.Options) (*apiSource[API, API_PTR], error) {
 	provider := newApiSource[API, API_PTR](mgr.GetClient())
 
 	// Zero-value API for controller registration
@@ -87,6 +87,7 @@ func NewApiSource[API any, API_PTR api[API]](mgr ctrl.Manager, options controlle
 	builder := ctrl.
 		NewControllerManagedBy(mgr).
 		For(ptr).
+		Named(name).
 		WithOptions(options)
 
 	if err := builder.Complete(provider); err != nil {

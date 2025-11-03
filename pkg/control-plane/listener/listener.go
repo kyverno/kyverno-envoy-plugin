@@ -9,7 +9,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
-	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,27 +16,26 @@ import (
 )
 
 type Processor interface {
-	Process(req *protov1alpha1.ValidatingPolicy)
+	Process(policies []*protov1alpha1.ValidatingPolicy)
 }
 
 type policyListener struct {
 	controlPlaneAddr            string
 	clientAddr                  string
+	currentVersion              int64
 	client                      protov1alpha1.ValidatingPolicyServiceClient
 	conn                        *grpc.ClientConn
-	processors                  map[vpol.EvaluationMode]Processor
+	processors                  []Processor
 	connEstablished             bool
 	controlPlaneReconnectWait   time.Duration
 	controlPlaneMaxDialInterval time.Duration
 	healthCheckInterval         time.Duration
 }
 
-// can two storage entities share the underlying connection of the policy listener?
-// store the normal policies and have it message
 func NewPolicyListener(
 	controlPlaneAddr string,
 	clientAddr string,
-	processors map[vpol.EvaluationMode]Processor,
+	processors []Processor,
 	controlPlaneReconnectWait,
 	controlPlaneMaxDialInterval,
 	healthCheckInterval time.Duration) *policyListener {
@@ -88,9 +86,7 @@ func (l *policyListener) listen(ctx context.Context) error {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-ctx.Done():
@@ -123,23 +119,18 @@ func (l *policyListener) listen(ctx context.Context) error {
 					return
 				}
 
-				ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received validating policy request: %s, Delete: %t", req.Name, req.Delete))
+				ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received validating policy request with version: %d", req.CurrentVersion))
 				go func() {
-					// if its a delete request, remove the policy from all processors that may have it
-					if req.Delete {
-						for _, p := range l.processors {
-							p.Process(req)
-						}
-						return
+					for _, p := range l.processors {
+						p.Process(req.Policies)
 					}
-					if p, ok := l.processors[vpol.EvaluationMode(req.Spec.EvaluationMode)]; ok {
-						p.Process(req)
+					if req.CurrentVersion != l.currentVersion {
+						l.currentVersion = req.CurrentVersion
 					}
 				}()
 			}
 		}
-	}()
-
+	})
 	ctrl.LoggerFrom(nil).Info("Policy listener running...")
 	wg.Wait()
 	return nil
@@ -152,8 +143,9 @@ func (l *policyListener) sendHealthChecks(ctx context.Context) {
 			return
 		case <-time.After(l.healthCheckInterval):
 			if _, err := l.client.HealthCheck(ctx, &protov1alpha1.HealthCheckRequest{
-				ClientAddress: l.clientAddr,
-				Time:          timestamppb.Now()}); err != nil {
+				ClientAddress:  l.clientAddr,
+				CurrentVersion: l.currentVersion,
+				Time:           timestamppb.Now()}); err != nil {
 				ctrl.LoggerFrom(ctx).Error(err, "Health check failed")
 			}
 			continue

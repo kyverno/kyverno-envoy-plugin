@@ -123,7 +123,6 @@ func Command() *cobra.Command {
 					httpProvider := sdksources.NewComposite(extForHTTP...)
 					// if we have a control plane source
 					if controlPlaneAddr != "" {
-						httpListener := sources.NewListener()
 						clientAddr := os.Getenv("POD_IP")
 						if clientAddr == "" {
 							panic("can't start auth server, no POD_IP has been passed")
@@ -131,8 +130,9 @@ func Command() *cobra.Command {
 						policyListener := listener.NewPolicyListener(
 							controlPlaneAddr,
 							clientAddr,
-							map[vpol.EvaluationMode]listener.Processor{
-								v1alpha1.EvaluationModeHTTP: httpListener,
+							[]listener.Processor{
+								sources.NewListener(v1alpha1.EvaluationModeHTTP),
+								sources.NewListener(v1alpha1.EvaluationModeEnvoy),
 							},
 							controlPlaneReconnectWait,
 							controlPlaneMaxDialInterval,
@@ -154,7 +154,7 @@ func Command() *cobra.Command {
 						})
 					}
 					// if kube policy source is enabled
-					if kubePolicySource {
+					if kubePolicySource && controlPlaneAddr == "" {
 						// create a controller manager
 						scheme := runtime.NewScheme()
 						if err := vpol.Install(scheme); err != nil {
@@ -201,6 +201,7 @@ func Command() *cobra.Command {
 					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient)
 					grpc := envoy.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient)
 					// run servers
+
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
 						defer cancel()
@@ -235,7 +236,7 @@ func Command() *cobra.Command {
 	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
 	command.Flags().DurationVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3*time.Second, "Duration to wait before retrying connecting to the control plane")
 	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
-	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
+	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 5*time.Second, "Interval for sending health checks")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 

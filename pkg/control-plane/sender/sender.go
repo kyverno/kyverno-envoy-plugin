@@ -9,6 +9,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/utils"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -19,9 +20,11 @@ type PolicySender struct {
 	protov1alpha1.UnimplementedValidatingPolicyServiceServer
 	polMu                     *sync.Mutex
 	policies                  map[string]*protov1alpha1.ValidatingPolicy
-	healthCheckMap            map[string]time.Time
+	currentVersion            int64
+	nonce                     string
+	healthCheckMap            map[string]*clientStatus
 	cxnMu                     *sync.Mutex
-	cxnsMap                   map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
+	cxnsMap                   map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicyStreamResponse]
 	ctx                       context.Context
 	initialSendPolicyWait     time.Duration // how long to wait before the second attempt of a failed policy send
 	maxSendPolicyInterval     time.Duration // the maximum duration to wait before stopping attempts of a policy send
@@ -40,14 +43,22 @@ func NewPolicySender(
 		polMu:                     &sync.Mutex{},
 		cxnMu:                     &sync.Mutex{},
 		ctx:                       ctx,
+		currentVersion:            1,
 		policies:                  make(map[string]*protov1alpha1.ValidatingPolicy),
-		healthCheckMap:            make(map[string]time.Time),
-		cxnsMap:                   make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
+		healthCheckMap:            make(map[string]*clientStatus),
+		cxnsMap:                   make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicyStreamResponse]),
 		initialSendPolicyWait:     initialSendPolicyWait,
 		maxSendPolicyInterval:     maxSendPolicyInterval,
 		clientFlushInterval:       clientFlushInterval,
 		maxClientInactiveDuration: maxClientInactiveDuration,
 	}
+}
+
+type clientStatus struct {
+	cancelFunc    context.CancelFunc // a function that
+	senderActive  bool
+	clientVersion int64
+	lastSent      time.Time
 }
 
 func (s *PolicySender) StartHealthCheckMonitor(ctx context.Context) {
@@ -65,11 +76,21 @@ func (s *PolicySender) SendPolicy(pol *protov1alpha1.ValidatingPolicy) {
 	errCh := make(chan error)
 	var wg sync.WaitGroup
 	wg.Add(len(s.cxnsMap))
+	s.currentVersion++
 	// send to clients, but don't wait on any of them
+	for _, state := range s.healthCheckMap {
+		if state.cancelFunc != nil {
+			state.cancelFunc() // stop all ongoing sync attempts
+		}
+	}
 	for _, stream := range s.cxnsMap {
 		go func() {
 			defer wg.Done()
-			errCh <- s.sendWithBackoff(stream, pol)
+			polResp := protov1alpha1.ValidatingPolicyStreamResponse{
+				CurrentVersion: s.currentVersion,
+				Policies:       utils.ToSortedSlice(s.policies),
+			}
+			errCh <- s.sendWithBackoff(stream, &polResp)
 		}()
 	}
 
@@ -101,15 +122,48 @@ func (s *PolicySender) HealthCheck(ctx context.Context, r *protov1alpha1.HealthC
 	if r.ClientAddress == "" || r.Time == nil {
 		return nil, nil // invalid request, do nothing
 	}
-	// s.logger.Debugf("got health check message from %s, time: %s", r.ClientAddress, r.Time.AsTime().Format(time.RFC3339))
-	t, ok := s.healthCheckMap[r.ClientAddress]
-	if !ok || r.Time.AsTime().After(t) {
-		s.healthCheckMap[r.ClientAddress] = r.Time.AsTime()
+	status, ok := s.healthCheckMap[r.ClientAddress]
+	if !ok {
+		s.healthCheckMap[r.ClientAddress] = &clientStatus{
+			lastSent: r.Time.AsTime(),
+		}
+		return &protov1alpha1.HealthCheckResponse{}, nil
 	}
+	if r.Time.AsTime().After(status.lastSent.Local()) {
+		status.lastSent = r.Time.AsTime()
+	}
+
+	if r.CurrentVersion == s.currentVersion && status.cancelFunc != nil {
+		status.cancelFunc()
+		status.cancelFunc = nil
+	}
+
+	if r.CurrentVersion != s.currentVersion && status.cancelFunc == nil {
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		go func(ctx context.Context) {
+			polResp := protov1alpha1.ValidatingPolicyStreamResponse{
+				CurrentVersion: s.currentVersion,
+				Policies:       utils.ToSortedSlice(s.policies),
+			}
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if err := s.cxnsMap[r.ClientAddress].Send(&polResp); err != nil {
+						fmt.Printf("error sending, trying again %s", err)
+					}
+					time.Sleep(time.Second * 5) // ammar: make it the same as the client health check interval
+				}
+			}
+		}(ctx)
+		status.cancelFunc = cancelFunc
+	}
+
 	return &protov1alpha1.HealthCheckResponse{}, nil
 }
 
-func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]) error {
+func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicyStreamResponse]) error {
 	for {
 		select {
 		case <-s.ctx.Done():
@@ -133,14 +187,20 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				return err
 			}
 			ctrl.LoggerFrom(nil).Info(fmt.Sprintf("Received validating policy stream request from: %s", req.ClientAddress))
-			for _, pol := range s.policies {
-				// send each policy in a goroutine to avoid blocking the receive loop
-				go func(p *protov1alpha1.ValidatingPolicy) {
-					if err := s.sendWithBackoff(stream, p); err != nil {
-						ctrl.LoggerFrom(nil).Error(err, "Error sending policy with backoff")
-					}
-				}(pol)
-			}
+			go func() {
+				if req.CurrentVersion == s.currentVersion {
+					return
+				}
+
+				polResp := protov1alpha1.ValidatingPolicyStreamResponse{
+					CurrentVersion: s.currentVersion,
+					Policies:       utils.ToSortedSlice(s.policies),
+				}
+
+				if err := s.sendWithBackoff(stream, &polResp); err != nil {
+					ctrl.LoggerFrom(nil).Error(err, "Error sending policy with backoff")
+				}
+			}()
 			s.cxnMu.Lock()
 			s.cxnsMap[req.ClientAddress] = stream
 			s.cxnMu.Unlock()
@@ -148,7 +208,7 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 	}
 }
 
-func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy], pol *protov1alpha1.ValidatingPolicy) error {
+func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicyStreamResponse], pol *protov1alpha1.ValidatingPolicyStreamResponse) error {
 	operation := func() error {
 		if err := stream.Send(pol); err != nil {
 			return err
@@ -174,8 +234,12 @@ func (s *PolicySender) deleteInactive() {
 
 func (s *PolicySender) getInactiveClients() []string {
 	clientsToDelete := []string{}
-	for c, t := range s.healthCheckMap {
-		if elapsed := time.Since(t); elapsed > s.maxClientInactiveDuration {
+	for c, status := range s.healthCheckMap {
+		if status.senderActive {
+			status.cancelFunc()
+		}
+
+		if elapsed := time.Since(status.lastSent); elapsed > s.maxClientInactiveDuration {
 			clientsToDelete = append(clientsToDelete, c)
 		}
 	}

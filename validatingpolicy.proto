@@ -71,17 +71,25 @@ message ValidatingPolicy {
 
 message ValidatingPolicyStreamRequest {
   string client_address = 1;
+  int64 current_version = 2;
+  string nonce = 3;
+}
+
+message ValidatingPolicyStreamResponse {
+    int64 current_version = 1;
+    repeated ValidatingPolicy policies = 3;
 }
 
 message HealthCheckRequest {
   string client_address = 1;
-  google.protobuf.Timestamp time = 2;
+  int64 current_version = 2;
+  google.protobuf.Timestamp time = 3;
 }
 
 message HealthCheckResponse {}
 
 // ValidatingPolicyService provides bidirectional communication for validating policies
 service ValidatingPolicyService {
-  rpc ValidatingPoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
+  rpc ValidatingPoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicyStreamResponse);
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }

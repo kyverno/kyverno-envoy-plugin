@@ -10,7 +10,7 @@ import (
 func NewControlPlane[POLICY any](
 	compiler engine.Compiler[POLICY],
 ) (core.Source[POLICY], error) {
-	listener := NewListener()
+	listener := NewListener("")
 	transform := sources.NewTransformErr(listener, func(in *v1alpha1.ValidatingPolicy) (POLICY, error) {
 		policy, err := compiler.Compile(in)
 		return policy, err.ToAggregate()

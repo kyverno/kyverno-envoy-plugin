@@ -2,9 +2,11 @@ package sources
 
 import (
 	"context"
+	"hash/fnv"
 	"slices"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
 	controlplane "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane"
 	protov1alpha1 "github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/proto/v1alpha1"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
@@ -12,28 +14,38 @@ import (
 )
 
 type listener struct {
-	lock      *sync.Mutex
-	resources map[string]*v1alpha1.ValidatingPolicy
+	lock           *sync.Mutex
+	evaluationMode v1alpha1.EvaluationMode
+	resources      map[int64]*v1alpha1.ValidatingPolicy
 }
 
-func NewListener() *listener {
+func NewListener(evalMode v1alpha1.EvaluationMode) *listener {
 	return &listener{
-		lock:      &sync.Mutex{},
-		resources: map[string]*v1alpha1.ValidatingPolicy{},
+		lock:           &sync.Mutex{},
+		evaluationMode: evalMode,
+		resources:      map[int64]*v1alpha1.ValidatingPolicy{},
 	}
 }
 
-func (p *listener) Process(req *protov1alpha1.ValidatingPolicy) {
-	if req.Delete {
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		delete(p.resources, req.Name)
-		return
+func (p *listener) Process(req []*protov1alpha1.ValidatingPolicy) {
+	newPolicyMap := map[int64]*v1alpha1.ValidatingPolicy{}
+	for _, policy := range req {
+		if policy.Spec.EvaluationMode != string(p.evaluationMode) {
+			continue
+		}
+		data, err := proto.Marshal(policy)
+		if err != nil {
+			// todo: handle this somehow ?
+			continue
+		}
+
+		h := fnv.New64a()
+		h.Write(data)
+		newPolicyMap[int64(h.Sum64())] = controlplane.FromProto(policy)
 	}
-	vpol := controlplane.FromProto(req)
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	p.resources[req.Name] = vpol
+	p.resources = newPolicyMap
 }
 
 func (r *listener) Load(ctx context.Context) ([]*v1alpha1.ValidatingPolicy, error) {

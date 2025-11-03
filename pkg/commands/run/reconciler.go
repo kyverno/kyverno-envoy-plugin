@@ -22,12 +22,14 @@ import (
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -100,6 +102,13 @@ func (r *reconciler) runEnvoyServer(req ctrl.Request, object v1alpha1.Authorizat
 			Scheme: scheme,
 			Metrics: metricsserver.Options{
 				BindAddress: "0",
+			},
+			Cache: cache.Options{
+				ByObject: map[client.Object]cache.ByObject{
+					&vpol.ValidatingPolicy{}: {
+						Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeEnvoy)),
+					},
+				},
 			},
 		})
 		if err != nil {
@@ -175,6 +184,13 @@ func (r *reconciler) runHttpServer(req ctrl.Request, object v1alpha1.Authorizati
 			Scheme: scheme,
 			Metrics: metricsserver.Options{
 				BindAddress: "0",
+			},
+			Cache: cache.Options{
+				ByObject: map[client.Object]cache.ByObject{
+					&vpol.ValidatingPolicy{}: {
+						Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeHTTP)),
+					},
+				},
 			},
 		})
 		if err != nil {

@@ -134,19 +134,6 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
  		> ./charts/kyverno-authz-server/templates/crds.yaml
-	@cat $(CRDS_PATH)/authz.kyverno.io/* \
-		| $(SED) -e '1i{{- if .Values.crds.install }}' \
-		| $(SED) -e '$$a{{- end }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
- 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "sidecar-injector.labels" . | nindent 4 }}' \
- 		> ./charts/kyverno-sidecar-injector/templates/crds.yaml
-
 
 .PHONY: codegen-proto
 codegen-proto: ## Generate proto files

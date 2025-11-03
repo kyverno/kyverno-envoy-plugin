@@ -63,7 +63,7 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | containers.injector.livenessProbe | object | See [values.yaml](values.yaml) | Liveness probe. The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.injector.readinessProbe | object | See [values.yaml](values.yaml) | Readiness Probe. The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/ |
 | containers.injector.ports | list | `[{"containerPort":9443,"name":"https","protocol":"TCP"}]` | Container ports. |
-| containers.injector.args | list | `["serve","sidecar-injector","--address=:9443","--cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt","--key-file=/opt/kubernetes-sidecar-injector/certs/tls.key","--config-file=/opt/kubernetes-sidecar-injector/config/sidecar.yaml"]` | Container args. |
+| containers.injector.args | list | `["serve","sidecar-injector","--address=:9443","--cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt","--key-file=/opt/kubernetes-sidecar-injector/certs/tls.key","--config-file=/opt/kubernetes-sidecar-injector/config/envoy-sidecar.yaml"]` | Container args. |
 | service.port | int | `443` | Service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | service.nodePort | string | `nil` | Service node port. Only used if `type` is `NodePort`. |
@@ -90,7 +90,6 @@ helm install kyverno-sidecar-injector --namespace kyverno --create-namespace kyv
 | sidecar.config.controlPlane.reconnectWait | string | `"3s"` | Duration to wait before retrying connecting to the control plane |
 | sidecar.config.controlPlane.maxDialInterval | string | `"8s"` | Duration to wait before stopping attempts of sending a policy to a client |
 | sidecar.config.controlPlane.healthCheckInterval | string | `"30s"` | Interval for sending health checks |
-| crds.install | bool | `true` |  |
 
 ## Source Code
 

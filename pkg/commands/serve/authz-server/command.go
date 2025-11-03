@@ -181,6 +181,11 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
+						envoySource, err := sources.NewKube("envoy", envoyMgr, envoyCompiler)
+						if err != nil {
+							return fmt.Errorf("failed to create envoy source: %w", err)
+						}
+						envoyProvider = sdksources.NewComposite(envoySource, envoyProvider)
 						httpMgr, err := ctrl.NewManager(config, ctrl.Options{
 							Scheme: scheme,
 							Metrics: metricsserver.Options{
@@ -201,12 +206,7 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						envoySource, err := sources.NewKube(envoyMgr, envoyCompiler)
-						if err != nil {
-							return fmt.Errorf("failed to create envoy source: %w", err)
-						}
-						envoyProvider = sdksources.NewComposite(envoySource, envoyProvider)
-						httpSource, err := sources.NewKube(httpMgr, httpCompiler)
+						httpSource, err := sources.NewKube("http", httpMgr, httpCompiler)
 						if err != nil {
 							return fmt.Errorf("failed to create http source: %w", err)
 						}

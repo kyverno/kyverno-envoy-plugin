@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -15,9 +14,6 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/envoy"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz/http"
-	httplib "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/control-plane/listener"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/sources"
@@ -46,7 +42,6 @@ func Command() *cobra.Command {
 	var metricsAddress string
 	var grpcAddress string
 	var grpcNetwork string
-	var httpAuthAddress string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
 	var kubePolicySource bool
@@ -54,11 +49,6 @@ func Command() *cobra.Command {
 	var leaderElectionID string
 	var imagePullSecrets []string
 	var allowInsecureRegistry bool
-	var controlPlaneAddr string
-	var controlPlaneReconnectWait time.Duration
-	var controlPlaneMaxDialInterval time.Duration
-	var healthCheckInterval time.Duration
-	var nestedRequest bool
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -66,7 +56,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var probesErr, connErr, httpErr, grpcErr, envoyMgrErr, httpMgrErr error
+				var probesErr, grpcErr, envoyMgrErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -111,51 +101,13 @@ func Command() *cobra.Command {
 						log.Fatalf("failed to initialize registry opts: %v", err)
 						os.Exit(1)
 					}
-					// initialize generic compilers for http and envoy requests
+					// initialize compiler
 					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
-					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *httplib.CheckRequest, *httplib.CheckResponse]()
 					extForEnvoy, err := getExternalProviders(envoyCompiler, nOpts, rOpts, externalPolicySources...)
 					if err != nil {
 						return err
 					}
-					extForHTTP, err := getExternalProviders(httpCompiler, nOpts, rOpts, externalPolicySources...)
-					if err != nil {
-						return err
-					}
 					envoyProvider := sdksources.NewComposite(extForEnvoy...)
-					httpProvider := sdksources.NewComposite(extForHTTP...)
-					// if we have a control plane source
-					if controlPlaneAddr != "" {
-						httpListener := sources.NewListener()
-						clientAddr := os.Getenv("POD_IP")
-						if clientAddr == "" {
-							panic("can't start auth server, no POD_IP has been passed")
-						}
-						policyListener := listener.NewPolicyListener(
-							controlPlaneAddr,
-							clientAddr,
-							map[vpol.EvaluationMode]listener.Processor{
-								v1alpha1.EvaluationModeHTTP: httpListener,
-							},
-							controlPlaneReconnectWait,
-							controlPlaneMaxDialInterval,
-							healthCheckInterval,
-						)
-						group.StartWithContext(ctx, func(ctx context.Context) {
-							for {
-								select {
-								case <-ctx.Done():
-									return
-								default:
-									if connErr = policyListener.Start(ctx); connErr != nil {
-										ctrl.LoggerFrom(ctx).Error(connErr, "error connecting to the control plane, sleeping 10 seconds then retrying")
-										time.Sleep(time.Second * 10)
-									}
-									continue
-								}
-							}
-						})
-					}
 					// if kube policy source is enabled
 					if kubePolicySource {
 						// create a controller manager
@@ -186,58 +138,22 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to create envoy source: %w", err)
 						}
 						envoyProvider = sdksources.NewComposite(envoySource, envoyProvider)
-						httpMgr, err := ctrl.NewManager(config, ctrl.Options{
-							Scheme: scheme,
-							Metrics: metricsserver.Options{
-								// TODO
-								// BindAddress: metricsAddress,
-								BindAddress: "0",
-							},
-							Cache: cache.Options{
-								ByObject: map[client.Object]cache.ByObject{
-									&vpol.ValidatingPolicy{}: {
-										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeHTTP)),
-									},
-								},
-							},
-							LeaderElection:   leaderElection,
-							LeaderElectionID: leaderElectionID,
-						})
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						httpSource, err := sources.NewKube("http", httpMgr, httpCompiler)
-						if err != nil {
-							return fmt.Errorf("failed to create http source: %w", err)
-						}
-						httpProvider = sdksources.NewComposite(httpSource, httpProvider)
 						// start managers
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
 							defer cancel()
 							envoyMgrErr = envoyMgr.Start(ctx)
 						})
-						group.StartWithContext(ctx, func(ctx context.Context) {
-							// cancel context at the end
-							defer cancel()
-							httpMgrErr = httpMgr.Start(ctx)
-						})
 						if !envoyMgr.GetCache().WaitForCacheSync(ctx) {
 							defer cancel()
 							return fmt.Errorf("failed to wait for envoy cache sync")
 						}
-						if !httpMgr.GetCache().WaitForCacheSync(ctx) {
-							defer cancel()
-							return fmt.Errorf("failed to wait for http cache sync")
-						}
 					}
 					// create http and grpc servers
 					probesServer := probes.NewServer(probesAddress)
-					httpConfig := http.Config{
-						Address:       httpAuthAddress,
-						NestedRequest: nestedRequest,
-					}
-					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient)
 					grpc := envoy.NewServer(grpcNetwork, grpcAddress, envoyProvider, dynclient)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
@@ -250,13 +166,9 @@ func Command() *cobra.Command {
 						defer cancel()
 						grpcErr = grpc.Run(ctx)
 					})
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						defer cancel()
-						httpErr = httpAuthServer.Run(ctx)
-					})
 					return nil
 				}(ctx)
-				return multierr.Combine(err, probesErr, httpErr, grpcErr, envoyMgrErr, httpMgrErr)
+				return multierr.Combine(err, probesErr, grpcErr, envoyMgrErr)
 			})
 		},
 	}
@@ -270,12 +182,6 @@ func Command() *cobra.Command {
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
 	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
-	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
-	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
-	command.Flags().DurationVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3*time.Second, "Duration to wait before retrying connecting to the control plane")
-	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
-	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
-	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 
 	return command

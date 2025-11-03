@@ -24,11 +24,13 @@ nav:
     - cel-extensions/json.md
     - cel-extensions/jwk.md
     - cel-extensions/jwt.md
+    - cel-extensions/http.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/istio/index.md
   - tutorials/envoy-gateway/index.md
   - tutorials/kgateway/index.md
+  - tutorials/ingress-nginx/index.md
 - Reference:
   - reference/index.md
   - reference/json-schemas.md
@@ -37,16 +39,22 @@ nav:
     - authz.kyverno.io/v1alpha1: reference/apis/authz.kyverno.io.v1alpha1.md
   - Command Line:
     - reference/commands/kyverno-envoy-plugin.md
-    - reference/commands/kyverno-envoy-plugin_serve.md
-    - reference/commands/kyverno-envoy-plugin_serve_authz-server.md
-    - reference/commands/kyverno-envoy-plugin_serve_sidecar-injector.md
-    - reference/commands/kyverno-envoy-plugin_serve_validation-webhook.md
-    - reference/commands/kyverno-envoy-plugin_version.md
     - reference/commands/kyverno-envoy-plugin_completion.md
     - reference/commands/kyverno-envoy-plugin_completion_bash.md
     - reference/commands/kyverno-envoy-plugin_completion_fish.md
     - reference/commands/kyverno-envoy-plugin_completion_powershell.md
     - reference/commands/kyverno-envoy-plugin_completion_zsh.md
+    - reference/commands/kyverno-envoy-plugin_run.md
+    - reference/commands/kyverno-envoy-plugin_serve.md
+    - reference/commands/kyverno-envoy-plugin_serve_control-plane.md
+    - reference/commands/kyverno-envoy-plugin_serve_envoy.md
+    - reference/commands/kyverno-envoy-plugin_serve_envoy_authz-server.md
+    - reference/commands/kyverno-envoy-plugin_serve_envoy_validation-webhook.md
+    - reference/commands/kyverno-envoy-plugin_serve_http.md
+    - reference/commands/kyverno-envoy-plugin_serve_http_authz-server.md
+    - reference/commands/kyverno-envoy-plugin_serve_http_validation-webhook.md
+    - reference/commands/kyverno-envoy-plugin_serve_sidecar-injector.md
+    - reference/commands/kyverno-envoy-plugin_version.md
 - Community:
   - community/index.md
   - Contributing: community/contribute.md

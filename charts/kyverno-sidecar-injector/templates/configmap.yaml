@@ -10,7 +10,7 @@ metadata:
     {{- tpl (toYaml .) $ | nindent 4 }}
   {{- end }}
 data:
-  sidecar.yaml: |
+  http-sidecar.yaml: |
     containers:
     - name: {{ .Values.sidecar.name }}
       image: {{ include "sidecar-injector.image" .Values.sidecar.image }}
@@ -19,9 +19,6 @@ data:
       - name: http
         protocol: TCP
         containerPort: 9080
-      - name: grpc
-        protocol: TCP
-        containerPort: 9081
       - name: metrics
         protocol: TCP
         containerPort: 9082
@@ -37,10 +34,9 @@ data:
       {{- end }}
       args:
       - serve
+      - http
       - authz-server
       - --probes-address=:9080
-      - --grpc-address=:9081
-      - --grpc-network={{ .Values.sidecar.config.grpcNetwork }}
       - --metrics-address=:9082
       - --http-auth-server-address={{ .Values.sidecar.config.httpAuthServerAddress }}
       - --kube-policy-source=false
@@ -60,6 +56,55 @@ data:
       - {{ printf "--control-plane-reconnect-wait=%s" .Values.sidecar.config.controlPlane.reconnectWait }}
       - {{ printf "--control-plane-max-dial-interval=%s" .Values.sidecar.config.controlPlane.maxDialInterval }}
       - {{ printf "--health-check-interval=%s" .Values.sidecar.config.controlPlane.healthCheckInterval }}
+      {{- end }}
+      {{- with .Values.sidecar.volumeMounts }}
+      # volume mounts
+      volumeMounts:
+      {{- tpl (toYaml .) $ | nindent 6 }}
+      {{- end }}
+    {{- with .Values.sidecar.volumes }}
+    # volumes
+    volumes:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
+    {{- with .Values.sidecar.imagePullSecrets }}
+    # image pull secrets
+    imagePullSecrets:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
+  envoy-sidecar.yaml: |
+    containers:
+    - name: {{ .Values.sidecar.name }}
+      image: {{ include "sidecar-injector.image" .Values.sidecar.image }}
+      imagePullPolicy: {{ .Values.sidecar.image.pullPolicy }}
+      ports:
+      - name: http
+        protocol: TCP
+        containerPort: 9080
+      - name: grpc
+        protocol: TCP
+        containerPort: 9081
+      - name: metrics
+        protocol: TCP
+        containerPort: 9082
+      args:
+      - serve
+      - envoy
+      - authz-server
+      - --probes-address=:9080
+      - --grpc-address=:9081
+      - --grpc-network={{ .Values.sidecar.config.grpcNetwork }}
+      - --metrics-address=:9082
+      - --kube-policy-source=false
+      - --allow-insecure-registry={{ .Values.sidecar.config.allowInsecureRegistry }}
+      {{- with .Values.sidecar.externalPolicySources }}
+      # external policy sources
+      {{- range . }}
+      - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
+      {{- end }}
+      {{- end }}
+      {{- range .Values.sidecar.config.imagePullSecrets }}
+      - {{ printf "--image-pull-secret=%s" . }}
       {{- end }}
       {{- with .Values.sidecar.volumeMounts }}
       # volume mounts

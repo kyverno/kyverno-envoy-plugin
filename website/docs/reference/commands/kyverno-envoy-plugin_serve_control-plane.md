@@ -49,5 +49,5 @@ kyverno-envoy-plugin serve control-plane [flags]
 
 ### SEE ALSO
 
-* [kyverno-envoy-plugin serve](kyverno-envoy-plugin_serve.md)	 - Run Kyverno Envoy Plugin servers
+* [kyverno-envoy-plugin serve](kyverno-envoy-plugin_serve.md)	 - Run Kyverno Authz servers
 

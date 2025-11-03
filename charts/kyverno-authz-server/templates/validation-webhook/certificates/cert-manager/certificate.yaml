@@ -1,18 +1,21 @@
-{{- if .Values.certificates.certManager -}}
+{{- with .Values.validatingWebhookConfiguration.certificates.certManager -}}
+{{- $name := (include "validation-webhook.name" $) }}
+{{- $namespace := (include "kyverno.lib.namespace" $) }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ template "validation-webhook.name" . }}
-  namespace: {{ template "kyverno.lib.namespace" . }}
+  name: {{ $name }}
+  namespace: {{ $namespace }}
   labels:
-    {{- include "validation-webhook.labels" . | nindent 4 }}
+    {{- include "validation-webhook.labels" $ | nindent 4 }}
 spec:
-  secretName: {{ template "validation-webhook.name" . }}
+  secretName: {{ $name }}
   privateKey:
     rotationPolicy: Always
   dnsNames:
-    - {{ printf "%s.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
-  {{- with .Values.certificates.certManager.issuerRef }}
+    - {{ printf "%s-http.%s.svc" $name $namespace }}
+    - {{ printf "%s-envoy.%s.svc" $name $namespace }}
+  {{- with .issuerRef }}
   issuerRef:
     {{- tpl (toYaml .) $ | nindent 4 }}
   {{- end }}

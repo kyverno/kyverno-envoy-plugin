@@ -4,27 +4,28 @@ metadata:
   name: {{ template "validation-webhook.name" . }}
   labels:
     {{- include "validation-webhook.labels" . | nindent 4 }}
-  {{- if (or .Values.certificates.certManager .Values.webhook.annotations) }}
+  {{- if (or .Values.validatingWebhookConfiguration.certificates.certManager .Values.validatingWebhookConfiguration.annotations) }}
   annotations:
-    {{- with .Values.webhook.annotations }}
+    {{- with .Values.validatingWebhookConfiguration.annotations }}
     {{- tpl (toYaml .) $ | nindent 4 }}
     {{- end }}
-    {{- if .Values.certificates.certManager }}
+    {{- if .Values.validatingWebhookConfiguration.certificates.certManager }}
     cert-manager.io/inject-ca-from: {{ printf "%s/%s" (include "kyverno.lib.namespace" .) (include "validation-webhook.name" .) }}
     {{- end }}
   {{- end }}
 webhooks:
-- name: {{ printf "%s.%s.svc" (include "validation-webhook.name" .) (include "kyverno.lib.namespace" .) }}
+{{- range $key, $value := .Values.validatingWebhookConfiguration.webhooks }}
+- name: {{ printf "%s.%s.%s.svc" $key (include "validation-webhook.name" $) (include "kyverno.lib.namespace" $) }}
   clientConfig:
     service:
-      name: {{ template "validation-webhook.name" . }}
-      namespace: {{ template "kyverno.lib.namespace" . }}
+      name: {{ template "validation-webhook.name" $ }}-{{ $key }}
+      namespace: {{ template "kyverno.lib.namespace" $ }}
       port: 9443
       path: /validate-policies-kyverno-io-v1alpha1-validatingpolicy
-    {{- if .Values.certificates.static }}
-    caBundle: {{ index .Values.certificates.static.crt | b64enc }}
+    {{- if $.Values.validatingWebhookConfiguration.certificates.static }}
+    caBundle: {{ index $.Values.validatingWebhookConfiguration.certificates.static.crt | b64enc }}
     {{- end }}
-  failurePolicy: {{ .Values.webhook.failurePolicy }}
+  failurePolicy: {{ $value.failurePolicy }}
   sideEffects: None
   admissionReviewVersions: [ v1 ]
   rules:
@@ -32,3 +33,4 @@ webhooks:
     apiVersions: [v1alpha1]
     resources: [validatingpolicies]
     operations: [CREATE, UPDATE]
+{{- end }}

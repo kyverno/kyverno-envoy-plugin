@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,15 +42,12 @@ func (*validator) ValidateDelete(ctx context.Context, obj runtime.Object) (admis
 }
 
 func (v *validator) validateVpol(policy *vpol.ValidatingPolicy) error {
-	if policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeEnvoy ||
-		policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeHTTP {
-		if allErrs := v.compileVpol(policy); len(allErrs) > 0 {
-			return apierrors.NewInvalid(
-				vpol.SchemeGroupVersion.WithKind("ValidatingPolicy").GroupKind(),
-				policy.Name,
-				allErrs,
-			)
-		}
+	if allErrs := v.compileVpol(policy); len(allErrs) > 0 {
+		return apierrors.NewInvalid(
+			vpol.SchemeGroupVersion.WithKind("ValidatingPolicy").GroupKind(),
+			policy.Name,
+			allErrs,
+		)
 	}
 	return nil
 }

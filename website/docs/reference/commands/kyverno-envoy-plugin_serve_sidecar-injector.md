@@ -24,5 +24,5 @@ kyverno-envoy-plugin serve sidecar-injector [flags]
 
 ### SEE ALSO
 
-* [kyverno-envoy-plugin serve](kyverno-envoy-plugin_serve.md)	 - Run Kyverno Envoy Plugin servers
+* [kyverno-envoy-plugin serve](kyverno-envoy-plugin_serve.md)	 - Run Kyverno Authz servers
 

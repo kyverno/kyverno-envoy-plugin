@@ -11,6 +11,6 @@ spec:
         expect:
         - check:
             ($error): |-
-              admission webhook "kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "compilation-failure" is invalid: spec.validations[0].expression: Invalid value: "http.Denied()\n": ERROR: <input>:1:12: found no matching overload for 'http.Denied' applied to '()'
+              admission webhook "http.kyverno-authz-server-validation.kyverno.svc" denied the request: ValidatingPolicy.policies.kyverno.io "compilation-failure" is invalid: spec.validations[0].expression: Invalid value: "http.Denied()\n": ERROR: <input>:1:12: found no matching overload for 'http.Denied' applied to '()'
                | http.Denied()
                | ...........^

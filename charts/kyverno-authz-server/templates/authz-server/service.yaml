@@ -1,0 +1,22 @@
+{{- range $key, $value := .Values.authzServer }}
+{{- $name := printf "%s-%s" (include "kyverno-authz-server.name" $) $key }}
+{{- $namespace := (include "kyverno.lib.namespace" $) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "kyverno-authz-server.labels" $ | nindent 4 }}
+  {{- with $value.service.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ $value.service.type }}
+  ports:
+  {{- tpl (toYaml $value.service.ports) $ | nindent 2 }}
+  selector:
+    {{- include "kyverno-authz-server.labels.selector" $ | nindent 4 }}
+{{- end }}

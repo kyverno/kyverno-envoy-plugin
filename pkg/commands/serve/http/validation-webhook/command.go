@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/compiler"
@@ -64,16 +63,9 @@ func Command() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
-					envoyCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *authv3.CheckRequest, *authv3.CheckResponse]()
 					httpCompiler := vpolcompiler.NewCompiler[dynamic.Interface, *http.CheckRequest, *http.CheckResponse]()
-
 					vpolCompileFunc := func(policy *vpol.ValidatingPolicy) field.ErrorList {
-						switch policy.Spec.EvaluationMode() {
-						case v1alpha1.EvaluationModeEnvoy:
-							_, err := envoyCompiler.Compile(policy)
-							ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Validating policy compilation error")
-							return err
-						case v1alpha1.EvaluationModeHTTP:
+						if policy.Spec.EvaluationMode() == v1alpha1.EvaluationModeHTTP {
 							_, err := httpCompiler.Compile(policy)
 							ctrl.LoggerFrom(ctx).Error(err.ToAggregate(), "Validating policy compilation error")
 							return err

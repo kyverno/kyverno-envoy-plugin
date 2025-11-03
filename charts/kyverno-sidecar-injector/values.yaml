@@ -216,7 +216,7 @@ containers:
       - --address=:9443
       - --cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt
       - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
-      - --config-file=/opt/kubernetes-sidecar-injector/config/sidecar.yaml
+      - --config-file=/opt/kubernetes-sidecar-injector/config/envoy-sidecar.yaml
 
 service:
 
@@ -315,6 +315,3 @@ sidecar:
 
       # -- Interval for sending health checks
       healthCheckInterval: 30s
-
-crds:
-  install: true

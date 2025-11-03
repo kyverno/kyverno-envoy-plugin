@@ -1,6 +1,7 @@
 {{- range $key, $value := .Values.authzServer }}
 {{- $name := printf "%s-%s" (include "kyverno-authz-server.name" $) $key }}
 {{- $namespace := (include "kyverno.lib.namespace" $) }}
+{{- $component := printf "authz-server-%s" $key }}
 ---
 {{- with $value }}
 apiVersion: apps/v1
@@ -9,7 +10,11 @@ metadata:
   name: {{ $name }}
   namespace: {{ $namespace }}
   labels:
-    {{- include "kyverno-authz-server.labels" $ | nindent 4 }}
+    {{- include "kyverno.lib.labels.merge" (list
+      (include "kyverno.lib.labels.common" $)
+      (include "kyverno.lib.labels.common.selector" $)
+      (include "kyverno.lib.labels.component" $component)
+    ) | nindent 4 }}
   {{- with .deployment.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
@@ -25,11 +30,18 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kyverno-authz-server.labels.selector" $ | nindent 6 }}
+      {{- include "kyverno.lib.labels.merge" (list
+        (include "kyverno.lib.labels.common.selector" $)
+        (include "kyverno.lib.labels.component" $component)
+      ) | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "kyverno-authz-server.labels" $ | nindent 8 }}
+        {{- include "kyverno.lib.labels.merge" (list
+          (include "kyverno.lib.labels.common" $)
+          (include "kyverno.lib.labels.common.selector" $)
+          (include "kyverno.lib.labels.component" $component)
+        ) | nindent 8 }}
         {{- with .pod.labels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}

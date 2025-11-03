@@ -5,7 +5,11 @@ metadata:
 metadata:
   name: {{ template "kyverno-authz-server.name" . }}
   labels:
-    {{- include "kyverno-authz-server.labels" . | nindent 4 }}
+    {{- include "kyverno.lib.labels.merge" (list
+      (include "kyverno.lib.labels.common" $)
+      (include "kyverno.lib.labels.common.selector" $)
+      (include "kyverno.lib.labels.component" "authz-server")
+    ) | nindent 4 }}
 rules:
 - apiGroups:
   - policies.kyverno.io

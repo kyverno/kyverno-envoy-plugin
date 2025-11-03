@@ -3,7 +3,11 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: {{ template "validation-webhook.name" . }}
   labels:
-    {{- include "validation-webhook.labels" . | nindent 4 }}
+    {{- include "kyverno.lib.labels.merge" (list
+      (include "kyverno.lib.labels.common" $)
+      (include "kyverno.lib.labels.common.selector" $)
+      (include "kyverno.lib.labels.component" "validation-webhook")
+    ) | nindent 4 }}
   {{- if (or .Values.validatingWebhookConfiguration.certificates.certManager .Values.validatingWebhookConfiguration.annotations) }}
   annotations:
     {{- with .Values.validatingWebhookConfiguration.annotations }}

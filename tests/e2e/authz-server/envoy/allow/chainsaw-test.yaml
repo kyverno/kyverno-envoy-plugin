@@ -15,6 +15,13 @@ spec:
         bindings:
         - name: file
           value: policy.yaml
+  - name: create policy
+    use:
+      template: ../../../_step-templates/policy.yaml
+      with:
+        bindings:
+        - name: file
+          value: policy-http.yaml
   - name: create shell
     use:
       template: ../../../_step-templates/shell.yaml

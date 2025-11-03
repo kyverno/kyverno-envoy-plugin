@@ -9,7 +9,6 @@ import (
 	jsonimpl "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/impl"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/envoy"
 	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
-	httpserver "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http-server"
 	jsoncel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/json"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/jwt"
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
@@ -63,7 +62,6 @@ func NewEnv(evalMode vpol.EvaluationMode) (*cel.Env, error) {
 	case v1alpha1.EvaluationModeHTTP:
 		base, err = base.Extend(
 			httpauth.Lib(),
-			httpserver.Lib(),
 		)
 	default:
 		err = fmt.Errorf("invalid evaluation mode passed for env builder")

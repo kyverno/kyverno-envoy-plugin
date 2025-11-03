@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-logr/logr"
+	"github.com/google/cel-go/cel"
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
+	httpserver "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/httpserver"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -15,11 +19,14 @@ import (
 type authorizer struct {
 	provider      engine.HTTPSource
 	dyn           dynamic.Interface
+	inputProgram  cel.Program
+	outputProgram cel.Program
 	nestedRequest bool
 }
 
 func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctrl.LoggerFrom(r.Context()).Info("received request", "from", r.RemoteAddr)
+	logger := ctrl.LoggerFrom(r.Context()).WithValues("from", r.RemoteAddr)
+	logger.Info("received request")
 	if a.nestedRequest {
 		reader := bufio.NewReader(r.Body)
 		req, err := http.ReadRequest(reader)
@@ -29,7 +36,6 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		r = req
 	}
-
 	pols, err := a.provider.Load(context.Background())
 	if err != nil {
 		writeErrResp(w, err)
@@ -40,17 +46,50 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeErrResp(w, err)
 		return
 	}
-	for _, pol := range pols {
-		resp, err := pol.Evaluate(context.Background(), a.dyn, &httpReq)
+	if a.inputProgram != nil {
+		out, _, err := a.inputProgram.Eval(map[string]any{
+			"object": &httpReq,
+		})
 		if err != nil {
 			writeErrResp(w, err)
 			return
 		}
-		// write the first valid policy response and exit
-		if resp != nil {
-			writeResponse(w, resp)
+		if out.Value() != nil {
+			out, ok := out.Value().(*httpcel.CheckRequest)
+			if ok && out != nil {
+				httpReq = *out
+			}
+		}
+	}
+	var result *httpcel.CheckResponse
+	for _, pol := range pols {
+		resp, err := pol.Evaluate(r.Context(), a.dyn, &httpReq)
+		if err != nil {
+			writeErrResp(w, err)
 			return
 		}
+		// keep the first valid policy response and exit
+		if resp != nil {
+			result = resp
+			break
+		}
+	}
+	if result == nil {
+		result = &httpcel.CheckResponse{
+			Ok: &httpcel.CheckResponseOk{},
+		}
+	}
+	out, _, err := a.outputProgram.Eval(map[string]any{
+		"object": result,
+	})
+	if err != nil {
+		writeErrResp(w, err)
+		return
+	}
+	if out, err := utils.ConvertToNative[httpserver.HttpResponse](out); err != nil {
+		writeErrResp(w, err)
+	} else {
+		writeResponse(logger, w, out)
 	}
 }
 
@@ -59,19 +98,19 @@ func writeErrResp(w http.ResponseWriter, err error) {
 	fmt.Fprint(w, err.Error()) //nolint:errcheck
 }
 
-func writeResponse(w http.ResponseWriter, resp *httpcel.CheckResponse) {
-	if resp.Denied != nil {
-		w.WriteHeader(403)
-	} else {
-		w.WriteHeader(200)
+func writeResponse(logger logr.Logger, w http.ResponseWriter, resp httpserver.HttpResponse) {
+	if resp.Header != nil {
+		for k, v := range resp.Header {
+			for _, val := range v {
+				w.Header().Set(k, val)
+			}
+		}
 	}
-	// if resp.Header != nil {
-	// 	for k, v := range resp.Header {
-	// 		for _, val := range v {
-	// 			w.Header().Set(k, val)
-	// 		}
-	// 	}
-	// }
-	// w.WriteHeader(resp.Status)
-	// fmt.Fprint(w, resp.Body) //nolint:errcheck
+	w.WriteHeader(resp.Status)
+	if resp.Body != nil {
+		_, err := w.Write(resp.Body)
+		if err != nil {
+			logger.Error(err, "failed to write body")
+		}
+	}
 }

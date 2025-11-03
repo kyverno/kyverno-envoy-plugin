@@ -29,12 +29,15 @@ import (
 	vpol "github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -63,7 +66,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var probesErr, connErr, httpAuthErr, grpcErr, mgrErr error
+				var probesErr, connErr, httpErr, grpcErr, envoyMgrErr, httpMgrErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -160,10 +163,17 @@ func Command() *cobra.Command {
 						if err := vpol.Install(scheme); err != nil {
 							return err
 						}
-						mgr, err := ctrl.NewManager(config, ctrl.Options{
+						envoyMgr, err := ctrl.NewManager(config, ctrl.Options{
 							Scheme: scheme,
 							Metrics: metricsserver.Options{
 								BindAddress: metricsAddress,
+							},
+							Cache: cache.Options{
+								ByObject: map[client.Object]cache.ByObject{
+									&vpol.ValidatingPolicy{}: {
+										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeEnvoy)),
+									},
+								},
 							},
 							LeaderElection:   leaderElection,
 							LeaderElectionID: leaderElectionID,
@@ -171,25 +181,54 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						envoySource, err := sources.NewKube("envoy", mgr, envoyCompiler)
+						envoySource, err := sources.NewKube("envoy", envoyMgr, envoyCompiler)
 						if err != nil {
 							return fmt.Errorf("failed to create envoy source: %w", err)
 						}
 						envoyProvider = sdksources.NewComposite(envoySource, envoyProvider)
-						httpSource, err := sources.NewKube("http", mgr, httpCompiler)
+						httpMgr, err := ctrl.NewManager(config, ctrl.Options{
+							Scheme: scheme,
+							Metrics: metricsserver.Options{
+								// TODO
+								// BindAddress: metricsAddress,
+								BindAddress: "0",
+							},
+							Cache: cache.Options{
+								ByObject: map[client.Object]cache.ByObject{
+									&vpol.ValidatingPolicy{}: {
+										Field: fields.OneTermEqualSelector("spec.evaluation.mode", string(v1alpha1.EvaluationModeHTTP)),
+									},
+								},
+							},
+							LeaderElection:   leaderElection,
+							LeaderElectionID: leaderElectionID,
+						})
+						if err != nil {
+							return fmt.Errorf("failed to construct manager: %w", err)
+						}
+						httpSource, err := sources.NewKube("http", httpMgr, httpCompiler)
 						if err != nil {
 							return fmt.Errorf("failed to create http source: %w", err)
 						}
 						httpProvider = sdksources.NewComposite(httpSource, httpProvider)
-						// start manager
+						// start managers
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
 							defer cancel()
-							mgrErr = mgr.Start(ctx)
+							envoyMgrErr = envoyMgr.Start(ctx)
 						})
-						if !mgr.GetCache().WaitForCacheSync(ctx) {
+						group.StartWithContext(ctx, func(ctx context.Context) {
+							// cancel context at the end
 							defer cancel()
-							return fmt.Errorf("failed to wait for cache sync")
+							httpMgrErr = httpMgr.Start(ctx)
+						})
+						if !envoyMgr.GetCache().WaitForCacheSync(ctx) {
+							defer cancel()
+							return fmt.Errorf("failed to wait for envoy cache sync")
+						}
+						if !httpMgr.GetCache().WaitForCacheSync(ctx) {
+							defer cancel()
+							return fmt.Errorf("failed to wait for http cache sync")
 						}
 					}
 					// create http and grpc servers
@@ -213,11 +252,11 @@ func Command() *cobra.Command {
 					})
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						defer cancel()
-						httpAuthErr = httpAuthServer.Run(ctx)
+						httpErr = httpAuthServer.Run(ctx)
 					})
 					return nil
 				}(ctx)
-				return multierr.Combine(err, probesErr, httpAuthErr, grpcErr, mgrErr)
+				return multierr.Combine(err, probesErr, httpErr, grpcErr, envoyMgrErr, httpMgrErr)
 			})
 		},
 	}

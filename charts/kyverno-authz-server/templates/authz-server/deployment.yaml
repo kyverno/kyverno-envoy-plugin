@@ -1,82 +1,87 @@
+{{- range $key, $value := .Values.authzServer }}
+{{- $name := printf "%s-%s" (include "kyverno-authz-server.name" $) $key }}
+{{- $namespace := (include "kyverno.lib.namespace" $) }}
+---
+{{- with $value }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "kyverno-authz-server.name" . }}
-  namespace: {{ template "kyverno.lib.namespace" . }}
+  name: {{ $name }}
+  namespace: {{ $namespace }}
   labels:
-    {{- include "kyverno-authz-server.labels" . | nindent 4 }}
-  {{- with .Values.deployment.annotations }}
+    {{- include "kyverno-authz-server.labels" $ | nindent 4 }}
+  {{- with .deployment.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
   {{- end }}
 spec:
-  {{- with .Values.deployment.replicas }}
+  {{- with .deployment.replicas }}
   replicas: {{ . }}
   {{- end }}
-  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
-  {{- with .Values.deployment.updateStrategy }}
+  revisionHistoryLimit: {{ .deployment.revisionHistoryLimit }}
+  {{- with .deployment.updateStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kyverno-authz-server.labels.selector" . | nindent 6 }}
+      {{- include "kyverno-authz-server.labels.selector" $ | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "kyverno-authz-server.labels" . | nindent 8 }}
-        {{- with .Values.pod.labels }}
+        {{- include "kyverno-authz-server.labels" $ | nindent 8 }}
+        {{- with .pod.labels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
-      {{- with .Values.pod.annotations }}
+      {{- with .pod.annotations }}
       annotations: {{ tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.pod.imagePullSecrets }}
+      {{- with .pod.imagePullSecrets }}
       imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.securityContext }}
+      {{- with .pod.securityContext }}
       securityContext:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.nodeSelector }}
+      {{- with .pod.nodeSelector }}
       nodeSelector:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.tolerations }}
+      {{- with .pod.tolerations }}
       tolerations:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.topologySpreadConstraints }}
+      {{- with .pod.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.priorityClassName }}
+      {{- with .pod.priorityClassName }}
       priorityClassName: {{ . | quote }}
       {{- end }}
-      {{- with .Values.pod.hostNetwork }}
+      {{- with .pod.hostNetwork }}
       hostNetwork: {{ . }}
       {{- end }}
-      {{- with .Values.pod.dnsPolicy }}
+      {{- with .pod.dnsPolicy }}
       dnsPolicy: {{ . }}
       {{- end }}
       affinity:
-        {{- with .Values.pod.antiAffinity }}
+        {{- with .pod.antiAffinity }}
         podAntiAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- with .Values.pod.affinity }}
+        {{- with .pod.affinity }}
         podAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- with .Values.pod.nodeAffinity }}
+        {{- with .pod.nodeAffinity }}
         nodeAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-      serviceAccountName: {{ template "kyverno-authz-server.service-account.name" . }}
+      serviceAccountName: {{ template "kyverno-authz-server.service-account.name" $ }}
       containers:
-        {{- with .Values.containers.server }}
+        {{- with .container }}
         - name: server
           image: {{ include "kyverno-authz-server.image" (mustMerge .image (dict "tag" (default $.Chart.Version $.Chart.AppVersion))) }}
           imagePullPolicy: {{ .image.pullPolicy }}
@@ -108,7 +113,9 @@ spec:
           args:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- range $.Values.externalPolicySources }}
+          {{- range $value.config.externalPolicySources }}
             - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
           {{- end }}
         {{- end }}
+{{- end }}
+{{- end }}

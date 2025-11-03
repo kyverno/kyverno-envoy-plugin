@@ -134,19 +134,6 @@ codegen-helm-crds: codegen-crds ## Generate helm CRDs
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
  		> ./charts/kyverno-authz-server/templates/crds.yaml
-	@cat $(CRDS_PATH)/authz.kyverno.io/* \
-		| $(SED) -e '1i{{- if .Values.crds.install }}' \
-		| $(SED) -e '$$a{{- end }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
- 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "sidecar-injector.labels" . | nindent 4 }}' \
- 		> ./charts/kyverno-sidecar-injector/templates/crds.yaml
-
 
 .PHONY: codegen-proto
 codegen-proto: ## Generate proto files
@@ -438,12 +425,21 @@ deploy-kyverno-authz-server: $(HELM)
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2
 	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
-		--set containers.server.image.registry=$(KO_REGISTRY) \
-		--set containers.server.image.repository=$(PACKAGE) \
-		--set containers.server.image.tag=$(GIT_SHA) \
-		--set certificates.certManager.issuerRef.group=cert-manager.io \
-		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
-		--set certificates.certManager.issuerRef.name=selfsigned-issuer
+		--set authzServer.envoy.container.image.registry=$(KO_REGISTRY) \
+		--set authzServer.envoy.container.image.repository=$(PACKAGE) \
+		--set authzServer.envoy.container.image.tag=$(GIT_SHA) \
+		--set authzServer.http.container.image.registry=$(KO_REGISTRY) \
+		--set authzServer.http.container.image.repository=$(PACKAGE) \
+		--set authzServer.http.container.image.tag=$(GIT_SHA) \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.group=cert-manager.io \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.kind=ClusterIssuer \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set validatingWebhookConfiguration.webhooks.envoy.container.image.registry=$(KO_REGISTRY) \
+		--set validatingWebhookConfiguration.webhooks.envoy.container.image.repository=$(PACKAGE) \
+		--set validatingWebhookConfiguration.webhooks.envoy.container.image.tag=$(GIT_SHA) \
+		--set validatingWebhookConfiguration.webhooks.http.container.image.registry=$(KO_REGISTRY) \
+		--set validatingWebhookConfiguration.webhooks.http.container.image.repository=$(PACKAGE) \
+		--set validatingWebhookConfiguration.webhooks.http.container.image.tag=$(GIT_SHA)
 
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart

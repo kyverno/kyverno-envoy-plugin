@@ -1,88 +1,103 @@
+{{- range $key, $value := .Values.validatingWebhookConfiguration.webhooks }}
+{{- $name := printf "%s-%s" (include "validation-webhook.name" $) $key }}
+{{- $namespace := (include "kyverno.lib.namespace" $) }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "validation-webhook.name" . }}
-  namespace: {{ template "kyverno.lib.namespace" . }}
+  name: {{ $name }}
+  namespace: {{ $namespace }}
   labels:
-    {{- include "validation-webhook.labels" . | nindent 4 }}
-  {{- with .Values.deployment.annotations }}
+    {{- include "kyverno.lib.labels.merge" (list
+      (include "kyverno.lib.labels.common" $)
+      (include "kyverno.lib.labels.common.selector" $)
+      (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+    ) | nindent 4 }}
+  {{- with $value.deployment.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
   {{- end }}
 spec:
-  {{- with .Values.deployment.replicas }}
+  {{- with $value.deployment.replicas }}
   replicas: {{ . }}
   {{- end }}
-  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
-  {{- with .Values.deployment.updateStrategy }}
+  revisionHistoryLimit: {{ $value.deployment.revisionHistoryLimit }}
+  {{- with $value.deployment.updateStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "validation-webhook.labels.selector" . | nindent 6 }}
+      {{- include "kyverno.lib.labels.merge" (list
+        (include "kyverno.lib.labels.common.selector" $)
+        (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+      ) | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "validation-webhook.labels" . | nindent 8 }}
-        {{- with .Values.pod.labels }}
+        {{- include "kyverno.lib.labels.merge" (list
+          (include "kyverno.lib.labels.common" $)
+          (include "kyverno.lib.labels.common.selector" $)
+          (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+        ) | nindent 8 }}
+        {{- with $value.pod.labels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
-      {{- with .Values.pod.annotations }}
+      {{- with $value.pod.annotations }}
       annotations: {{ tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.pod.imagePullSecrets }}
+      {{- with $value.pod.imagePullSecrets }}
       imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.securityContext }}
+      {{- with $value.pod.securityContext }}
       securityContext:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.nodeSelector }}
+      {{- with $value.pod.nodeSelector }}
       nodeSelector:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.tolerations }}
+      {{- with $value.pod.tolerations }}
       tolerations:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.topologySpreadConstraints }}
+      {{- with $value.pod.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.pod.priorityClassName }}
+      {{- with $value.pod.priorityClassName }}
       priorityClassName: {{ . | quote }}
       {{- end }}
-      {{- with .Values.pod.hostNetwork }}
+      {{- with $value.pod.hostNetwork }}
       hostNetwork: {{ . }}
       {{- end }}
-      {{- with .Values.pod.dnsPolicy }}
+      {{- with $value.pod.dnsPolicy }}
       dnsPolicy: {{ . }}
       {{- end }}
       affinity:
-        {{- with .Values.pod.antiAffinity }}
+        {{- with $value.pod.antiAffinity }}
         podAntiAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- with .Values.pod.affinity }}
+        {{- with $value.pod.affinity }}
         podAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- with .Values.pod.nodeAffinity }}
+        {{- with $value.pod.nodeAffinity }}
         nodeAffinity:
           {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-      serviceAccountName: {{ template "validation-webhook.service-account.name" . }}
+      serviceAccountName: {{ template "kyverno-authz-server.service-account.name" $ }}
       volumes:
         - name: certs
           secret:
-            secretName: {{ template "validation-webhook.name" . }}
+            secretName: {{ template "validation-webhook.name" $ }}
       containers:
-        {{- with .Values.containers.server }}
+        {{- with $value.container }}
         - name: server
-          image: {{ include "validation-webhook.image" (mustMerge .image (dict "tag" (default $.Chart.Version $.Chart.AppVersion))) }}
+          image: {{ include "kyverno-authz-server.image" (mustMerge .image (dict "tag" (default $.Chart.Version $.Chart.AppVersion))) }}
           imagePullPolicy: {{ .image.pullPolicy }}
           {{- with .resources }}
           resources:
@@ -108,13 +123,13 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
+          {{- with .args }}
           args:
-            - serve
-            - validation-webhook
-            - --probes-address=:9080
-            - --metrics-address=:9082
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: certs
               mountPath: /tmp/k8s-webhook-server/serving-certs
               readOnly: true
         {{- end }}
+{{- end }}

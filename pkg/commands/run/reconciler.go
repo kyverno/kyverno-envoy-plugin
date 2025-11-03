@@ -245,7 +245,7 @@ func buildSources[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY]
 	for _, src := range server.Spec.Sources {
 		if src.Kubernetes != nil {
 			// TODO: selector
-			source, err := sources.NewKube(mgr, compiler)
+			source, err := sources.NewKube(server.Name, mgr, compiler)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create kube source: %w", err)
 			}

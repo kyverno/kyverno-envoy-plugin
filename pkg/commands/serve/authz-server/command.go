@@ -171,12 +171,12 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						envoySource, err := sources.NewKube(mgr, envoyCompiler)
+						envoySource, err := sources.NewKube("envoy", mgr, envoyCompiler)
 						if err != nil {
 							return fmt.Errorf("failed to create envoy source: %w", err)
 						}
 						envoyProvider = sdksources.NewComposite(envoySource, envoyProvider)
-						httpSource, err := sources.NewKube(mgr, httpCompiler)
+						httpSource, err := sources.NewKube("http", mgr, httpCompiler)
 						if err != nil {
 							return fmt.Errorf("failed to create http source: %w", err)
 						}

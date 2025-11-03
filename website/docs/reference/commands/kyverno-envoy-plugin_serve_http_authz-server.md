@@ -22,7 +22,6 @@ kyverno-envoy-plugin serve http authz-server [flags]
       --external-policy-source stringArray         External policy sources
       --health-check-interval duration             Interval for sending health checks (default 30s)
   -h, --help                                       help for authz-server
-      --http-auth-server-address string            Address to serve the http authorization server on (default ":9083")
       --image-pull-secret stringArray              Image pull secrets
       --kube-as string                             Username to impersonate for the operation
       --kube-as-group stringArray                  Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
@@ -49,6 +48,7 @@ kyverno-envoy-plugin serve http authz-server [flags]
       --metrics-address string                     Address to listen on for metrics (default ":9082")
       --nested-request                             Expect the requests to validate to be in the body of the original request
       --probes-address string                      Address to listen on for health checks (default ":9080")
+      --server-address string                      Address to serve the http authorization server on (default ":9083")
 ```
 
 ### SEE ALSO

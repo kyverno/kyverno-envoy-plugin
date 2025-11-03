@@ -425,12 +425,21 @@ deploy-kyverno-authz-server: $(HELM)
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2
 	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
-		--set containers.server.image.registry=$(KO_REGISTRY) \
-		--set containers.server.image.repository=$(PACKAGE) \
-		--set containers.server.image.tag=$(GIT_SHA) \
-		--set certificates.certManager.issuerRef.group=cert-manager.io \
-		--set certificates.certManager.issuerRef.kind=ClusterIssuer \
-		--set certificates.certManager.issuerRef.name=selfsigned-issuer
+		--set authzServer.envoy.container.image.registry=$(KO_REGISTRY) \
+		--set authzServer.envoy.container.image.repository=$(PACKAGE) \
+		--set authzServer.envoy.container.image.tag=$(GIT_SHA) \
+		--set authzServer.http.container.image.registry=$(KO_REGISTRY) \
+		--set authzServer.http.container.image.repository=$(PACKAGE) \
+		--set authzServer.http.container.image.tag=$(GIT_SHA) \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.group=cert-manager.io \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.kind=ClusterIssuer \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set validatingWebhookConfiguration.webhooks.envoy.container.image.registry=$(KO_REGISTRY) \
+		--set validatingWebhookConfiguration.webhooks.envoy.container.image.repository=$(PACKAGE) \
+		--set validatingWebhookConfiguration.webhooks.envoy.container.image.tag=$(GIT_SHA) \
+		--set validatingWebhookConfiguration.webhooks.http.container.image.registry=$(KO_REGISTRY) \
+		--set validatingWebhookConfiguration.webhooks.http.container.image.repository=$(PACKAGE) \
+		--set validatingWebhookConfiguration.webhooks.http.container.image.tag=$(GIT_SHA)
 
 .PHONY: install-kyverno-authz-server
 install-kyverno-authz-server: ## Install kyverno-authz-server chart

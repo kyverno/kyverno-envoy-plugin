@@ -11,13 +11,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-func NewKube[POLICY any](mgr ctrl.Manager, compiler engine.Compiler[POLICY]) (core.Source[POLICY], error) {
+func NewKube[POLICY any](name string, mgr ctrl.Manager, compiler engine.Compiler[POLICY]) (core.Source[POLICY], error) {
 	options := controller.Options{
-		// TODO: allow custom name
-		SkipNameValidation: ptr.To(true),
 		NeedLeaderElection: ptr.To(false),
 	}
-	apis, err := controllerruntime.NewApiSource[v1alpha1.ValidatingPolicy](mgr, options)
+	apis, err := controllerruntime.NewApiSource[v1alpha1.ValidatingPolicy](name, mgr, options)
 	if err != nil {
 		return nil, err
 

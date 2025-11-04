@@ -1,6 +1,8 @@
 # Shell Completion
 
-Assuming the Kyverno Authz Server is installed locally, you can easily enable shell completion support for `Bash`, `Zsh`, `Fish`, and `PowerShell`. Once set up, you can use the <Tab> key to auto-complete commands, flags, and even some arguments, which significantly improves the command-line experience.
+Assuming the Kyverno Authz Server is installed locally, you can easily enable shell completion support for `Bash`, `Zsh`, `Fish`, and `PowerShell`.
+
+Once set up, you can use the <Tab> key to auto-complete commands, flags, and even some arguments, which significantly improves the command-line experience.
 
 ## Generating Completion Scripts
 

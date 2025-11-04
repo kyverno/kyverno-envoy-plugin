@@ -9,16 +9,12 @@ nav:
   - quick-start/completion.md
   - quick-start/policy-sources.md
   - quick-start/first-policy.md
-  - quick-start/http-authz-server.md
-  - quick-start/envoy-authz-server.md
-  - Envoy: quick-start/envoy.md
-  - HTTP: quick-start/http.md
-  - Sidecar Injector: quick-start/sidecar-injector.md
+  - Hello World:
+    - hello-world/index.md
+    - HTTP: quick-start/http-authz-server.md
+    - Envoy: quick-start/envoy-authz-server.md
+    - Sidecar Injector: quick-start/sidecar-injector.md
   - Next Steps: quick-start/next-steps.md
-  - Install:
-    - install/crds.md
-    - install/certificates.md
-    - install/external-policy-source.md
 - Policies:
   - policies/index.md
   - Envoy Policy Breakdown: policies/envoy-policy-breakdown.md

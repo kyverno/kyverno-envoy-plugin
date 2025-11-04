@@ -96,7 +96,7 @@ certificates:
 EOF
 ```
 
-### Deploy the Kyverno Authz Server
+## Deploy the Kyverno Authz Server
 
 Now we can deploy the Kyverno Authz Server.
 

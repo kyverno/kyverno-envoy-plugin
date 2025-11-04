@@ -4,10 +4,13 @@ nav:
 - Home: index.md
 - Getting Started:
   - quick-start/index.md
+  - quick-start/kube-install.md
   - quick-start/local-install.md
   - quick-start/completion.md
-  - quick-start/kube-install.md
+  - quick-start/policy-sources.md
+  - quick-start/first-policy.md
   - quick-start/http-authz-server.md
+  - quick-start/envoy-authz-server.md
   - Envoy: quick-start/envoy.md
   - HTTP: quick-start/http.md
   - Sidecar Injector: quick-start/sidecar-injector.md

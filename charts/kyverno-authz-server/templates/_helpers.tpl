@@ -4,20 +4,6 @@
 {{ template "kyverno.lib.names.name" . }}
 {{- end -}}
 
-{{- define "kyverno-authz-server.labels" -}}
-{{- template "kyverno.lib.labels.merge" (list
-  (include "kyverno.lib.labels.common" .)
-  (include "kyverno-authz-server.labels.selector" .)
-) -}}
-{{- end -}}
-
-{{- define "kyverno-authz-server.labels.selector" -}}
-{{- template "kyverno.lib.labels.merge" (list
-  (include "kyverno.lib.labels.common.selector" .)
-  (include "kyverno.lib.labels.component" "authz-server")
-) -}}
-{{- end -}}
-
 {{- define "kyverno-authz-server.service-account.name" -}}
 {{- if .Values.rbac.create -}}
   {{- default (include "kyverno-authz-server.name" .) .Values.rbac.serviceAccount.name -}}

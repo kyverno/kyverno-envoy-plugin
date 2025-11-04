@@ -8,8 +8,8 @@ It helps you understand how the server evaluates incoming requests and applies d
 
 Before you begin, make sure you have:
 
-- **Docker** installed and working.
-- **curl** for sending requests to the authz server.
+- [Docker](https://www.docker.com) installed and working.
+- [curl](https://curl.se) for sending requests to the authz server.
 
 !!! tip
     You **do not need a Kubernetes cluster** for this tutorial — the server runs locally and loads policies directly from files.

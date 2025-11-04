@@ -2,7 +2,6 @@ package http
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"net/http"
 
@@ -11,13 +10,14 @@ import (
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	httpserver "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/httpserver"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type authorizer struct {
-	provider      engine.HTTPSource
+	engine        core.Engine[dynamic.Interface, *httpcel.CheckRequest, policy.Evaluation[*httpcel.CheckResponse]]
 	dyn           dynamic.Interface
 	inputProgram  cel.Program
 	outputProgram cel.Program
@@ -35,11 +35,6 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		r = req
-	}
-	pols, err := a.provider.Load(context.Background())
-	if err != nil {
-		writeErrResp(w, err)
-		return
 	}
 	httpReq, err := httpcel.NewRequest(r)
 	if err != nil {
@@ -61,19 +56,12 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	var result *httpcel.CheckResponse
-	for _, pol := range pols {
-		resp, err := pol.Evaluate(r.Context(), a.dyn, &httpReq)
-		if err != nil {
-			writeErrResp(w, err)
-			return
-		}
-		// keep the first valid policy response and exit
-		if resp != nil {
-			result = resp
-			break
-		}
+	response := a.engine.Handle(r.Context(), a.dyn, &httpReq)
+	if response.Error != nil {
+		writeErrResp(w, response.Error)
+		return
 	}
+	result := response.Result
 	if result == nil {
 		result = &httpcel.CheckResponse{
 			Ok: &httpcel.CheckResponseOk{},

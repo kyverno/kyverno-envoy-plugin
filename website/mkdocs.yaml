@@ -4,8 +4,9 @@ nav:
 - Home: index.md
 - Getting Started:
   - quick-start/index.md
-  - quick-start/install.md
+  - quick-start/local-install.md
   - quick-start/completion.md
+  - quick-start/kube-install.md
   - Envoy: quick-start/envoy.md
   - HTTP: quick-start/http.md
   - Sidecar Injector: quick-start/sidecar-injector.md

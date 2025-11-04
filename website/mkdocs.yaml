@@ -11,8 +11,8 @@ nav:
   - quick-start/first-policy.md
   - Hello World:
     - hello-world/index.md
-    - HTTP: quick-start/http-authz-server.md
-    - Envoy: quick-start/envoy-authz-server.md
+    - HTTP: hello-world/http.md
+    - Envoy: hello-world/envoy.md
     - Sidecar Injector: quick-start/sidecar-injector.md
   - Next Steps: quick-start/next-steps.md
 - Policies:

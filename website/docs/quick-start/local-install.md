@@ -18,7 +18,7 @@ go install github.com/kyverno/kyverno-envoy-plugin@latest
 
 ## Run with Docker
 
-Chainsaw is also available as a Docker image which you can pull and run:
+The Kyverno Authz Server is also available as a Docker image which you can pull and run:
 
 ```bash
 docker pull ghcr.io/kyverno/kyverno-envoy-plugin:<version>

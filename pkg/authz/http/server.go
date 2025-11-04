@@ -106,7 +106,7 @@ has(object.ok)
 			outputProgram: outputProgram,
 			nestedRequest: config.NestedRequest,
 		}
-		mux.Handle("POST /", a)
+		mux.Handle("POST /{$}", a)
 		// create server
 		s := &http.Server{
 			Addr:    config.Address,

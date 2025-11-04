@@ -98,7 +98,7 @@ authzServer:
                   - key: app.kubernetes.io/component
                     operator: In
                     values:
-                      - admission-controller
+                      - authz-server-envoy
               topologyKey: kubernetes.io/hostname
 
       # -- Pod affinity constraints.
@@ -324,7 +324,7 @@ authzServer:
                   - key: app.kubernetes.io/component
                     operator: In
                     values:
-                      - admission-controller
+                      - authz-server-http
               topologyKey: kubernetes.io/hostname
 
       # -- Pod affinity constraints.
@@ -587,7 +587,7 @@ validatingWebhookConfiguration:
                     - key: app.kubernetes.io/component
                       operator: In
                       values:
-                        - admission-controller
+                        - validation-webhook-envoy
                 topologyKey: kubernetes.io/hostname
 
         # -- Pod affinity constraints.
@@ -773,7 +773,7 @@ validatingWebhookConfiguration:
                     - key: app.kubernetes.io/component
                       operator: In
                       values:
-                        - admission-controller
+                        - validation-webhook-http
                 topologyKey: kubernetes.io/hostname
 
         # -- Pod affinity constraints.

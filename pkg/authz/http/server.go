@@ -11,10 +11,15 @@ import (
 	httpserver "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/httpserver"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/dispatchers"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/handlers"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/core/resulters"
+	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	"k8s.io/client-go/dynamic"
 )
 
-func NewServer(config Config, p engine.HTTPSource, dyn dynamic.Interface) server.ServerFunc {
+func NewServer(config Config, source engine.HTTPSource, dyn dynamic.Interface) server.ServerFunc {
 	return func(ctx context.Context) error {
 		base, err := kcel.NewEnv(v1alpha1.EvaluationModeHTTP)
 		if err != nil {
@@ -74,9 +79,28 @@ has(object.ok)
 		}
 		// create mux
 		mux := http.NewServeMux()
+		// build the engine
+		engine := core.NewEngine(
+			source,
+			handlers.Handler(
+				dispatchers.Sequential(
+					policy.EvaluatorFactory[engine.HTTPPolicy](),
+					func(ctx context.Context, fc core.FactoryContext[engine.HTTPPolicy, dynamic.Interface, *httpcel.CheckRequest]) core.Breaker[engine.HTTPPolicy, *httpcel.CheckRequest, policy.Evaluation[*httpcel.CheckResponse]] {
+						return core.MakeBreakerFunc(func(_ context.Context, _ engine.HTTPPolicy, _ *httpcel.CheckRequest, out policy.Evaluation[*httpcel.CheckResponse]) bool {
+							return out.Result != nil
+						})
+					},
+				),
+				func(ctx context.Context, fc core.FactoryContext[engine.HTTPPolicy, dynamic.Interface, *httpcel.CheckRequest]) core.Resulter[engine.HTTPPolicy, *httpcel.CheckRequest, policy.Evaluation[*httpcel.CheckResponse], policy.Evaluation[*httpcel.CheckResponse]] {
+					return resulters.NewFirst[engine.HTTPPolicy, *httpcel.CheckRequest](func(out policy.Evaluation[*httpcel.CheckResponse]) bool {
+						return out.Result != nil || out.Error != nil
+					})
+				},
+			),
+		)
 		// register service
 		a := &authorizer{
-			provider:      p,
+			engine:        engine,
 			dyn:           dyn,
 			inputProgram:  inputProgram,
 			outputProgram: outputProgram,

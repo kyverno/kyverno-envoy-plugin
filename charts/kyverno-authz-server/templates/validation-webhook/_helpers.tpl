@@ -4,20 +4,6 @@
 {{ template "kyverno.lib.names.name" . }}-validation
 {{- end -}}
 
-{{- define "validation-webhook.labels" -}}
-{{- template "kyverno.lib.labels.merge" (list
-  (include "kyverno.lib.labels.common" .)
-  (include "validation-webhook.labels.selector" .)
-) -}}
-{{- end -}}
-
-{{- define "validation-webhook.labels.selector" -}}
-{{- template "kyverno.lib.labels.merge" (list
-  (include "kyverno.lib.labels.common.selector" .)
-  (include "kyverno.lib.labels.component" "validation-webhook")
-) -}}
-{{- end -}}
-
 {{- define "validation-webhook.service-account.name" -}}
 {{- if .Values.rbac.create -}}
   {{- default (include "validation-webhook.name" .) .Values.rbac.serviceAccount.name -}}

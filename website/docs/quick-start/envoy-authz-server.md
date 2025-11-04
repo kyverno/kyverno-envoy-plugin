@@ -1,3 +1,0 @@
-# Envoy Authz Server
-
-TODO

@@ -1,8 +1,7 @@
-{{- range $key, $value := .Values.authzServer }}
-{{- $name := printf "%s-%s" (include "kyverno-authz-server.name" $) $key }}
+{{- $name := (include "kyverno-authz-server.name" $) }}
 {{- $namespace := (include "kyverno.lib.namespace" $) }}
-{{- $component := printf "authz-server-%s" $key }}
----
+{{- $component := "authz-server" }}
+{{- $value := .Values.authzServer }}
 {{- with $value }}
 apiVersion: apps/v1
 kind: Deployment
@@ -129,5 +128,4 @@ spec:
             - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
           {{- end }}
         {{- end }}
-{{- end }}
 {{- end }}

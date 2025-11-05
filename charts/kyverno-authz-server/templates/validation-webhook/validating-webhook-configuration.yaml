@@ -1,33 +1,36 @@
+{{- $name := (include "validation-webhook.name" $) }}
+{{- $namespace := (include "kyverno.lib.namespace" $) }}
+{{- $component := "validation-webhook" }}
+{{- $value := .Values.validatingWebhookConfiguration }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: {{ template "validation-webhook.name" . }}
+  name: {{ $name }}
   labels:
     {{- include "kyverno.lib.labels.merge" (list
       (include "kyverno.lib.labels.common" $)
       (include "kyverno.lib.labels.common.selector" $)
-      (include "kyverno.lib.labels.component" "validation-webhook")
+      (include "kyverno.lib.labels.component" $component)
     ) | nindent 4 }}
-  {{- if (or .Values.validatingWebhookConfiguration.certificates.certManager .Values.validatingWebhookConfiguration.annotations) }}
+  {{- if (or $value.certificates.certManager $value.annotations) }}
   annotations:
-    {{- with .Values.validatingWebhookConfiguration.annotations }}
+    {{- with $value.annotations }}
     {{- tpl (toYaml .) $ | nindent 4 }}
     {{- end }}
-    {{- if .Values.validatingWebhookConfiguration.certificates.certManager }}
-    cert-manager.io/inject-ca-from: {{ printf "%s/%s" (include "kyverno.lib.namespace" .) (include "validation-webhook.name" .) }}
+    {{- if $value.certificates.certManager }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s" $namespace $name }}
     {{- end }}
   {{- end }}
 webhooks:
-{{- range $key, $value := .Values.validatingWebhookConfiguration.webhooks }}
-- name: {{ printf "%s.%s.%s.svc" $key (include "validation-webhook.name" $) (include "kyverno.lib.namespace" $) }}
+- name: {{ printf "%s.%s.svc" $name $namespace }}
   clientConfig:
     service:
-      name: {{ template "validation-webhook.name" $ }}-{{ $key }}
-      namespace: {{ template "kyverno.lib.namespace" $ }}
+      name: {{ $name }}
+      namespace: {{ $namespace }}
       port: 9443
       path: /validate-policies-kyverno-io-v1alpha1-validatingpolicy
-    {{- if $.Values.validatingWebhookConfiguration.certificates.static }}
-    caBundle: {{ index $.Values.validatingWebhookConfiguration.certificates.static.crt | b64enc }}
+    {{- if $value.certificates.static }}
+    caBundle: {{ index $value.certificates.static.crt | b64enc }}
     {{- end }}
   failurePolicy: {{ $value.failurePolicy }}
   sideEffects: None
@@ -37,4 +40,3 @@ webhooks:
     apiVersions: [v1alpha1]
     resources: [validatingpolicies]
     operations: [CREATE, UPDATE]
-{{- end }}

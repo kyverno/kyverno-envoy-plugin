@@ -6,7 +6,7 @@ require (
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.10.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589
-	github.com/envoyproxy/go-control-plane/envoy v1.35.0
+	github.com/envoyproxy/go-control-plane/envoy v1.36.0
 	github.com/go-logr/logr v1.4.3
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-containerregistry v0.20.6

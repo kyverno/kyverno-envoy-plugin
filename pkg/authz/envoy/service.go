@@ -2,8 +2,10 @@ package envoy
 
 import (
 	"context"
+	"time"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/metrics"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	"k8s.io/client-go/dynamic"
@@ -16,11 +18,15 @@ type service struct {
 }
 
 func (s *service) Check(ctx context.Context, r *authv3.CheckRequest) (*authv3.CheckResponse, error) {
+	start := time.Now()
 	// execute check
 	response, err := s.check(ctx, r)
 	// log error if any
 	if err != nil {
+		metrics.RecordEnvoyRequestError(ctx, r, err)
 		ctrl.LoggerFrom(ctx).Error(err, "Check failed")
+	} else {
+		defer metrics.RecordEnvoyRequest(ctx, start, r, response)
 	}
 	// return response and error
 	return response, err

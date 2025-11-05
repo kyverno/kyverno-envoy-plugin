@@ -1,8 +1,8 @@
-# Authz server
+# Example
 
 ## Setup
 
-In this quick start guide we will deploy the Kyverno Authz Server inside a cluster.
+In this example we will deploy the Kyverno Authz Server inside a cluster.
 
 Then you will interface [Istio](https://istio.io/latest/), an open source service mesh with the Kyverno Authz Server to delegate the request authorisation based on policies installed in the cluster.
 
@@ -91,7 +91,7 @@ spec:
 EOF
 ```
 
-For more certificate management options, refer to [Certificates management](../install/certificates.md).
+For more certificate management options, refer to [Certificates management](../../quick-start/kube-install.md#certificates-management).
 
 ### Install Kyverno ValidatingPolicy CRD
 
@@ -245,6 +245,6 @@ curl -s -w "\nhttp_code=%{http_code}" httpbin:8000/get -H "x-force-authorized: t
 
 ## Wrap Up
 
-Congratulations on completing the quick start guide!
+Congratulations on completing this guide!
 
 This tutorial demonstrated how to configure Istio’s EnvoyFilter to utilize the Kyverno Authz Server as an external authorization service.

@@ -1,8 +1,8 @@
-# Quick Start
+# Example
 
 ## Setup
 
-In this quick start guide we will deploy the Kyverno HTTP Authorizer components in a Kubernetes cluster.
+In this example we will deploy the Kyverno HTTP Authorizer components in a Kubernetes cluster.
 
 ### Prerequisites
 
@@ -15,7 +15,7 @@ In this quick start guide we will deploy the Kyverno HTTP Authorizer components 
 If you don't have a cluster at hand, you can create a local one with [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation).
 
 ```bash
-KIND_IMAGE=kindest/node:v1.31.1
+KIND_IMAGE=kindest/node:v1.34.0
 
 # create cluster
 kind create cluster --image $KIND_IMAGE --wait 1m
@@ -44,7 +44,7 @@ spec:
 EOF
 ```
 
-For more certificate management options, refer to [Certificates management](../install/certificates.md).
+For more certificate management options, refer to [Certificates management](../../quick-start/kube-install.md#certificates-management).
 
 ### Deploy the Control Plane
 
@@ -109,14 +109,8 @@ EOF
 
 This policy denies requests that don't contain the header `x-force-authorized` with the value `enabled` or `true`.
 
-## Next Steps
-
-Now that you have the components deployed, check out the [tutorials](../tutorials/index.md) to learn how to integrate with:
-
-- [Ingress NGINX](../tutorials/ingress-nginx/index.md)
-
 ## Wrap Up
 
-Congratulations on completing the quick start guide!
+Congratulations on completing this guide!
 
 You have successfully deployed the Kyverno HTTP Authorizer control plane, sidecar injector, and a sample ValidatingPolicy.

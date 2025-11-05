@@ -418,13 +418,14 @@ install-kyverno-sidecar-injector: install-vpol
 install-kyverno-sidecar-injector: $(HELM)
 	@$(MAKE) deploy-kyverno-sidecar-injector
 
-.PHONY: deploy-kyverno-authz-server
-deploy-kyverno-authz-server: ## Deploy kyverno-authz-server chart
-deploy-kyverno-authz-server: $(HELM)
+.PHONY: deploy-kyverno-envoy-server
+deploy-kyverno-envoy-server: ## Deploy kyverno-authz-server chart (envoy)
+deploy-kyverno-envoy-server: $(HELM)
 	@echo Build kyverno-authz-server dependecy... >&2
 	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
 	@echo Install kyverno-authz-server chart... >&2
 	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
+		--set config.type=envoy \
 		--set authzServer.container.image.registry=$(KO_REGISTRY) \
 		--set authzServer.container.image.repository=$(PACKAGE) \
 		--set authzServer.container.image.tag=$(GIT_SHA) \
@@ -435,13 +436,39 @@ deploy-kyverno-authz-server: $(HELM)
 		--set validatingWebhookConfiguration.container.image.repository=$(PACKAGE) \
 		--set validatingWebhookConfiguration.container.image.tag=$(GIT_SHA)
 
-.PHONY: install-kyverno-authz-server
-install-kyverno-authz-server: ## Install kyverno-authz-server chart
-install-kyverno-authz-server: kind-load-image
-install-kyverno-authz-server: install-cluster-issuer
-install-kyverno-authz-server: install-vpol
-install-kyverno-authz-server: $(HELM)
-	@$(MAKE) deploy-kyverno-authz-server
+.PHONY: install-kyverno-envoy-server
+install-kyverno-envoy-server: ## Install kyverno-authz-server chart (envoy)
+install-kyverno-envoy-server: kind-load-image
+install-kyverno-envoy-server: install-cluster-issuer
+install-kyverno-envoy-server: install-vpol
+install-kyverno-envoy-server: $(HELM)
+	@$(MAKE) deploy-kyverno-envoy-server
+
+.PHONY: deploy-kyverno-http-server
+deploy-kyverno-http-server: ## Deploy kyverno-authz-server chart (http)
+deploy-kyverno-http-server: $(HELM)
+	@echo Build kyverno-authz-server dependecy... >&2
+	@$(HELM) dependency build --skip-refresh ./charts/kyverno-authz-server
+	@echo Install kyverno-authz-server chart... >&2
+	@$(HELM) upgrade --install kyverno-authz-server --namespace kyverno --create-namespace --wait ./charts/kyverno-authz-server \
+		--set config.type=http \
+		--set authzServer.container.image.registry=$(KO_REGISTRY) \
+		--set authzServer.container.image.repository=$(PACKAGE) \
+		--set authzServer.container.image.tag=$(GIT_SHA) \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.group=cert-manager.io \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.kind=ClusterIssuer \
+		--set validatingWebhookConfiguration.certificates.certManager.issuerRef.name=selfsigned-issuer \
+		--set validatingWebhookConfiguration.container.image.registry=$(KO_REGISTRY) \
+		--set validatingWebhookConfiguration.container.image.repository=$(PACKAGE) \
+		--set validatingWebhookConfiguration.container.image.tag=$(GIT_SHA)
+
+.PHONY: install-kyverno-http-server
+install-kyverno-http-server: ## Install kyverno-authz-server chart (http)
+install-kyverno-http-server: kind-load-image
+install-kyverno-http-server: install-cluster-issuer
+install-kyverno-http-server: install-vpol
+install-kyverno-http-server: $(HELM)
+	@$(MAKE) deploy-kyverno-http-server
 
 .PHONY: deploy-kyverno-authz-server-control-plane
 deploy-kyverno-authz-server-control-plane: ## Deploy kyverno-authz-server-control-plane chart

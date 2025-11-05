@@ -123,10 +123,12 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
-            {{- tpl (toYaml .) $ | nindent 12 }}
-          {{- end }}
+          - serve
+          - '{{ $.Values.config.type }}'
+          - validation-webhook
+          - --probes-address=:9080
+          - --metrics-address=:9082
           volumeMounts:
             - name: certs
               mountPath: /tmp/k8s-webhook-server/serving-certs

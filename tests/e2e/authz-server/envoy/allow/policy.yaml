@@ -8,5 +8,4 @@ spec:
     mode: Envoy
   validations:
   - expression: >
-      envoy
-        .Allowed().Response()
+      envoy.Allowed().Response()

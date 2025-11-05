@@ -25,6 +25,53 @@ rbac:
     annotations: {}
       # example.com/annotation: value
 
+config:
+
+  # -- Authz server type (`envoy` or `http`)
+  type: envoy
+
+  grpc:
+    # -- GRPC network type (tcp, unix, etc.)
+    network: tcp
+
+    # -- GRPC address
+    address: :9081
+
+  http:
+    # -- HTTP address
+    address: :9081
+
+    # -- Expect the requests to validate to be in the body of the original request
+    nestedRequest: true
+
+  sources:
+    # -- Enable in-cluster kubernetes policy source
+    kube: true
+
+    # -- External policy sources
+    external: []
+    # - file:///data/kyverno-authz-server
+
+    controlPlane:
+      # -- Control plane address (leave empty for standalone mode)
+      address: ""
+
+      # -- Duration to wait before retrying connecting to the control plane
+      reconnectWait: 3s
+
+      # -- Duration to wait before stopping attempts of sending a policy to a client
+      maxDialInterval: 8s
+
+      # -- Interval for sending health checks
+      healthCheckInterval: 30s
+
+  # -- Allow insecure registry for pulling policy images
+  allowInsecureRegistry: false
+
+  # -- Image pull secrets for fetching policies from OCI registries
+  imagePullSecrets: []
+  # - secret-name
+
 authzServer:
   deployment:
 
@@ -194,25 +241,11 @@ authzServer:
       name: probes
       protocol: TCP
     - containerPort: 9081
-      name: grpc
+      name: authz
       protocol: TCP
     - containerPort: 9082
       name: metrics
       protocol: TCP
-
-    # -- Container args.
-    args:
-      - serve
-      - envoy
-      - authz-server
-      - --probes-address=:9080
-      - --grpc-address=:9081
-      - --grpc-network={{ .Values.authzServer.config.grpcNetwork }}
-      - --metrics-address=:9082
-      - --leader-election=true
-      - --leader-election-id={{ template "kyverno-authz-server.name" . }}
-      - --kube-policy-source={{ .Values.authzServer.config.kubePolicySource }}
-      - --allow-insecure-registry={{ .Values.authzServer.config.allowInsecureRegistry }}
 
   service:
 
@@ -222,272 +255,12 @@ authzServer:
     # -- Service type.
     type: ClusterIP
 
-    # -- Service ports.
-    ports:
-    - name: grpc
-      port: 9081
-      protocol: TCP
-      appProtocol: ~
-      targetPort: grpc
-      nodePort: ~
+    # -- Service port.
+    port: 9081
 
-  config:
-  
-    # -- GRPC network type (tcp, unix, etc.)
-    grpcNetwork: tcp
+    appProtocol: ~
 
-    # -- Enable in-cluster kubernetes policy source
-    kubePolicySource: true
-
-    # -- External policy sources
-    externalPolicySources: []
-      # eg: - file:///data/kyverno-authz-server
-
-    # -- Allow insecure registry for pulling policy images
-    allowInsecureRegistry: false
-
-    # -- Image pull secrets for fetching policies from OCI registries
-    imagePullSecrets: []
-      # - secret-name
-
-  # http:
-
-  #   deployment:
-
-  #     # -- (int) Desired number of pods
-  #     replicas: ~
-
-  #     # -- The number of revisions to keep
-  #     revisionHistoryLimit: 10
-
-  #     # -- Deployment annotations.
-  #     annotations: {}
-
-  #     # -- Deployment update strategy.
-  #     # Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-  #     # @default -- See [values.yaml](values.yaml)
-  #     updateStrategy:
-  #       rollingUpdate:
-  #         maxSurge: 1
-  #         maxUnavailable: 40%
-  #       type: RollingUpdate
-
-  #   pod:
-
-  #     # -- Additional labels to add to each pod
-  #     labels: {}
-  #       # example.com/label: foo
-
-  #     # -- Additional annotations to add to each pod
-  #     annotations: {}
-  #       # example.com/annotation: foo
-
-  #     # -- Image pull secrets
-  #     imagePullSecrets: []
-  #       # - secretName
-
-  #     # -- Security context
-  #     securityContext: {}
-
-  #     # -- Node labels for pod assignment
-  #     nodeSelector: {}
-
-  #     # -- List of node taints to tolerate
-  #     tolerations: []
-
-  #     # -- Topology spread constraints.
-  #     topologySpreadConstraints: []
-
-  #     # -- Optional priority class
-  #     priorityClassName: ''
-
-  #     # -- Change `hostNetwork` to `true` when you want the pod to share its host's network namespace.
-  #     # Useful for situations like when you end up dealing with a custom CNI over Amazon EKS.
-  #     # Update the `dnsPolicy` accordingly as well to suit the host network mode.
-  #     hostNetwork: false
-
-  #     # -- `dnsPolicy` determines the manner in which DNS resolution happens in the cluster.
-  #     # In case of `hostNetwork: true`, usually, the `dnsPolicy` is suitable to be `ClusterFirstWithHostNet`.
-  #     # For further reference: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy.
-  #     dnsPolicy: ClusterFirst
-
-  #     # -- Pod anti affinity constraints.
-  #     # @default -- See [values.yaml](values.yaml)
-  #     antiAffinity:
-  #       preferredDuringSchedulingIgnoredDuringExecution:
-  #         - weight: 1
-  #           podAffinityTerm:
-  #             labelSelector:
-  #               matchExpressions:
-  #                 - key: app.kubernetes.io/component
-  #                   operator: In
-  #                   values:
-  #                     - authz-server-http
-  #             topologyKey: kubernetes.io/hostname
-
-  #     # -- Pod affinity constraints.
-  #     affinity: {}
-
-  #     # -- Node affinity constraints.
-  #     nodeAffinity: {}
-
-  #   container:
-
-  #     image:
-
-  #       # -- Image registry
-  #       registry: ghcr.io
-
-  #       # -- Image repository
-  #       repository: kyverno/kyverno-envoy-plugin
-
-  #       # -- (string) Image tag
-  #       # Defaults to appVersion in Chart.yaml if omitted
-  #       tag: ~
-
-  #       # -- Image pull policy
-  #       pullPolicy: IfNotPresent
-
-  #     resources:
-
-  #       # -- Pod resource limits
-  #       limits:
-  #         memory: 384Mi
-
-  #       # -- Pod resource requests
-  #       requests:
-  #         cpu: 100m
-  #         memory: 128Mi
-
-  #     # -- Container security context
-  #     securityContext:
-  #       runAsNonRoot: true
-  #       privileged: false
-  #       allowPrivilegeEscalation: false
-  #       readOnlyRootFilesystem: true
-  #       capabilities:
-  #         drop:
-  #           - ALL
-  #       seccompProfile:
-  #         type: RuntimeDefault
-
-  #     # -- Startup probe.
-  #     # The block is directly forwarded into the deployment, so you can use whatever startupProbes configuration you want.
-  #     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-  #     # @default -- See [values.yaml](values.yaml)
-  #     startupProbe:
-  #       httpGet:
-  #         path: /livez
-  #         port: 9080
-  #         scheme: HTTP
-  #       failureThreshold: 20
-  #       initialDelaySeconds: 2
-  #       periodSeconds: 6
-
-  #     # -- Liveness probe.
-  #     # The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want.
-  #     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-  #     # @default -- See [values.yaml](values.yaml)
-  #     livenessProbe:
-  #       httpGet:
-  #         path: /livez
-  #         port: 9080
-  #         scheme: HTTP
-  #       initialDelaySeconds: 15
-  #       periodSeconds: 30
-  #       timeoutSeconds: 5
-  #       failureThreshold: 2
-  #       successThreshold: 1
-
-  #     # -- Readiness Probe.
-  #     # The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want.
-  #     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-  #     # @default -- See [values.yaml](values.yaml)
-  #     readinessProbe:
-  #       httpGet:
-  #         path: /readyz
-  #         port: 9080
-  #         scheme: HTTP
-  #       initialDelaySeconds: 5
-  #       periodSeconds: 10
-  #       timeoutSeconds: 5
-  #       failureThreshold: 6
-  #       successThreshold: 1
-
-  #     # -- Container ports.
-  #     ports:
-  #     - containerPort: 9080
-  #       name: probes
-  #       protocol: TCP
-  #     - containerPort: 9082
-  #       name: metrics
-  #       protocol: TCP
-  #     - containerPort: 9083
-  #       name: http
-  #       protocol: TCP
-
-  #     # -- Container args.
-  #     args:
-  #       - serve
-  #       - http
-  #       - authz-server
-  #       - --probes-address=:9080
-  #       - --metrics-address=:9082
-  #       - --server-address=:9083
-  #       - --leader-election=true
-  #       - --leader-election-id={{ template "kyverno-authz-server.name" . }}
-  #       - --kube-policy-source={{ .Values.authzServer.http.config.kubePolicySource }}
-  #       - --nested-request={{ .Values.authzServer.http.config.nestedRequest }}
-  #       - --allow-insecure-registry={{ .Values.authzServer.http.config.allowInsecureRegistry }}
-
-  #   service:
-
-  #     # -- Service annotations.
-  #     annotations: {}
-
-  #     # -- Service type.
-  #     type: ClusterIP
-
-  #     # -- Service ports.
-  #     ports:
-  #     - name: http
-  #       port: 9083
-  #       protocol: TCP
-  #       appProtocol: ~
-  #       targetPort: http
-  #       nodePort: ~
-
-  #   config:
-  #     # -- Enable in-cluster kubernetes policy source
-  #     kubePolicySource: true
-
-  #     # -- External policy sources
-  #     externalPolicySources: []
-  #       # eg: - file:///data/kyverno-authz-server
-
-  #     # -- Allow insecure registry for pulling policy images
-  #     allowInsecureRegistry: false
-
-  #     # -- Image pull secrets for fetching policies from OCI registries
-  #     imagePullSecrets: []
-  #       # - secret-name
-
-  #     # -- Expect the requests to validate to be in the body of the original request
-  #     nestedRequest: true
-
-  #     # Control plane settings (for sidecar mode)
-  #     controlPlane:
-  #       # -- Control plane address (leave empty for standalone mode)
-  #       address: ""
-
-  #       # -- Duration to wait before retrying connecting to the control plane
-  #       reconnectWait: 3s
-
-  #       # -- Duration to wait before stopping attempts of sending a policy to a client
-  #       maxDialInterval: 8s
-
-  #       # -- Interval for sending health checks
-  #       healthCheckInterval: 30s
+    nodePort: ~
 
 validatingWebhookConfiguration:
 
@@ -582,7 +355,7 @@ validatingWebhookConfiguration:
                 - key: app.kubernetes.io/component
                   operator: In
                   values:
-                    - validation-webhook-envoy
+                    - validation-webhook
             topologyKey: kubernetes.io/hostname
 
     # -- Pod affinity constraints.
@@ -679,206 +452,12 @@ validatingWebhookConfiguration:
     - containerPort: 9080
       name: probes
       protocol: TCP
-    - containerPort: 9081
-      name: grpc
-      protocol: TCP
     - containerPort: 9082
       name: metrics
       protocol: TCP
-
-    # -- Container args.
-    args:
-      - serve
-      - envoy
-      - validation-webhook
-      - --probes-address=:9080
-      - --metrics-address=:9082
-
-    # http:
-    #   # -- Webhook failure policy
-    #   failurePolicy: Fail
-
-    #   deployment:
-
-    #     # -- (int) Desired number of pods
-    #     replicas: ~
-
-    #     # -- The number of revisions to keep
-    #     revisionHistoryLimit: 10
-
-    #     # -- Deployment annotations.
-    #     annotations: {}
-
-    #     # -- Deployment update strategy.
-    #     # Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-    #     # @default -- See [values.yaml](values.yaml)
-    #     updateStrategy:
-    #       rollingUpdate:
-    #         maxSurge: 1
-    #         maxUnavailable: 40%
-    #       type: RollingUpdate
-
-    #   pod:
-
-    #     # -- Additional labels to add to each pod
-    #     labels: {}
-    #       # example.com/label: foo
-
-    #     # -- Additional annotations to add to each pod
-    #     annotations: {}
-    #       # example.com/annotation: foo
-
-    #     # -- Image pull secrets
-    #     imagePullSecrets: []
-    #       # - secretName
-
-    #     # -- Security context
-    #     securityContext: {}
-
-    #     # -- Node labels for pod assignment
-    #     nodeSelector: {}
-
-    #     # -- List of node taints to tolerate
-    #     tolerations: []
-
-    #     # -- Topology spread constraints.
-    #     topologySpreadConstraints: []
-
-    #     # -- Optional priority class
-    #     priorityClassName: ''
-
-    #     # -- Change `hostNetwork` to `true` when you want the pod to share its host's network namespace.
-    #     # Useful for situations like when you end up dealing with a custom CNI over Amazon EKS.
-    #     # Update the `dnsPolicy` accordingly as well to suit the host network mode.
-    #     hostNetwork: false
-
-    #     # -- `dnsPolicy` determines the manner in which DNS resolution happens in the cluster.
-    #     # In case of `hostNetwork: true`, usually, the `dnsPolicy` is suitable to be `ClusterFirstWithHostNet`.
-    #     # For further reference: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy.
-    #     dnsPolicy: ClusterFirst
-
-    #     # -- Pod anti affinity constraints.
-    #     # @default -- See [values.yaml](values.yaml)
-    #     antiAffinity:
-    #       preferredDuringSchedulingIgnoredDuringExecution:
-    #         - weight: 1
-    #           podAffinityTerm:
-    #             labelSelector:
-    #               matchExpressions:
-    #                 - key: app.kubernetes.io/component
-    #                   operator: In
-    #                   values:
-    #                     - validation-webhook-http
-    #             topologyKey: kubernetes.io/hostname
-
-    #     # -- Pod affinity constraints.
-    #     affinity: {}
-
-    #     # -- Node affinity constraints.
-    #     nodeAffinity: {}
-
-    #   container:
-
-    #     image:
-
-    #       # -- Image registry
-    #       registry: ghcr.io
-
-    #       # -- Image repository
-    #       repository: kyverno/kyverno-envoy-plugin
-
-    #       # -- (string) Image tag
-    #       # Defaults to appVersion in Chart.yaml if omitted
-    #       tag: ~
-
-    #       # -- Image pull policy
-    #       pullPolicy: IfNotPresent
-
-    #     resources:
-
-    #       # -- Pod resource limits
-    #       limits:
-    #         memory: 384Mi
-
-    #       # -- Pod resource requests
-    #       requests:
-    #         cpu: 100m
-    #         memory: 128Mi
-
-    #     # -- Container security context
-    #     securityContext:
-    #       runAsNonRoot: true
-    #       privileged: false
-    #       allowPrivilegeEscalation: false
-    #       readOnlyRootFilesystem: true
-    #       capabilities:
-    #         drop:
-    #           - ALL
-    #       seccompProfile:
-    #         type: RuntimeDefault
-
-    #     # -- Startup probe.
-    #     # The block is directly forwarded into the deployment, so you can use whatever startupProbes configuration you want.
-    #     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-    #     # @default -- See [values.yaml](values.yaml)
-    #     startupProbe:
-    #       httpGet:
-    #         path: /livez
-    #         port: 9080
-    #         scheme: HTTP
-    #       failureThreshold: 20
-    #       initialDelaySeconds: 2
-    #       periodSeconds: 6
-
-    #     # -- Liveness probe.
-    #     # The block is directly forwarded into the deployment, so you can use whatever livenessProbe configuration you want.
-    #     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-    #     # @default -- See [values.yaml](values.yaml)
-    #     livenessProbe:
-    #       httpGet:
-    #         path: /livez
-    #         port: 9080
-    #         scheme: HTTP
-    #       initialDelaySeconds: 15
-    #       periodSeconds: 30
-    #       timeoutSeconds: 5
-    #       failureThreshold: 2
-    #       successThreshold: 1
-
-    #     # -- Readiness Probe.
-    #     # The block is directly forwarded into the deployment, so you can use whatever readinessProbe configuration you want.
-    #     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-    #     # @default -- See [values.yaml](values.yaml)
-    #     readinessProbe:
-    #       httpGet:
-    #         path: /readyz
-    #         port: 9080
-    #         scheme: HTTP
-    #       initialDelaySeconds: 5
-    #       periodSeconds: 10
-    #       timeoutSeconds: 5
-    #       failureThreshold: 6
-    #       successThreshold: 1
-
-    #     # -- Container ports.
-    #     ports:
-    #     - containerPort: 9080
-    #       name: probes
-    #       protocol: TCP
-    #     - containerPort: 9081
-    #       name: grpc
-    #       protocol: TCP
-    #     - containerPort: 9082
-    #       name: metrics
-    #       protocol: TCP
-
-    #     # -- Container args.
-    #     args:
-    #       - serve
-    #       - http
-    #       - validation-webhook
-    #       - --probes-address=:9080
-    #       - --metrics-address=:9082
+    - containerPort: 9443
+      name: webhook
+      protocol: TCP
 
 crds:
   install: false

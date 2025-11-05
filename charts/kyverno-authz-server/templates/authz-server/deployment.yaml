@@ -120,12 +120,28 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
-            {{- tpl (toYaml .) $ | nindent 12 }}
+          - serve
+          - '{{ $.Values.config.type }}'
+          - authz-server
+          - --probes-address=:9080
+          - --metrics-address=:9082
+          - --leader-election=true
+          - --leader-election-id={{ $name }}
+          - --kube-policy-source={{ $.Values.config.sources.kube }}
+          {{- range $.Values.config.sources.external }}
+          - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
           {{- end }}
-          {{- range $value.config.externalPolicySources }}
-            - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}
+          {{- if eq $.Values.config.type "envoy" }}
+          - --grpc-network={{ $.Values.config.grpc.network }}
+          - --grpc-address={{ $.Values.config.grpc.address }}
+          {{- else }}
+          - --server-address={{ $.Values.config.http.address }}
+          - --nested-request={{ $.Values.config.http.nestedRequest }}
+          {{- end }}
+          - --allow-insecure-registry={{ $.Values.config.allowInsecureRegistry }}
+          {{- range $.Values.config.imagePullSecrets }}
+          - {{ printf "--image-pull-secret=%s" (tpl (toYaml .) $) }}
           {{- end }}
         {{- end }}
 {{- end }}

@@ -15,6 +15,21 @@ nav:
     - Envoy: hello-world/envoy.md
     - Sidecar Injector: quick-start/sidecar-injector.md
   - Next Steps: quick-start/next-steps.md
+- Authz Server:
+  - server/index.md
+  - Envoy:
+    - server/envoy/index.md
+    - server/envoy/commands.md
+    - server/envoy/configuration.md
+    - server/envoy/webhook.md
+    - server/envoy/example.md
+  - HTTP:
+    - server/http/index.md
+    - server/http/commands.md
+    - server/http/configuration.md
+    - server/http/programmability.md
+    - server/http/webhook.md
+    - server/http/example.md
 - Policies:
   - policies/index.md
   - Envoy Policy Breakdown: policies/envoy-policy-breakdown.md

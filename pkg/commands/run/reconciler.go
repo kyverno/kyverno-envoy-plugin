@@ -221,7 +221,7 @@ func (r *reconciler) runHttpServer(req ctrl.Request, object v1alpha1.Authorizati
 		}
 		httpConfig := http.Config{
 			Address:          object.Spec.Type.HTTP.Address,
-			NestedRequest:    false,
+			NestedRequest:    r.nestedRequest,
 			InputExpression:  object.Spec.Type.HTTP.Modifiers.Request,
 			OutputExpression: object.Spec.Type.HTTP.Modifiers.Response,
 			CertFile:         r.certFile,

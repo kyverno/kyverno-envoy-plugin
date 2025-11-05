@@ -2,12 +2,14 @@
 
 The CEL engine used to evaluate variables and authorization rules has been extended with libraries to help processing the input `CheckRequest` and forge the corresponding `OkResponse` and/or `DeniedResponse`.
 
-## Envoy plugin libraries
+## Authorization plugin libraries
 
 - [Envoy](./envoy.md)
+- [HTTP](./http.md)
 - [Jwk](./jwk.md)
 - [Jwt](./jwt.md)
 - [Json](./json.md)
+- [MCP](./mcp.md)
 
 ## Common libraries
 

@@ -33,6 +33,6 @@ Runs as a programmable HTTP server that evaluates requests directly and returns 
 
 ## Get Started
 
-- **[Envoy Integration Guide](./envoy.md)** – Use with Envoy or service meshes
-- **[HTTP Authorization Guide](./http.md)** – Use with HTTP services and ingress controllers
+- **[Envoy Hello World](../hello-world/envoy.md)** – Introduction to the Envoy Authz Server
+- **[HTTP Hello World](../hello-world/http.md)** – Introduction to the HTTP Authz Server
 - **[Sidecar Injector](./sidecar-injector.md)** – Automate sidecar injection

@@ -146,6 +146,7 @@ https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3
 | Field | Type | Required | Inline | Description |
 |---|---|---|---|---|
 | `address` | `string` | :white_check_mark: |  | <p>Address is the network address the server listens on.</p> |
+| `nestedRequest` | `bool` | :white_check_mark: |  | <p>Where to find the request to authenticate, the incoming request itself or the body of it</p> |
 | `modifiers` | [`Modifiers`](#authz-kyverno-io-v1alpha1-Modifiers) | :white_check_mark: |  | <p>Modifiers to apply to requests and responses.</p> |
 
 ## Kind     {#authz-kyverno-io-v1alpha1-Kind}

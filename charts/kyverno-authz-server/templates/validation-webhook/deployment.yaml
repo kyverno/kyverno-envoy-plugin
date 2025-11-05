@@ -1,7 +1,7 @@
-{{- range $key, $value := .Values.validatingWebhookConfiguration.webhooks }}
-{{- $name := printf "%s-%s" (include "validation-webhook.name" $) $key }}
+{{- $name := (include "validation-webhook.name" $) }}
 {{- $namespace := (include "kyverno.lib.namespace" $) }}
----
+{{- $component := "validation-webhook" }}
+{{- $value := .Values.validatingWebhookConfiguration }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,7 +11,7 @@ metadata:
     {{- include "kyverno.lib.labels.merge" (list
       (include "kyverno.lib.labels.common" $)
       (include "kyverno.lib.labels.common.selector" $)
-      (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+      (include "kyverno.lib.labels.component" $component)
     ) | nindent 4 }}
   {{- with $value.deployment.annotations }}
   annotations:
@@ -30,7 +30,7 @@ spec:
     matchLabels:
       {{- include "kyverno.lib.labels.merge" (list
         (include "kyverno.lib.labels.common.selector" $)
-        (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+        (include "kyverno.lib.labels.component" $component)
       ) | nindent 6 }}
   template:
     metadata:
@@ -38,7 +38,7 @@ spec:
         {{- include "kyverno.lib.labels.merge" (list
           (include "kyverno.lib.labels.common" $)
           (include "kyverno.lib.labels.common.selector" $)
-          (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+          (include "kyverno.lib.labels.component" $component)
         ) | nindent 8 }}
         {{- with $value.pod.labels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
@@ -123,13 +123,14 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
-            {{- tpl (toYaml .) $ | nindent 12 }}
-          {{- end }}
+          - serve
+          - '{{ $.Values.config.type }}'
+          - validation-webhook
+          - --probes-address=:9080
+          - --metrics-address=:9082
           volumeMounts:
             - name: certs
               mountPath: /tmp/k8s-webhook-server/serving-certs
               readOnly: true
         {{- end }}
-{{- end }}

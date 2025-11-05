@@ -4,16 +4,32 @@ nav:
 - Home: index.md
 - Getting Started:
   - quick-start/index.md
-  - quick-start/install.md
+  - quick-start/kube-install.md
+  - quick-start/local-install.md
   - quick-start/completion.md
-  - Envoy: quick-start/envoy.md
-  - HTTP: quick-start/http.md
-  - Sidecar Injector: quick-start/sidecar-injector.md
+  - quick-start/policy-sources.md
+  - quick-start/first-policy.md
+  - Hello World:
+    - hello-world/index.md
+    - HTTP: hello-world/http.md
+    - Envoy: hello-world/envoy.md
+    - Sidecar Injector: quick-start/sidecar-injector.md
   - Next Steps: quick-start/next-steps.md
-  - Install:
-    - install/crds.md
-    - install/certificates.md
-    - install/external-policy-source.md
+- Authz Server:
+  - server/index.md
+  - Envoy:
+    - server/envoy/index.md
+    - server/envoy/commands.md
+    - server/envoy/configuration.md
+    - server/envoy/webhook.md
+    - server/envoy/example.md
+  - HTTP:
+    - server/http/index.md
+    - server/http/commands.md
+    - server/http/configuration.md
+    - server/http/programmability.md
+    - server/http/webhook.md
+    - server/http/example.md
 - Policies:
   - policies/index.md
   - Envoy Policy Breakdown: policies/envoy-policy-breakdown.md

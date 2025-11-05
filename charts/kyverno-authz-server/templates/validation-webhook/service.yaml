@@ -1,7 +1,6 @@
-{{- range $key, $_ := .Values.validatingWebhookConfiguration.webhooks }}
-{{- $name := printf "%s-%s" (include "validation-webhook.name" $) $key }}
+{{- $name := (include "validation-webhook.name" $) }}
 {{- $namespace := (include "kyverno.lib.namespace" $) }}
----
+{{- $component := "validation-webhook" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,7 +10,7 @@ metadata:
     {{- include "kyverno.lib.labels.merge" (list
       (include "kyverno.lib.labels.common" $)
       (include "kyverno.lib.labels.common.selector" $)
-      (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+      (include "kyverno.lib.labels.component" $component)
     ) | nindent 4 }}
 spec:
   type: ClusterIP
@@ -19,10 +18,9 @@ spec:
   - name: webhook
     port: 9443
     protocol: TCP
-    targetPort: 9443
+    targetPort: webhook
   selector:
     {{- include "kyverno.lib.labels.merge" (list
       (include "kyverno.lib.labels.common.selector" $)
-      (include "kyverno.lib.labels.component" (printf "validation-webhook-%s" $key ))
+      (include "kyverno.lib.labels.component" $component)
     ) | nindent 4 }}
-{{- end }}

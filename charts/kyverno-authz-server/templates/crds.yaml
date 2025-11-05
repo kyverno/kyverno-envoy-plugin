@@ -245,6 +245,10 @@ spec:
                               the outgoing response.
                             type: string
                         type: object
+                      nestedRequest:
+                        description: Where to find the request to authenticate, the
+                          incoming request itself or the body of it
+                        type: boolean
                     required:
                     - address
                     type: object

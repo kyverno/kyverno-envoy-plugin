@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/google/cel-go/cel"
 	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/authz/http"
 	httpserver "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/httpserver"
 	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
+	"github.com/kyverno/kyverno-envoy-plugin/pkg/metrics"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/core"
 	"github.com/kyverno/kyverno-envoy-plugin/sdk/extensions/policy"
 	"k8s.io/client-go/dynamic"
@@ -25,6 +27,8 @@ type authorizer struct {
 }
 
 func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
 	logger := ctrl.LoggerFrom(r.Context()).WithValues("from", r.RemoteAddr)
 	logger.Info("received request")
 	if a.nestedRequest {
@@ -58,6 +62,7 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	response := a.engine.Handle(r.Context(), a.dyn, &httpReq)
 	if response.Error != nil {
+		metrics.RecordHTTPRequestError(r.Context(), httpReq, response.Error)
 		writeErrResp(w, response.Error)
 		return
 	}
@@ -67,6 +72,7 @@ func (a *authorizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Ok: &httpcel.CheckResponseOk{},
 		}
 	}
+	defer metrics.RecordHTTPRequest(r.Context(), start, httpReq, result)
 	out, _, err := a.outputProgram.Eval(map[string]any{
 		"object": result,
 	})

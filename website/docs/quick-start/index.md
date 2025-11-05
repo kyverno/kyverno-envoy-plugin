@@ -23,16 +23,16 @@ Connects with [Envoy’s External Authorization filter](https://www.envoyproxy.i
 
 Envoy sends authorization requests to the Kyverno sidecar, which evaluates policies and returns allow/deny decisions.
 
-![Architecture Overview](../schemas/overview.png)
+![Architecture Overview](../schemas/overview.svg)
 
 ### HTTP Authorization
 
 Runs as a programmable HTTP server that evaluates requests directly and returns a decision — ideal for ingress controllers or standalone services.
 
-TODO Architecture Overview
+![Architecture Overview](../schemas/overview-2.svg)
 
 ## Get Started
 
-- **[Envoy Integration Guide](./envoy.md)** – Use with Envoy or service meshes
-- **[HTTP Authorization Guide](./http.md)** – Use with HTTP services and ingress controllers
+- **[Envoy Hello World](../hello-world/envoy.md)** – Introduction to the Envoy Authz Server
+- **[HTTP Hello World](../hello-world/http.md)** – Introduction to the HTTP Authz Server
 - **[Sidecar Injector](./sidecar-injector.md)** – Automate sidecar injection

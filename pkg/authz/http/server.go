@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 
 	"github.com/google/cel-go/cel"
@@ -106,13 +107,28 @@ has(object.ok)
 			outputProgram: outputProgram,
 			nestedRequest: config.NestedRequest,
 		}
-		mux.Handle("POST /", a)
+		mux.Handle("POST /{$}", a)
 		// create server
 		s := &http.Server{
 			Addr:    config.Address,
 			Handler: mux,
 		}
+		// serve TLS if a certfile and a keyfile are provided
+		if config.CertFile != "" && config.KeyFile != "" {
+			s.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+				CipherSuites: []uint16{
+					// AEADs w/ ECDHE
+					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+					tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+					tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+					tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				},
+			}
+		}
 		// run server
-		return server.RunHttp(ctx, s, "", "")
+		return server.RunHttp(ctx, s, config.CertFile, config.KeyFile)
 	}
 }

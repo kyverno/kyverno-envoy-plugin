@@ -45,8 +45,6 @@ func Command() *cobra.Command {
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
 	var kubePolicySource bool
-	var leaderElection bool
-	var leaderElectionID string
 	var imagePullSecrets []string
 	var allowInsecureRegistry bool
 	command := &cobra.Command{
@@ -127,8 +125,6 @@ func Command() *cobra.Command {
 									},
 								},
 							},
-							LeaderElection:   leaderElection,
-							LeaderElectionID: leaderElectionID,
 						})
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
@@ -180,8 +176,6 @@ func Command() *cobra.Command {
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", nil, "Image pull secrets")
 	command.Flags().BoolVar(&allowInsecureRegistry, "allow-insecure-registry", false, "Allow insecure registry")
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
-	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
-	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 
 	return command

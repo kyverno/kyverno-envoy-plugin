@@ -613,6 +613,13 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "nestedRequest": {
+                  "description": "Where to find the request to authenticate, the incoming request itself or the body of it",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false

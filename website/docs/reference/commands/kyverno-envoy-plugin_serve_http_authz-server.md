@@ -16,6 +16,7 @@ kyverno-envoy-plugin serve http authz-server [flags]
 
 ```
       --allow-insecure-registry                    Allow insecure registry
+      --cert-file string                           File containing tls certificate
       --control-plane-address string               Control plane address
       --control-plane-max-dial-interval duration   Duration to wait before stopping attempts of sending a policy to a client (default 8s)
       --control-plane-reconnect-wait duration      Duration to wait before retrying connecting to the control plane (default 3s)
@@ -23,6 +24,7 @@ kyverno-envoy-plugin serve http authz-server [flags]
       --health-check-interval duration             Interval for sending health checks (default 30s)
   -h, --help                                       help for authz-server
       --image-pull-secret stringArray              Image pull secrets
+      --key-file string                            File containing tls private key
       --kube-as string                             Username to impersonate for the operation
       --kube-as-group stringArray                  Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
       --kube-as-uid string                         UID to impersonate for the operation

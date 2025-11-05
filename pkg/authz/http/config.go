@@ -5,4 +5,6 @@ type Config struct {
 	NestedRequest    bool
 	InputExpression  string
 	OutputExpression string
+	CertFile         string
+	KeyFile          string
 }

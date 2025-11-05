@@ -17,8 +17,7 @@ spec:
   privateKey:
     rotationPolicy: Always
   dnsNames:
-    - {{ printf "%s-http.%s.svc" $name $namespace }}
-    - {{ printf "%s-envoy.%s.svc" $name $namespace }}
+    - {{ printf "%s.%s.svc" $name $namespace }}
   {{- with .issuerRef }}
   issuerRef:
     {{- tpl (toYaml .) $ | nindent 4 }}

@@ -1,8 +1,7 @@
-{{- range $key, $value := .Values.authzServer }}
-{{- $name := printf "%s-%s" (include "kyverno-authz-server.name" $) $key }}
+{{- $name := (include "kyverno-authz-server.name" $) }}
 {{- $namespace := (include "kyverno.lib.namespace" $) }}
-{{- $component := printf "authz-server-%s" $key }}
----
+{{- $component := "authz-server" }}
+{{- $value := .Values.authzServer }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -21,10 +20,18 @@ metadata:
 spec:
   type: {{ $value.service.type }}
   ports:
-  {{- tpl (toYaml $value.service.ports) $ | nindent 2 }}
+  - name: grpc
+    port: {{ $value.service.port }}
+    protocol: TCP
+    targetPort: authz
+    {{- with $value.service.appProtocol }}
+    appProtocol: {{ . }}
+    {{- end }}
+    {{- with $value.service.nodePort }}
+    nodePort: {{ . }}
+    {{- end }}
   selector:
     {{- include "kyverno.lib.labels.merge" (list
       (include "kyverno.lib.labels.common.selector" $)
       (include "kyverno.lib.labels.component" $component)
     ) | nindent 4 }}
-{{- end }}

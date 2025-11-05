@@ -55,6 +55,8 @@ func Command() *cobra.Command {
 	var nestedRequest bool
 	var certFile string
 	var keyFile string
+	var inputExpression string
+	var outputExpression string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -190,10 +192,12 @@ func Command() *cobra.Command {
 					// create http and grpc servers
 					probesServer := probes.NewServer(probesAddress)
 					httpConfig := http.Config{
-						Address:       serverAddress,
-						NestedRequest: nestedRequest,
-						CertFile:      certFile,
-						KeyFile:       keyFile,
+						Address:          serverAddress,
+						NestedRequest:    nestedRequest,
+						CertFile:         certFile,
+						KeyFile:          keyFile,
+						InputExpression:  inputExpression,
+						OutputExpression: outputExpression,
 					}
 					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient) // run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
@@ -223,6 +227,8 @@ func Command() *cobra.Command {
 	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
 	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
+	command.Flags().StringVar(&inputExpression, "input-expression", "", "CEL expression for transforming the incoming request")
+	command.Flags().StringVar(&outputExpression, "output-expression", "", "CEL expression for transforming responses before being sent to clients")
 	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
 	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))

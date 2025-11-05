@@ -49,6 +49,8 @@ type EnvoyAuthorizationServer struct {
 type HTTPAuthorizationServer struct {
 	// Address is the network address the server listens on.
 	Address string `json:"address"`
+	// Where to find the request to authenticate, the incoming request itself or the body of it
+	NestedRequest bool `json:"nestedRequest,omitempty"`
 	// Modifiers to apply to requests and responses.
 	Modifiers *Modifiers `json:"modifiers,omitempty"`
 }

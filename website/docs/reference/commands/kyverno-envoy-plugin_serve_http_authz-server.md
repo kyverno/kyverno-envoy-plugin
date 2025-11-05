@@ -45,8 +45,6 @@ kyverno-envoy-plugin serve http authz-server [flags]
       --kube-token string                          Bearer token for authentication to the API server
       --kube-user string                           The name of the kubeconfig user to use
       --kube-username string                       Username for basic authentication to the API server
-      --leader-election                            Enable leader election
-      --leader-election-id string                  Leader election ID
       --metrics-address string                     Address to listen on for metrics (default ":9082")
       --nested-request                             Expect the requests to validate to be in the body of the original request
       --probes-address string                      Address to listen on for health checks (default ":9080")

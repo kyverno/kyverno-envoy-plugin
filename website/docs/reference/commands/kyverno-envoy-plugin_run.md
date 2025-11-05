@@ -15,7 +15,9 @@ kyverno-envoy-plugin run [flags]
 ### Options
 
 ```
+      --cert-file string                    File containing tls certificate
   -h, --help                                help for run
+      --key-file string                     File containing tls private key
       --kube-as string                      Username to impersonate for the operation
       --kube-as-group stringArray           Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
       --kube-as-uid string                  UID to impersonate for the operation
@@ -38,6 +40,7 @@ kyverno-envoy-plugin run [flags]
       --leader-election                     Enable leader election
       --leader-election-id string           Leader election ID
       --metrics-address string              Address to listen on for metrics (default ":9082")
+      --nested-request                      Expect the requests to validate to be in the body of the original request
       --probes-address string               Address to listen on for health checks (default ":9080")
 ```
 

@@ -53,6 +53,8 @@ func Command() *cobra.Command {
 	var controlPlaneMaxDialInterval time.Duration
 	var healthCheckInterval time.Duration
 	var nestedRequest bool
+	var certFile string
+	var keyFile string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -190,9 +192,10 @@ func Command() *cobra.Command {
 					httpConfig := http.Config{
 						Address:       serverAddress,
 						NestedRequest: nestedRequest,
+						CertFile:      certFile,
+						KeyFile:       keyFile,
 					}
-					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient)
-					// run servers
+					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient) // run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
 						defer cancel()
@@ -220,6 +223,8 @@ func Command() *cobra.Command {
 	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
 	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
+	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
+	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 
 	return command

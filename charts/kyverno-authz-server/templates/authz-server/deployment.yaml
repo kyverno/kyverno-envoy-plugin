@@ -126,8 +126,6 @@ spec:
           - authz-server
           - --probes-address=:9080
           - --metrics-address=:9082
-          - --leader-election=true
-          - --leader-election-id={{ $name }}
           - --kube-policy-source={{ $.Values.config.sources.kube }}
           {{- range $.Values.config.sources.external }}
           - {{ printf "--external-policy-source=%s" (tpl (toYaml .) $) }}

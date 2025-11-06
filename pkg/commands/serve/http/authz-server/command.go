@@ -158,9 +158,7 @@ func Command() *cobra.Command {
 						httpMgr, err := ctrl.NewManager(config, ctrl.Options{
 							Scheme: scheme,
 							Metrics: metricsserver.Options{
-								// TODO
-								// BindAddress: metricsAddress,
-								BindAddress: "0",
+								BindAddress: metricsAddress,
 							},
 							Cache: cache.Options{
 								ByObject: map[client.Object]cache.ByObject{

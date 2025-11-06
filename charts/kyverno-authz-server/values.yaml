@@ -12,12 +12,10 @@ nameOverride: ~
 fullnameOverride: ~
 
 rbac:
-
   # -- Create RBAC resources
   create: true
 
   serviceAccount:
-
     # -- The ServiceAccount name
     name:
 
@@ -26,7 +24,6 @@ rbac:
       # example.com/annotation: value
 
 config:
-
   # -- Authz server type (`envoy` or `http`)
   type: envoy
 
@@ -43,6 +40,12 @@ config:
 
     # -- Expect the requests to validate to be in the body of the original request
     nestedRequest: true
+
+    # -- CEL expression applied to transform incoming requests
+    inputExpression: ""
+
+    # -- CEL: expression applied to outgoing responses
+    outputExpression: ""
 
   sources:
     # -- Enable in-cluster kubernetes policy source
@@ -74,7 +77,6 @@ config:
 
 authzServer:
   deployment:
-
     # -- (int) Desired number of pods
     replicas: ~
 
@@ -94,7 +96,6 @@ authzServer:
       type: RollingUpdate
 
   pod:
-
     # -- Additional labels to add to each pod
     labels: {}
       # example.com/label: foo
@@ -120,7 +121,7 @@ authzServer:
     topologySpreadConstraints: []
 
     # -- Optional priority class
-    priorityClassName: ''
+    priorityClassName: ""
 
     # -- Change `hostNetwork` to `true` when you want the pod to share its host's network namespace.
     # Useful for situations like when you end up dealing with a custom CNI over Amazon EKS.
@@ -153,9 +154,7 @@ authzServer:
     nodeAffinity: {}
 
   container:
-
     image:
-
       # -- Image registry
       registry: ghcr.io
 
@@ -170,7 +169,6 @@ authzServer:
       pullPolicy: IfNotPresent
 
     resources:
-
       # -- Pod resource limits
       limits:
         memory: 384Mi
@@ -237,18 +235,17 @@ authzServer:
 
     # -- Container ports.
     ports:
-    - containerPort: 9080
-      name: probes
-      protocol: TCP
-    - containerPort: 9081
-      name: authz
-      protocol: TCP
-    - containerPort: 9082
-      name: metrics
-      protocol: TCP
+      - containerPort: 9080
+        name: probes
+        protocol: TCP
+      - containerPort: 9081
+        name: authz
+        protocol: TCP
+      - containerPort: 9082
+        name: metrics
+        protocol: TCP
 
   service:
-
     # -- Service annotations.
     annotations: {}
 
@@ -263,13 +260,11 @@ authzServer:
     nodePort: ~
 
 validatingWebhookConfiguration:
-
   # -- Webhook annotations
   annotations: {}
     # example.com/annotation: value
 
   certificates:
-
     # -- Static data to set in certificate secret
     static: {}
       # crt: ...
@@ -286,7 +281,6 @@ validatingWebhookConfiguration:
   failurePolicy: Fail
 
   deployment:
-
     # -- (int) Desired number of pods
     replicas: ~
 
@@ -306,7 +300,6 @@ validatingWebhookConfiguration:
       type: RollingUpdate
 
   pod:
-
     # -- Additional labels to add to each pod
     labels: {}
       # example.com/label: foo
@@ -332,7 +325,7 @@ validatingWebhookConfiguration:
     topologySpreadConstraints: []
 
     # -- Optional priority class
-    priorityClassName: ''
+    priorityClassName: ""
 
     # -- Change `hostNetwork` to `true` when you want the pod to share its host's network namespace.
     # Useful for situations like when you end up dealing with a custom CNI over Amazon EKS.
@@ -365,9 +358,7 @@ validatingWebhookConfiguration:
     nodeAffinity: {}
 
   container:
-
     image:
-
       # -- Image registry
       registry: ghcr.io
 
@@ -382,7 +373,6 @@ validatingWebhookConfiguration:
       pullPolicy: IfNotPresent
 
     resources:
-
       # -- Pod resource limits
       limits:
         memory: 384Mi
@@ -449,15 +439,15 @@ validatingWebhookConfiguration:
 
     # -- Container ports.
     ports:
-    - containerPort: 9080
-      name: probes
-      protocol: TCP
-    - containerPort: 9082
-      name: metrics
-      protocol: TCP
-    - containerPort: 9443
-      name: webhook
-      protocol: TCP
+      - containerPort: 9080
+        name: probes
+        protocol: TCP
+      - containerPort: 9082
+        name: metrics
+        protocol: TCP
+      - containerPort: 9443
+        name: webhook
+        protocol: TCP
 
 crds:
   install: false

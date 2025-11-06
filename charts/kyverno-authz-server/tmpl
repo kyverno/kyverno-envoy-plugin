@@ -1,0 +1,450 @@
+---
+# Source: kyverno-authz-server/templates/rbac/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-authz-server
+  namespace: default
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+---
+# Source: kyverno-authz-server/templates/validation-webhook/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-authz-server-validation
+  namespace: default
+  labels:
+    app.kubernetes.io/component: validation-webhook
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+---
+# Source: kyverno-authz-server/templates/rbac/cluster-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+metadata:
+  name: kyverno-authz-server
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+rules:
+- apiGroups:
+  - policies.kyverno.io
+  resources:
+  - validatingpolicies
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Source: kyverno-authz-server/templates/rbac/cluster-role-binding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kyverno-authz-server
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+roleRef:
+  kind: ClusterRole
+  name: kyverno-authz-server
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-authz-server
+    namespace: default
+---
+# Source: kyverno-authz-server/templates/rbac/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+metadata:
+  name: kyverno-authz-server
+  namespace: default
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - update
+- apiGroups:
+  - ''
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Source: kyverno-authz-server/templates/rbac/role-binding.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kyverno-authz-server
+  namespace: default
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+roleRef:
+  kind: Role
+  name: kyverno-authz-server
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-authz-server
+---
+# Source: kyverno-authz-server/templates/authz-server/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyverno-authz-server
+  namespace: default
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: 9081
+    protocol: TCP
+    targetPort: authz
+  selector:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/part-of: kyverno-authz-server
+---
+# Source: kyverno-authz-server/templates/validation-webhook/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyverno-authz-server-validation
+  namespace: default
+  labels:
+    app.kubernetes.io/component: validation-webhook
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+spec:
+  type: ClusterIP
+  ports:
+  - name: webhook
+    port: 9443
+    protocol: TCP
+    targetPort: webhook
+  selector:
+    app.kubernetes.io/component: validation-webhook
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/part-of: kyverno-authz-server
+---
+# Source: kyverno-authz-server/templates/authz-server/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyverno-authz-server
+  namespace: default
+  labels:
+    app.kubernetes.io/component: authz-server
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+spec:
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 40%
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: authz-server
+      app.kubernetes.io/instance: kyverno-authz-server
+      app.kubernetes.io/part-of: kyverno-authz-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: authz-server
+        app.kubernetes.io/instance: kyverno-authz-server
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: kyverno-authz-server
+        app.kubernetes.io/version: 0.0.0
+        helm.sh/chart: kyverno-authz-server-0.0.0
+    spec:
+      dnsPolicy: ClusterFirst
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - authz-server
+              topologyKey: kubernetes.io/hostname
+            weight: 1
+      serviceAccountName: kyverno-authz-server
+      containers:
+        - name: server
+          image: ghcr.io/kyverno/kyverno-envoy-plugin:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /livez
+              port: 9080
+              scheme: HTTP
+            initialDelaySeconds: 2
+            periodSeconds: 6
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /livez
+              port: 9080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /readyz
+              port: 9080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 9080
+              name: probes
+              protocol: TCP
+            - containerPort: 9081
+              name: authz
+              protocol: TCP
+            - containerPort: 9082
+              name: metrics
+              protocol: TCP
+          args:
+          - serve
+          - 'http'
+          - authz-server
+          - --probes-address=:9080
+          - --metrics-address=:9082
+          - --kube-policy-source=true
+          - --server-address=:9081
+          - --nested-request=true
+          - --input-expression=ammar
+          - --output-expression=
+          - --allow-insecure-registry=false
+---
+# Source: kyverno-authz-server/templates/validation-webhook/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyverno-authz-server-validation
+  namespace: default
+  labels:
+    app.kubernetes.io/component: validation-webhook
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+spec:
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 40%
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: validation-webhook
+      app.kubernetes.io/instance: kyverno-authz-server
+      app.kubernetes.io/part-of: kyverno-authz-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: validation-webhook
+        app.kubernetes.io/instance: kyverno-authz-server
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: kyverno-authz-server
+        app.kubernetes.io/version: 0.0.0
+        helm.sh/chart: kyverno-authz-server-0.0.0
+    spec:
+      dnsPolicy: ClusterFirst
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - validation-webhook
+              topologyKey: kubernetes.io/hostname
+            weight: 1
+      serviceAccountName: kyverno-authz-server
+      volumes:
+        - name: certs
+          secret:
+            secretName: kyverno-authz-server-validation
+      containers:
+        - name: server
+          image: ghcr.io/kyverno/kyverno-envoy-plugin:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /livez
+              port: 9080
+              scheme: HTTP
+            initialDelaySeconds: 2
+            periodSeconds: 6
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /livez
+              port: 9080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /readyz
+              port: 9080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 9080
+              name: probes
+              protocol: TCP
+            - containerPort: 9082
+              name: metrics
+              protocol: TCP
+            - containerPort: 9443
+              name: webhook
+              protocol: TCP
+          args:
+          - serve
+          - 'http'
+          - validation-webhook
+          - --probes-address=:9080
+          - --metrics-address=:9082
+          volumeMounts:
+            - name: certs
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+---
+# Source: kyverno-authz-server/templates/validation-webhook/validating-webhook-configuration.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: kyverno-authz-server-validation
+  labels:
+    app.kubernetes.io/component: validation-webhook
+    app.kubernetes.io/instance: kyverno-authz-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kyverno-authz-server
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: kyverno-authz-server-0.0.0
+webhooks:
+- name: kyverno-authz-server-validation.default.svc
+  clientConfig:
+    service:
+      name: kyverno-authz-server-validation
+      namespace: default
+      port: 9443
+      path: /validate-policies-kyverno-io-v1alpha1-validatingpolicy
+  failurePolicy: Fail
+  sideEffects: None
+  admissionReviewVersions: [ v1 ]
+  rules:
+  - apiGroups: [policies.kyverno.io]
+    apiVersions: [v1alpha1]
+    resources: [validatingpolicies]
+    operations: [CREATE, UPDATE]

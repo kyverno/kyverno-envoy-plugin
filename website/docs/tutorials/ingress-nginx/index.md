@@ -65,68 +65,19 @@ EOF
 
 For more certificate management options, refer to [Certificates management](../../install/certificates.md).
 
-### Deploy the Kyverno HTTP Authorizer Control Plane
 
-First, deploy the control plane which manages policies and serves them to the sidecars:
-
-```bash
-# deploy the control plane
-helm install kyverno-http-authorizer-control-plane \
-  --namespace kyverno --create-namespace \
-  --wait \
-  --repo https://kyverno.github.io/kyverno-http-authorizer kyverno-http-authorizer-control-plane \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer
-```
-
-The cert-manager configuration is required because the control plane includes a validating webhook for ValidatingPolicy resources.
-
-### Deploy the Kyverno Sidecar Injector
-
-Now deploy the sidecar injector, passing the control plane address:
+### Deploy the Authz server
 
 ```bash
-# deploy the sidecar injector
-helm install kyverno-sidecar-injector \
-  --namespace kyverno \
-  --wait \
-  --repo https://kyverno.github.io/kyverno-http-authorizer kyverno-sidecar-injector \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer \
-  --set controlPlaneAddress=kyverno-http-authorizer-control-plane.kyverno.svc.cluster.local:9081
-```
-
-The `controlPlaneAddress` tells injected sidecars where to connect to fetch policies.
-
-### Enable sidecar injection for the Ingress namespace
-
-Label the `ingress-nginx` namespace to enable automatic sidecar injection:
-
-```bash
-# enable sidecar injection
-kubectl label namespace ingress-nginx kyverno-injection=enabled
-```
-
-This triggers the mutating webhook to inject the Kyverno Authz Server sidecar into pods created in the `ingress-nginx` namespace.
-
-The mutating webhook is configured with a namespace selector:
-
-```yaml
-namespaceSelector:
-  matchExpressions:
-    - key: kyverno-injection
-      operator: In
-      values:
-      - enabled
-```
-
-Restart the Ingress NGINX controller to trigger sidecar injection:
-
-```bash
-# restart ingress controller to inject sidecar
-kubectl rollout restart deployment -n ingress-nginx ingress-nginx-controller
+# deploy the kyverno authz server
+helm install kyverno-authz-server                                             \
+  --namespace kyverno --create-namespace                                      \
+  --wait                                                                      \
+  --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server  \
+  --set config.type=http                                                      \
+  --set certManager.issuerRef.name=selfsigned-issuer \
+  --set certManager.issuerRef.kind=ClusterIssuer \
+  --set certManager.issuerRef.group=cert-manager.io
 ```
 
 ## Create a Kyverno ValidatingPolicy
@@ -149,26 +100,32 @@ spec:
     mode: HTTP
   matchConditions:
   - expression: |
-      object.host == "myapp.com"
+      object.attributes.host == "myapp.com"
     name: host
   - expression: |
-      object.path.startsWith("/api/v1")
+      object.attributes.path.startsWith("/api/v1")
     name: v1-api
   variables:
   - name: secretWord
     expression: |
       http.Get("http://my-server:3000").secretWord
+  - name: secretHeader
+    expression: |
+      size(object.attributes.Header("secret-header")) > 0 ? object.attributes.Header("secret-header")[0] : ""
+  - name: contentType
+    expression: |
+      size(object.attributes.Header("content-type")) > 0 ? object.attributes.Header("content-type")[0] : ""
   validations:
   - expression: |
-      object.headers.get("secret-header") == variables.secretWord && object.method == "GET"
-        ? http.response().status(200).withBody("request is GET and contains secret header")
+      variables.secretHeader == variables.secretWord && object.attributes.method == "GET"
+        ? http.Allowed().Response()
         : null
   - expression: |
-      object.headers.get("content-type") == "application/json" && object.method == "POST"
-        ? http.response().status(200).withBody("request is post and content is application/json")
+      variables.contentType == "application/json" && object.attributes.method == "POST"
+        ? http.Allowed().Response()
         : null
   - expression: |
-      http.response().status(403).withBody("validations didnt pass")
+      http.Denied("validations didnt pass").Response()
 ```
 
 ### Deploy the external service
@@ -263,7 +220,8 @@ kind: Ingress
 metadata:
   name: myapp
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/validate"
+    nginx.ingress.kubernetes.io/auth-method: POST
+    nginx.ingress.kubernetes.io/auth-url: "http://kyverno-authz-server.kyverno.svc.cluster.local:9083/validate"
 spec:
   ingressClassName: nginx
   rules:
@@ -378,26 +336,32 @@ spec:
     mode: HTTP
   matchConditions:
   - expression: |
-      object.host == "acme.corp"
+      object.attributes.host == "acme.corp"
     name: host
   - expression: |
-      object.path.startsWith("/api/v1")
+      object.attributes.path.startsWith("/api/v1")
     name: v1-api
   variables:
   - name: secretWord
     expression: |
       resource.Get("v1", "configmaps", "demo", "secret-word").data["secret-word"]
+  - name: secretHeader
+    expression: |
+      size(object.attributes.Header("secret-header")) > 0 ? object.attributes.Header("secret-header")[0] : ""
+  - name: contentType
+    expression: |
+      size(object.attributes.Header("content-type")) > 0 ? object.attributes.Header("content-type")[0] : ""
   validations:
   - expression: |
-      object.headers.get("secret-header") == variables.secretWord && object.method == "GET"
-        ? http.response().status(200).withBody("request is GET and contains secret header")
+      variables.secretHeader == variables.secretWord && object.attributes.method == "GET"
+        ? http.Allowed().Response()
         : null
   - expression: |
-      object.headers.get("content-type") == "application/json" && object.method == "POST"
-        ? http.response().status(200).withBody("request is post and content is application/json")
+      variables.contentType == "application/json" && object.attributes.method == "POST"
+        ? http.Allowed().Response()
         : null
   - expression: |
-      http.response().status(403).withBody("validations didnt pass")
+      http.Denied("validations didnt pass").Response()
 EOF
 ```
 
@@ -413,7 +377,8 @@ kind: Ingress
 metadata:
   name: acme
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/validate"
+    nginx.ingress.kubernetes.io/auth-method: POST
+    nginx.ingress.kubernetes.io/auth-url: "http://kyverno-authz-server.kyverno.svc.cluster.local:9083/validate"
 spec:
   ingressClassName: nginx
   rules:

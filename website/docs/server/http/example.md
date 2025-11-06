@@ -2,7 +2,7 @@
 
 ## Setup
 
-In this example we will deploy the Kyverno HTTP Authorizer components in a Kubernetes cluster.
+In this example we will deploy the Kyverno Authz server in a Kubernetes cluster.
 
 ### Prerequisites
 
@@ -46,35 +46,18 @@ EOF
 
 For more certificate management options, refer to [Certificates management](../../quick-start/kube-install.md#certificates-management).
 
-### Deploy the Control Plane
-
-Deploy the control plane which manages policies:
+### Deploy the Authz server
 
 ```bash
-# deploy the control plane
-helm install kyverno-http-authorizer-control-plane \
-  --namespace kyverno --create-namespace \
-  --wait \
-  --repo https://kyverno.github.io/kyverno-http-authorizer kyverno-http-authorizer-control-plane \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer
-```
-
-### Deploy the Sidecar Injector
-
-Deploy the sidecar injector:
-
-```bash
-# deploy the sidecar injector
-helm install kyverno-sidecar-injector \
-  --namespace kyverno \
-  --wait \
-  --repo https://kyverno.github.io/kyverno-http-authorizer kyverno-sidecar-injector \
-  --set certificates.certManager.issuerRef.group=cert-manager.io \
-  --set certificates.certManager.issuerRef.kind=ClusterIssuer \
-  --set certificates.certManager.issuerRef.name=selfsigned-issuer \
-  --set controlPlaneAddress=kyverno-http-authorizer-control-plane.kyverno.svc.cluster.local:9081
+# deploy the kyverno authz server
+helm install kyverno-authz-server                                             \
+  --namespace kyverno --create-namespace                                      \
+  --wait                                                                      \
+  --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server  \
+  --set config.type=http                                                      \
+  --set certManager.issuerRef.name=selfsigned-issuer \
+  --set certManager.issuerRef.kind=ClusterIssuer \
+  --set certManager.issuerRef.group=cert-manager.io
 ```
 
 ### Deploy a ValidatingPolicy
@@ -94,16 +77,12 @@ spec:
     mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.headers.get("x-force-authorized")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   validations:
   - expression: |
-      !variables.allowed
-        ? http.response().status(403).withBody("Forbidden")
-        : null
-  - expression: |
-      http.response().status(200)
+      !variables.force_authorized
+        ? http.Denied("Forbidden").Response()
+        : http.Allowed().Response()
 EOF
 ```
 

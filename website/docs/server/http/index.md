@@ -1,3 +1,3 @@
 # HTTP Authz Server
 
-TODO
+Run the Kyverno Authz Server for authorizing vanilla HTTP requests

@@ -38,6 +38,8 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | config.grpc.address | string | `":9081"` | GRPC address |
 | config.http.address | string | `":9081"` | HTTP address |
 | config.http.nestedRequest | bool | `true` | Expect the requests to validate to be in the body of the original request |
+| config.http.inputExpression | string | `""` | CEL expression applied to transform incoming requests |
+| config.http.outputExpression | string | `""` | CEL: expression applied to outgoing responses |
 | config.sources.kube | bool | `true` | Enable in-cluster kubernetes policy source |
 | config.sources.external | list | `[]` | External policy sources |
 | config.sources.controlPlane.address | string | `""` | Control plane address (leave empty for standalone mode) |

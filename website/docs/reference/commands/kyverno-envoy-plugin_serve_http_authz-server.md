@@ -24,6 +24,7 @@ kyverno-envoy-plugin serve http authz-server [flags]
       --health-check-interval duration             Interval for sending health checks (default 30s)
   -h, --help                                       help for authz-server
       --image-pull-secret stringArray              Image pull secrets
+      --input-expression string                    CEL expression for transforming the incoming request
       --key-file string                            File containing tls private key
       --kube-as string                             Username to impersonate for the operation
       --kube-as-group stringArray                  Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
@@ -47,6 +48,7 @@ kyverno-envoy-plugin serve http authz-server [flags]
       --kube-username string                       Username for basic authentication to the API server
       --metrics-address string                     Address to listen on for metrics (default ":9082")
       --nested-request                             Expect the requests to validate to be in the body of the original request
+      --output-expression string                   CEL expression for transforming responses before being sent to clients
       --probes-address string                      Address to listen on for health checks (default ":9080")
       --server-address string                      Address to serve the http authorization server on (default ":9083")
 ```

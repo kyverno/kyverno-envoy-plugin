@@ -6,7 +6,7 @@ require (
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.10.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589
-	github.com/envoyproxy/go-control-plane/envoy v1.35.0
+	github.com/envoyproxy/go-control-plane/envoy v1.36.0
 	github.com/go-logr/logr v1.4.3
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-containerregistry v0.20.6
@@ -15,6 +15,7 @@ require (
 	github.com/kyverno/kyverno v1.5.0-rc1.0.20250917075031-67ba05a0a08d
 	github.com/kyverno/pkg/ext v0.0.0-20250303002756-48769d003e55
 	github.com/lestrrat-go/jwx/v3 v3.0.12
+	github.com/mark3labs/mcp-go v0.42.0
 	github.com/nlepage/go-tarfs v1.2.1
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
@@ -32,6 +33,15 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.4
 	sigs.k8s.io/kubectl-validate v0.0.5-0.20250915070809-d2f2d68fba09
 	sigs.k8s.io/yaml v1.6.0
+)
+
+require (
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/invopop/jsonschema v0.13.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 )
 
 require (

@@ -46,8 +46,6 @@ func Command() *cobra.Command {
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
 	var kubePolicySource bool
-	var leaderElection bool
-	var leaderElectionID string
 	var imagePullSecrets []string
 	var allowInsecureRegistry bool
 	var controlPlaneAddr string
@@ -55,6 +53,8 @@ func Command() *cobra.Command {
 	var controlPlaneMaxDialInterval time.Duration
 	var healthCheckInterval time.Duration
 	var nestedRequest bool
+	var certFile string
+	var keyFile string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -167,8 +167,6 @@ func Command() *cobra.Command {
 									},
 								},
 							},
-							LeaderElection:   leaderElection,
-							LeaderElectionID: leaderElectionID,
 						})
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
@@ -194,9 +192,10 @@ func Command() *cobra.Command {
 					httpConfig := http.Config{
 						Address:       serverAddress,
 						NestedRequest: nestedRequest,
+						CertFile:      certFile,
+						KeyFile:       keyFile,
 					}
-					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient)
-					// run servers
+					httpAuthServer := http.NewServer(httpConfig, httpProvider, dynclient) // run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
 						defer cancel()
@@ -218,14 +217,14 @@ func Command() *cobra.Command {
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", nil, "Image pull secrets")
 	command.Flags().BoolVar(&allowInsecureRegistry, "allow-insecure-registry", false, "Allow insecure registry")
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
-	command.Flags().BoolVar(&leaderElection, "leader-election", false, "Enable leader election")
-	command.Flags().StringVar(&leaderElectionID, "leader-election-id", "", "Leader election ID")
 	command.Flags().StringVar(&serverAddress, "server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
 	command.Flags().DurationVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3*time.Second, "Duration to wait before retrying connecting to the control plane")
 	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
 	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
+	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
+	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 
 	return command

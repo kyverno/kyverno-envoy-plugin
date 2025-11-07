@@ -1,5 +1,14 @@
 # kyverno-envoy-plugin
 
+:warning: :warning: :warning: :warning: :warning: :warning: :warning: :warning: :warning: :warning:
+
+**This project is no longer maintained!**
+
+The project was transferred to https://github.com/kyverno/kyverno-authz.
+
+:warning: :warning: :warning: :warning: :warning: :warning: :warning: :warning: :warning: :warning:
+
+
 A flexible authorization service that enforces Kyverno policies for **Envoy proxies** and **plain HTTP services**. This plugin enables you to apply Kyverno's powerful policy engine to secure and control access to your APIs and services.
 
 ## Overview 

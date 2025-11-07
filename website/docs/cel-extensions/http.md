@@ -1,182 +1,202 @@
 # HTTP library
 
-The `http` library provides types and functions for working with HTTP requests and responses in CEL expressions. It enables policies to inspect incoming HTTP requests and construct custom HTTP responses.
+The `http` library provides types and functions for working with HTTP requests and responses in CEL expressions. It enables policies to inspect incoming HTTP requests and construct authorization responses.
 
 ## Types
 
-### `http.Request`
+### `http.CheckRequest`
 
-Represents an HTTP request with all its attributes.
+Represents the top-level HTTP check request object.
+
+| Field | CEL Type | Description |
+|---|---|---|
+| `attributes` | `http.CheckRequestAttributes` | Request attributes containing all HTTP request details |
+
+**Example:**
+```cel
+object.attributes.method == "POST"
+```
+
+### `http.CheckRequestAttributes`
+
+Contains all the attributes of an HTTP request.
 
 | Field | CEL Type | Description |
 |---|---|---|
 | `method` | `string` | HTTP method (GET, POST, etc.) |
-| `headers` | `http.KV` | Request headers |
-| `path` | `string` | URL path |
+| `header` | `map<string, list<string>>` | Request headers (multi-value map) |
 | `host` | `string` | Host header value |
+| `protocol` | `string` | HTTP protocol version (HTTP/1.1, HTTP/2, etc.) |
+| `contentLength` | `int` | Content length in bytes |
+| `body` | `bytes` | Request body as raw bytes |
 | `scheme` | `string` | URL scheme (http, https) |
-| `queryParams` | `http.KV` | Query parameters |
+| `path` | `string` | URL path |
+| `query` | `map<string, list<string>>` | Query parameters (multi-value map) |
 | `fragment` | `string` | URL fragment |
-| `size` | `int` | Request body size in bytes |
-| `protocol` | `string` | HTTP protocol version (HTTP/1.1, HTTP/2) |
-| `body` | `string` | Request body as string |
-| `rawBody` | `bytes` | Request body as raw bytes |
 
 **Example:**
 ```cel
-object.method == "POST" && object.path.startsWith("/api")
+object.attributes.method == "POST" && object.attributes.path.startsWith("/api")
 ```
 
-### `http.KV`
+### `http.CheckResponseOk`
 
-Represents a key-value map for headers and query parameters. Supports multiple values per key.
+Represents an allowed/approved response (empty struct).
 
-**Methods:**
-- `get(string) -> string`: Get the first value for a header/parameter
-- `getAll(string) -> list<string>`: Get all values for a header/parameter
+### `http.CheckResponseDenied`
 
-**Example:**
-```cel
-object.headers.get("content-type") == "application/json"
-```
-
-### `http.Response`
-
-Represents an HTTP response that can be returned from a policy.
+Represents a denied response with a reason.
 
 | Field | CEL Type | Description |
 |---|---|---|
-| `status` | `int` | HTTP status code |
-| `headers` | `http.KV` | Response headers |
-| `body` | `string` | Response body |
+| `reason` | `string` | Reason for denial |
 
-**Methods:**
-- `status(int) -> http.Response`: Set the HTTP status code
-- `withHeader(string, string) -> http.Response`: Add a response header
-- `withBody(string) -> http.Response`: Set the response body
+### `http.CheckResponse`
 
-**Example:**
-```cel
-http.response().status(403).withBody("Access denied")
-```
+The final response object that contains either an OK or Denied response.
+
+| Field | CEL Type | Description |
+|---|---|---|
+| `ok` | `http.CheckResponseOk` | Set if request is allowed |
+| `denied` | `http.CheckResponseDenied` | Set if request is denied |
 
 ## Functions
 
-### http.response()
+### http.Allowed()
 
-Creates a new `http.Response` object that can be customized with status, headers, and body.
+Creates an allowed response (CheckResponseOk).
 
 **Signature:**
 ```cel
-http.response() -> http.Response
+http.Allowed() -> http.CheckResponseOk
 ```
 
 **Example:**
 ```cel
-http.response().status(200).withBody("Success")
+http.Allowed()
 ```
 
-### get()
+### http.Denied()
 
-Gets the first value of a header or query parameter from an `http.KV` object. Returns an empty string if the key doesn't exist.
+Creates a denied response with a reason string.
 
 **Signature:**
 ```cel
-http.KV.get(string) -> string
+http.Denied(string) -> http.CheckResponseDenied
 ```
 
 **Example:**
 ```cel
-object.headers.get("authorization")
-object.queryParams.get("token")
+http.Denied("Access denied: insufficient permissions")
+http.Denied("Invalid authentication token")
 ```
 
-### getAll()
+### Header()
 
-Gets all values of a header or query parameter from an `http.KV` object. Returns an empty list if the key doesn't exist.
+Gets all values for a specific header from the request attributes. Returns a list of strings.
 
 **Signature:**
 ```cel
-http.KV.getAll(string) -> list<string>
+http.CheckRequestAttributes.Header(string) -> list<string>
 ```
 
 **Example:**
 ```cel
-object.headers.getAll("accept")
+object.attributes.Header("authorization")
+object.attributes.Header("content-type")
 ```
 
-### status()
+### QueryParam()
 
-Sets the HTTP status code for an `http.Response` object.
+Gets all values for a specific query parameter from the request attributes. Returns a list of strings.
 
 **Signature:**
 ```cel
-http.Response.status(int) -> http.Response
+http.CheckRequestAttributes.QueryParam(string) -> list<string>
 ```
 
 **Example:**
 ```cel
-http.response().status(403)
-http.response().status(200)
-http.response().status(401)
+object.attributes.QueryParam("token")
+object.attributes.QueryParam("api_key")
 ```
 
-### withHeader()
+### Response()
 
-Adds a header to an `http.Response` object. Can be called multiple times to add multiple headers.
+Converts a CheckResponseOk or CheckResponseDenied into a final CheckResponse.
 
 **Signature:**
 ```cel
-http.Response.withHeader(string, string) -> http.Response
+http.CheckResponseOk.Response() -> http.CheckResponse
+http.CheckResponseDenied.Response() -> http.CheckResponse
 ```
 
 **Example:**
 ```cel
-http.response().status(200).withHeader("x-custom-header", "value")
-http.response().status(403).withHeader("www-authenticate", "Bearer")
-```
-
-### withBody()
-
-Sets the response body for an `http.Response` object.
-
-**Signature:**
-```cel
-http.Response.withBody(string) -> http.Response
-```
-
-**Example:**
-```cel
-http.response().status(403).withBody("Access denied")
-http.response().status(200).withBody("Request approved")
+http.Allowed().Response()
+http.Denied("Forbidden").Response()
 ```
 
 ## Complete Examples
 
-### Allow request with custom header
+### Allow all requests
 
 ```cel
-http.response().status(200).withHeader("x-validated-by", "kyverno")
+http.Allowed().Response()
 ```
 
-### Deny request with custom status and body
+### Deny request with reason
 
 ```cel
-http.response().status(403).withBody("Insufficient permissions")
+http.Denied("Access denied: insufficient permissions").Response()
 ```
 
 ### Check authorization header
 
 ```cel
-object.headers.get("authorization").startsWith("Bearer ")
-  ? http.response().status(200)
-  : http.response().status(401).withBody("Missing authorization header")
+size(object.attributes.Header("authorization")) > 0
+  ? http.Allowed().Response()
+  : http.Denied("Missing authorization header").Response()
 ```
 
-### Validate content type
+### Validate HTTP method
 
 ```cel
-object.headers.get("content-type") == "application/json"
-  ? http.response().status(200)
-  : http.response().status(415).withBody("Unsupported media type")
+object.attributes.method == "GET" || object.attributes.method == "POST"
+  ? http.Allowed().Response()
+  : http.Denied("Method not allowed").Response()
+```
+
+### Check path prefix
+
+```cel
+object.attributes.path.startsWith("/api/v1")
+  ? http.Allowed().Response()
+  : http.Denied("Invalid API path").Response()
+```
+
+### Validate query parameter
+
+```cel
+size(object.attributes.QueryParam("api_key")) > 0
+  ? http.Allowed().Response()
+  : http.Denied("Missing api_key parameter").Response()
+```
+
+### Check header value
+
+```cel
+"application/json" in object.attributes.Header("content-type")
+  ? http.Allowed().Response()
+  : http.Denied("Invalid content type").Response()
+```
+
+### Complex authorization logic
+
+```cel
+object.attributes.method == "POST" && 
+object.attributes.path.startsWith("/api/admin") &&
+size(object.attributes.Header("x-admin-token")) > 0
+  ? http.Allowed().Response()
+  : http.Denied("Admin access required").Response()
 ```

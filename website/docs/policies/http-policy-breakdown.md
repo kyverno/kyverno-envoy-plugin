@@ -53,14 +53,12 @@ spec:
     mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.headers.get("x-force-authorized")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   validations:
   - expression: |
-      !variables.allowed
-        ? http.response().status(403).withBody("Forbidden")
-        : null
+      !variables.force_authorized
+        ? http.Denied("forbidden").Response()
+        : http.Allowed().Response()
 ```
 
 ### Example: Ignore Policy
@@ -76,14 +74,12 @@ spec:
     mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.headers.get("x-force-authorized")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   validations:
   - expression: |
-      !variables.allowed
-        ? http.response().status(403).withBody("Forbidden")
-        : null
+      !variables.force_authorized
+        ? http.Denied("Forbidden").Response()
+        : http.Allowed().Response()
 ```
 
 ## Match Conditions
@@ -106,10 +102,10 @@ spec:
     mode: HTTP
   matchConditions:
   - name: is-api-path
-    expression: object.path.startsWith("/api/")
+    expression: object.attributes.path.startsWith("/api/")
   validations:
   - expression: |
-      http.response().status(403).withBody("API access denied")
+      http.Denied("API access denied").Response()
 ```
 
 ### Example: Header-Based Matching
@@ -124,10 +120,10 @@ spec:
     mode: HTTP
   matchConditions:
   - name: has-admin-header
-    expression: object.headers.get("x-user-role") == "admin"
+    expression: object.attributes.header[?"x-user-role"].orValue("") == "admin"
   validations:
   - expression: |
-      http.response().status(200).withBody("Admin access granted")
+      http.Allowed().Response()
 ```
 
 ### Error Handling
@@ -159,17 +155,14 @@ spec:
   variables:
     # Extract header value
   - name: force_authorized
-    expression: object.headers.get("x-force-authorized")
-    # Compute authorization status
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   validations:
   - expression: |
-      !variables.allowed
-        ? http.response().status(403).withBody("Forbidden")
+      !variables.force_authorized
+        ? http.Denied("Forbidden").Response()
         : null
   - expression: |
-      http.response().status(200)
+      http.Allowed().Response()
 ```
 
 **Important**: Variables must be sorted by order of first appearance. A variable can reference earlier variables but not later ones.
@@ -201,18 +194,16 @@ spec:
     mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.headers.get("x-force-authorized")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   validations:
   # Deny if not allowed
   - expression: |
-      !variables.allowed
-        ? http.response().status(403).withBody("Forbidden")
+      !variables.force_authorized
+        ? http.Denied("Forbidden").Response()
         : null
   # Allow the request
   - expression: |
-      http.response().status(200)
+      http.Allowed().Response()
 ```
 
 ### Advanced Example
@@ -230,34 +221,29 @@ spec:
     mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.headers.get("x-force-authorized") in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-authorized"].orValue("") in ["enabled", "true"]
   - name: force_unauthenticated
-    expression: object.headers.get("x-force-unauthenticated") in ["enabled", "true"]
+    expression: object.attributes.header[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
   validations:
-  # Check 1: Return 401 if unauthenticated
+  # Check 1: Deny if unauthenticated
   - expression: |
       variables.force_unauthenticated
-        ? http.response().status(401).withBody("Authentication Failed")
+        ? http.Denied("Authentication Failed").Response()
         : null
-  # Check 2: Return 403 if not authorized
+  # Check 2: Deny if not authorized
   - expression: |
       !variables.force_authorized
-        ? http.response().status(403).withBody("Unauthorized Request")
+        ? http.Denied("Unauthorized Request").Response()
         : null
-  # Check 3: Allow with custom headers
+  # Check 3: Allow the request
   - expression: |
-      http.response()
-        .status(200)
-        .withHeader("x-validated-by", "kyverno")
-        .withHeader("x-custom-header", "custom-value")
+      http.Allowed().Response()
 ```
 
 This policy demonstrates:
 - **Sequential evaluation**: Each validation is checked in order
 - **Conditional responses**: Using ternary operators to return responses or null
-- **Multiple status codes**: Different responses for authentication (401) vs authorization (403) failures
-- **Custom headers**: Adding headers to successful responses
-- **Custom body**: Setting response body content
+- **Different denial reasons**: Providing specific reasons for authentication vs authorization failures
 
 ## CEL HTTP Extension Library
 
@@ -265,23 +251,23 @@ The CEL engine includes helper functions for creating HTTP responses:
 
 ### Key Functions
 
-- **`http.response()`**: Creates a new HTTP response builder
-- **`.status(code)`**: Sets the HTTP status code
-- **`.withBody(content)`**: Sets the response body
-- **`.withHeader(key, value)`**: Adds a response header
+- **`http.Allowed()`**: Creates an allowed response
+- **`http.Denied(reason)`**: Creates a denied response with a reason string
+- **`.Response()`**: Converts the response to the final CheckResponse type
 
-### Response Builder Pattern
+### Response Pattern
 
-The HTTP library uses a builder pattern for constructing responses:
+The HTTP library provides simple functions for authorization decisions:
 
 ```yaml
 validations:
+# Allow the request
 - expression: |
-    http.response()
-      .status(200)
-      .withHeader("Content-Type", "application/json")
-      .withHeader("X-Custom-Header", "value")
-      .withBody('{"status": "ok"}')
+    http.Allowed().Response()
+
+# Deny with a reason
+- expression: |
+    http.Denied("Access denied: insufficient permissions").Response()
 ```
 
 ## Using External Data
@@ -304,9 +290,9 @@ spec:
       http.Get("http://my-server:3000").secretWord
   validations:
   - expression: |
-      object.headers.get("secret-header") == variables.secretWord
-        ? http.response().status(200).withBody("Valid secret")
-        : http.response().status(403).withBody("Invalid secret")
+      object.attributes.header[?"secret-header"].orValue("") == variables.secretWord
+        ? http.Allowed().Response()
+        : http.Denied("Invalid secret").Response()
 ```
 
 ### Example: Multiple External Calls
@@ -320,17 +306,19 @@ spec:
   evaluation:
     mode: HTTP
   variables:
+  - name: userId
+    expression: object.attributes.header[?"x-user-id"].orValue("")
   - name: userInfo
     expression: |
-      http.Get("http://user-service:8080/users/" + object.headers.get("x-user-id"))
+      http.Get("http://user-service:8080/users/" + variables.userId)
   - name: permissions
     expression: |
       http.Get("http://auth-service:8080/permissions/" + variables.userInfo.role)
   validations:
   - expression: |
       variables.permissions.canAccess
-        ? http.response().status(200).withHeader("x-user-role", variables.userInfo.role)
-        : http.response().status(403).withBody("Insufficient permissions")
+        ? http.Allowed().Response()
+        : http.Denied("Insufficient permissions").Response()
 ```
 
 ## Complete Example
@@ -348,43 +336,34 @@ spec:
     mode: HTTP
   matchConditions:
   - name: is-api-path
-    expression: object.path.startsWith("/api/")
+    expression: object.attributes.path.startsWith("/api/")
   - name: is-post-or-put
-    expression: object.method in ["POST", "PUT"]
+    expression: object.attributes.method in ["POST", "PUT"]
   variables:
   - name: auth_header
-    expression: object.headers.get("authorization")
+    expression: object.attributes.header[?"authorization"].orValue("")
   - name: is_authenticated
     expression: variables.auth_header.startsWith("Bearer ")
   - name: user_role
-    expression: object.headers.get("x-user-role")
+    expression: object.attributes.header[?"x-user-role"].orValue("")
   - name: is_admin
     expression: variables.user_role == "admin"
   - name: request_path
-    expression: object.path
+    expression: object.attributes.path
   validations:
   # Deny if not authenticated
   - expression: |
       !variables.is_authenticated
-        ? http.response()
-            .status(401)
-            .withHeader("WWW-Authenticate", "Bearer")
-            .withBody("Authentication required")
+        ? http.Denied("Authentication required").Response()
         : null
   # Deny if not admin
   - expression: |
       !variables.is_admin
-        ? http.response()
-            .status(403)
-            .withBody("Admin access required for " + variables.request_path)
+        ? http.Denied("Admin access required for " + variables.request_path).Response()
         : null
-  # Allow with tracking headers
+  # Allow the request
   - expression: |
-      http.response()
-        .status(200)
-        .withHeader("x-auth-validated", "true")
-        .withHeader("x-policy-applied", "complete-http-policy")
-        .withHeader("x-user-role", variables.user_role)
+      http.Allowed().Response()
 ```
 
 ## Request Object Structure
@@ -393,16 +372,23 @@ The HTTP request object (`object`) has the following structure:
 
 ```javascript
 {
-  method: "GET",              // HTTP method
-  path: "/api/users",         // Request path
-  headers: {                  // Request headers (map)
-    "authorization": "Bearer token",
-    "content-type": "application/json"
-  },
-  body: "...",               // Request body (if present)
-  query: {                   // Query parameters (map)
-    "page": "1",
-    "limit": "10"
+  attributes: {
+    method: "GET",                           // HTTP method
+    path: "/api/users",                      // Request path
+    header: {                                // Request headers (multi-value map)
+      "authorization": ["Bearer token"],
+      "content-type": ["application/json"]
+    },
+    body: bytes,                             // Request body as bytes
+    query: {                                 // Query parameters (multi-value map)
+      "page": ["1"],
+      "limit": ["10"]
+    },
+    host: "example.com",                     // Host header
+    protocol: "HTTP/1.1",                    // Protocol version
+    contentLength: 123,                      // Content length
+    scheme: "https",                         // URL scheme
+    fragment: ""                             // URL fragment
   }
 }
 ```
@@ -413,23 +399,27 @@ The HTTP request object (`object`) has the following structure:
 variables:
 # Access method
 - name: method
-  expression: object.method
+  expression: object.attributes.method
 
 # Access path
 - name: path
-  expression: object.path
+  expression: object.attributes.path
 
-# Access headers
+# Access headers using map syntax with optional chaining
 - name: auth_header
-  expression: object.headers.get("authorization")
+  expression: object.attributes.header[?"authorization"].orValue("")
 
-# Access query parameters
+# Access query parameters using map syntax
 - name: page
-  expression: object.query.get("page")
+  expression: object.attributes.query[?"page"].orValue("")
 
 # Check if header exists
 - name: has_auth
-  expression: object.headers.has("authorization")
+  expression: object.attributes.header[?"authorization"].hasValue()
+
+# Get header value with default
+- name: content_type
+  expression: object.attributes.header[?"content-type"].orValue("application/octet-stream")
 ```
 
 ## Common Patterns
@@ -445,15 +435,17 @@ spec:
   evaluation:
     mode: HTTP
   variables:
+  - name: auth_header
+    expression: object.attributes.header[?"authorization"].orValue("")
   - name: token
-    expression: object.headers.get("authorization").replace("Bearer ", "")
+    expression: variables.auth_header.startsWith("Bearer ") ? variables.auth_header.replace("Bearer ", "") : ""
   - name: is_valid
     expression: variables.token.size() > 20
   validations:
   - expression: |
       !variables.is_valid
-        ? http.response().status(401).withBody("Invalid token")
-        : http.response().status(200)
+        ? http.Denied("Invalid token").Response()
+        : http.Allowed().Response()
 ```
 
 ### Pattern 2: Role-Based Access Control
@@ -468,14 +460,14 @@ spec:
     mode: HTTP
   variables:
   - name: user_role
-    expression: object.headers.get("x-user-role")
+    expression: object.attributes.header[?"x-user-role"].orValue("")
   - name: allowed_roles
     expression: ["admin", "editor"]
   validations:
   - expression: |
       !(variables.user_role in variables.allowed_roles)
-        ? http.response().status(403).withBody("Role not authorized")
-        : http.response().status(200)
+        ? http.Denied("Role not authorized").Response()
+        : http.Allowed().Response()
 ```
 
 ### Pattern 3: Rate Limiting Check
@@ -490,18 +482,15 @@ spec:
     mode: HTTP
   variables:
   - name: user_id
-    expression: object.headers.get("x-user-id")
+    expression: object.attributes.header[?"x-user-id"].orValue("")
   - name: rate_limit_status
     expression: |
       http.Get("http://rate-limiter:8080/check/" + variables.user_id)
   validations:
   - expression: |
       variables.rate_limit_status.exceeded
-        ? http.response()
-            .status(429)
-            .withHeader("Retry-After", "60")
-            .withBody("Rate limit exceeded")
-        : http.response().status(200)
+        ? http.Denied("Rate limit exceeded").Response()
+        : http.Allowed().Response()
 ```
 
 ### Pattern 4: Path-Based Authorization
@@ -516,16 +505,16 @@ spec:
     mode: HTTP
   variables:
   - name: is_admin_path
-    expression: object.path.startsWith("/admin/")
+    expression: object.attributes.path.startsWith("/admin/")
   - name: is_admin_user
-    expression: object.headers.get("x-user-role") == "admin"
+    expression: object.attributes.header[?"x-user-role"].orValue("") == "admin"
   validations:
   - expression: |
       variables.is_admin_path && !variables.is_admin_user
-        ? http.response().status(403).withBody("Admin access required")
+        ? http.Denied("Admin access required").Response()
         : null
   - expression: |
-      http.response().status(200)
+      http.Allowed().Response()
 ```
 
 ## Best Practices
@@ -536,17 +525,16 @@ spec:
 4. **Return `null`** from validations that don't make a decision
 5. **Set appropriate failure policies** based on your security requirements
 6. **Use descriptive policy names** for easier troubleshooting
-7. **Add custom headers** for observability and debugging
-8. **Cache external data** when possible to improve performance
-9. **Use meaningful HTTP status codes** (401 for authentication, 403 for authorization)
-10. **Provide clear error messages** in response bodies
+7. **Cache external data** when possible to improve performance
+8. **Provide clear denial reasons** in `http.Denied()` calls for better debugging
+9. **Use optional chaining** with `.orValue("")` to safely access headers and query parameters
+10. **Use `.hasValue()`** to check if a header or query parameter exists
 
 ## Debugging Tips
 
-1. **Add debug headers** to responses to track which policy and validation matched:
+1. **Include detailed denial reasons** to track which validation failed:
    ```yaml
-   .withHeader("x-policy-name", "my-policy")
-   .withHeader("x-validation-step", "step-2")
+   http.Denied("Policy: my-policy, Step: authentication-check").Response()
    ```
 
 2. **Use variables to break down complex logic** for easier debugging
@@ -554,6 +542,8 @@ spec:
 3. **Test match conditions separately** to ensure they work as expected
 
 4. **Check failure policy behavior** in development before deploying to production
+
+5. **Use optional chaining syntax** - `object.attributes.header[?"key"].orValue("")` for safe access
 
 ## Additional Resources
 
